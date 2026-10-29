@@ -1,0 +1,6 @@
+{
+    "starter_kit_source_path": "C:\\laragon\\www\\base",
+    "starter_kit_source_commit": "ba54d312535cdc65b3bace6544812ddfdc323448",
+    "generated_at": "2026-10-29T16:23:09+00:00",
+    "upgrade_hint": "To see what's changed in the starter kit since this project was created, from a checkout of the source repo run: git log ba54d312535cdc65b3bace6544812ddfdc323448..HEAD -- app/Console/Commands app/Models/BaseModel.php app/Services/Basic \u2014 then hand-port or cherry-pick whatever's relevant."
+}
