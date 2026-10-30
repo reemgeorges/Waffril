@@ -39,10 +39,11 @@ class DriverDeliveryProblemReported extends Notification
             'order_status' => $this->order->status->value,
             'driver_id' => $this->driver->id,
             'driver_name' => $this->driver->name,
-            'message' => [
-                'en' => "Driver {$this->driver->name} reported a problem on {$this->order->order_number}: ".__('messages.driver.problem_types.'.$this->type, [], 'en'),
-                'ar' => "أبلغ السائق {$this->driver->name} عن مشكلة في {$this->order->order_number}: ".__('messages.driver.problem_types.'.$this->type, [], 'ar'),
-            ],
+            'message' => collect(['ar', 'en'])->mapWithKeys(fn ($locale) => [$locale => __('notifications.admin.problem_reported', [
+                'driver' => $this->driver->name,
+                'number' => $this->order->order_number,
+                'problem' => __('messages.driver.problem_types.'.$this->type, [], $locale),
+            ], $locale)])->all(),
         ];
     }
 }

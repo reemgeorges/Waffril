@@ -80,7 +80,7 @@ class OrderStateMachine
         // The customer hears about progress, not about internal re-dispatching
         // (a driver being unassigned returns the order to "accepted").
         $silent = $to === OrderStatus::Accepted && in_array($from, [OrderStatus::Assigned, OrderStatus::PickedUp], true);
-        if (! $silent && array_key_exists($to->value, CustomerOrderUpdate::TEXTS) && $order->user) {
+        if (! $silent && in_array($to->value, CustomerOrderUpdate::KINDS, true) && $order->user) {
             Notify::send($order->user, new CustomerOrderUpdate($to->value, $order));
         }
 

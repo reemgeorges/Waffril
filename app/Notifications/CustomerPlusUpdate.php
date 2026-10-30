@@ -19,11 +19,10 @@ class CustomerPlusUpdate extends AppNotification
 
     protected function texts(): array
     {
-        $body = $this->decision === 'approved'
-            ? ['en' => 'Your WAFFRLI PLUS request was approved.', 'ar' => 'تمت الموافقة على طلب وفرلي بلس.']
-            : ['en' => 'Your WAFFRLI PLUS request was declined.', 'ar' => 'تم رفض طلب وفرلي بلس.'];
-
-        return ['title' => ['en' => 'WAFFRLI PLUS', 'ar' => 'وفرلي بلس'], 'body' => $body];
+        return [
+            'title' => $this->both('notifications.customer.plus_title'),
+            'body' => $this->both('notifications.customer.plus.'.$this->decision),
+        ];
     }
 
     protected function references(): array

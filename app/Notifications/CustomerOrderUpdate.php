@@ -10,15 +10,8 @@ use App\Models\Order;
  */
 class CustomerOrderUpdate extends AppNotification
 {
-    public const TEXTS = [
-        'accepted' => ['en' => 'Your order :n was accepted.', 'ar' => 'تم قبول طلبك :n.'],
-        'assigned' => ['en' => 'A driver is on the way to pick up :n.', 'ar' => 'تم تعيين سائق لطلبك :n.'],
-        'picked_up' => ['en' => 'Your order :n is on its way.', 'ar' => 'طلبك :n في الطريق إليك.'],
-        'delivered' => ['en' => 'Your order :n was delivered.', 'ar' => 'تم توصيل طلبك :n.'],
-        'cancelled' => ['en' => 'Your order :n was cancelled.', 'ar' => 'تم إلغاء طلبك :n.'],
-        'cancellation_rejected' => ['en' => 'Your cancellation request for :n was declined.', 'ar' => 'تم رفض طلب إلغاء :n.'],
-        'refunded' => ['en' => 'A refund was recorded for :n.', 'ar' => 'تم تسجيل استرداد للطلب :n.'],
-    ];
+    /** Order events a customer is told about (texts: lang/{ar,en}/notifications.php). */
+    public const KINDS = ['accepted', 'assigned', 'picked_up', 'delivered', 'cancelled', 'cancellation_rejected', 'refunded'];
 
     public function __construct(public string $kind, public Order $order) {}
 
@@ -29,9 +22,12 @@ class CustomerOrderUpdate extends AppNotification
 
     protected function texts(): array
     {
-        $body = array_map(fn ($t) => str_replace(':n', $this->order->order_number, $t), self::TEXTS[$this->kind]);
+        $number = ['number' => $this->order->order_number];
 
-        return ['title' => ['en' => 'Order '.$this->order->order_number, 'ar' => 'الطلب '.$this->order->order_number], 'body' => $body];
+        return [
+            'title' => $this->both('notifications.customer.order_title', $number),
+            'body' => $this->both('notifications.customer.order.'.$this->kind, $number),
+        ];
     }
 
     protected function references(): array

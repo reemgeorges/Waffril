@@ -29,14 +29,10 @@ class DriverOrderUpdate extends AppNotification
 
     protected function texts(): array
     {
-        $n = $this->order->order_number;
-        $body = [
-            'assigned' => ['en' => "New delivery assigned: {$n}", 'ar' => "تم إسناد توصيل جديد: {$n}"],
-            'unassigned' => ['en' => "Delivery {$n} was removed from you", 'ar' => "تم سحب التوصيل {$n} منك"],
-            'cancelled' => ['en' => "Delivery {$n} was cancelled", 'ar' => "تم إلغاء التوصيل {$n}"],
-        ][$this->event];
-
-        return ['title' => ['en' => 'WAFFRLI delivery', 'ar' => 'توصيل وفرلي'], 'body' => $body];
+        return [
+            'title' => $this->both('notifications.driver.order_title'),
+            'body' => $this->both('notifications.driver.order.'.$this->event, ['number' => $this->order->order_number]),
+        ];
     }
 
     protected function references(): array

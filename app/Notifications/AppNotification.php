@@ -79,6 +79,12 @@ abstract class AppNotification extends Notification
         return ['title' => $texts['title'][$locale], 'body' => $texts['body'][$locale], 'data' => $data];
     }
 
+    /** The same translation in every supported locale: {ar: ..., en: ...}. */
+    protected function both(string $key, array $replace = []): array
+    {
+        return ['ar' => __($key, $replace, 'ar'), 'en' => __($key, $replace, 'en')];
+    }
+
     protected function readerLocale(object $notifiable): string
     {
         return in_array($notifiable->language ?? null, ['ar', 'en'], true) ? $notifiable->language : 'ar';
