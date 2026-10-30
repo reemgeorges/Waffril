@@ -418,6 +418,7 @@ return [
         'membership_not_active' => 'The membership is not active.',
         'no_collected_cash_to_refund' => 'There is no collected cash to refund.',
         'not_assigned_driver' => 'This order is not assigned to this driver.',
+        'category_cycle' => 'A category cannot be its own parent or descendant.',
         'not_in_store' => 'Must belong to the selected store.',
         'order_changed_concurrently' => 'The order was changed by someone else. Reload and try again.',
         'order_not_assignable' => 'Only accepted or assigned orders can get a driver.',

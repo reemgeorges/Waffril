@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\BusinessRuleException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,6 +37,29 @@ class Category extends BaseModel
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    /**
+     * MySQL 8 cannot CHECK parent_id <> id (id is AUTO_INCREMENT), so the
+     * tree is guarded here: a category may not be its own ancestor.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Category $category) {
+            $parentId = $category->parent_id;
+            if ($parentId === null || ! $category->exists) {
+                return;
+            }
+
+            $seen = [];
+            while ($parentId !== null && ! isset($seen[$parentId])) {
+                if ((int) $parentId === (int) $category->getKey()) {
+                    throw new BusinessRuleException(__('admin.errors.category_cycle'));
+                }
+                $seen[$parentId] = true;
+                $parentId = static::withTrashed()->whereKey($parentId)->value('parent_id');
+            }
+        });
+    }
 
     public function parent(): BelongsTo
     {

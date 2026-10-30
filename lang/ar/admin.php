@@ -418,6 +418,7 @@ return [
         'membership_not_active' => 'العضوية غير نشطة.',
         'no_collected_cash_to_refund' => 'لا يوجد نقد محصّل لإعادته.',
         'not_assigned_driver' => 'هذا الطلب غير مسند لهذا السائق.',
+        'category_cycle' => 'لا يمكن أن يكون التصنيف أباً لنفسه أو لأحد فروعه.',
         'not_in_store' => 'يجب أن يتبع المتجر المحدد.',
         'order_changed_concurrently' => 'تم تعديل الطلب من قبل شخص آخر. أعد التحميل وحاول مجدداً.',
         'order_not_assignable' => 'يمكن إسناد سائق للطلبات المقبولة أو المسندة فقط.',

@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\Schema;
  *  - slug becomes unique; a duplicate slug keeps its first owner and the
  *    others get "-<id>" appended.
  *  - image becomes optional; parent_id (tree) and sort_order are added.
+ *    Tree integrity (no self-parent, no cycle) is enforced by the model.
  *
- * Rollback restores plain text from the "en" translation.
+ * Rollback restores plain text from the "en" translation. It keeps the
+ * de-duplicated slugs and leaves `image` nullable (no placeholder data).
  */
 return new class extends Migration
 {
@@ -64,15 +66,13 @@ return new class extends Migration
             $table->index('parent_id', 'idx_categories_parent');
         });
 
-        SchemaConstraints::addCheck('categories', 'chk_categories_not_own_parent', 'parent_id IS NULL OR parent_id <> id');
+        // No CHECK (parent_id <> id): MySQL 8 rejects a CHECK that refers to an
+        // AUTO_INCREMENT column (error 3818). Self-parenting and cycles are
+        // refused by App\Models\Category::booted() instead.
     }
 
     public function down(): void
     {
-        if (SchemaConstraints::isMySql()) {
-            DB::statement('ALTER TABLE `categories` DROP CHECK `chk_categories_not_own_parent`');
-        }
-
         Schema::table('categories', function (Blueprint $table) {
             // SQLite cannot drop a foreign key by name; by column it rebuilds the table.
             $table->dropForeign(SchemaConstraints::isMySql() ? 'fk_categories_parent' : ['parent_id']);
@@ -104,6 +104,16 @@ return new class extends Migration
         Schema::table('categories', function (Blueprint $table) {
             $table->renameColumn('name_plain', 'name');
             $table->renameColumn('description_plain', 'description');
+        });
+
+        // Restore the legacy shape where that cannot lose or invent data:
+        // name/description were always filled above. `image` stays nullable,
+        // because categories created after up() may have no image and a
+        // placeholder would be invented data.
+        Schema::table('categories', function (Blueprint $table) {
+            $table->string('name')->nullable(false)->change();
+            $table->text('description')->nullable(false)->change();
+            $table->string('slug')->change();
         });
     }
 };
