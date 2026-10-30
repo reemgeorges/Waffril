@@ -36,6 +36,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // WAFFRLI driver API (2026-11-02).
             'driver.active'      => \App\Http\Middleware\EnsureDriverIsActive::class,
 
+            // WAFFRLI customer API (2026-11-03).
+            'customer.active'    => \App\Http\Middleware\EnsureCustomerIsActive::class,
+
         ]);
 
 

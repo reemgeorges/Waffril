@@ -29,6 +29,15 @@ use Illuminate\Support\Facades\Route;
  * anything by default. The route being live or not isn't what makes this
  * safe; the per-action config gate is.
  */
+// WAFFRLI customer identity (2026-11-03): customers now authenticate with
+// PHONE OTP only (routes/api/v1/customer.php). This legacy email/password
+// flow is no longer registered unless explicitly enabled with
+// WAFFRLI_LEGACY_USER_AUTH=true (phpunit.xml does, so the legacy starter-kit
+// regression tests keep covering it until they are retired).
+if (! config('waffrli.customer.legacy_password_auth')) {
+    return;
+}
+
 Route::prefix('user')->name('user.')->group(function () {
 
     Route::post('register', [UserAuthController::class, 'register'])->name('register')->middleware('throttle:auth-otp-endpoint');

@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Contracts\Delivery\DistanceCalculator;
+use App\Contracts\Messaging\TextMessageGateway;
 use App\Exceptions\Handler;
 use App\Policies\NotificationPolicy;
 use App\Policies\RolePolicy;
 use App\Services\Functional\AdminAuthService;
 use App\Services\Functional\UserAuthService;
+use App\Services\Messaging\TextMessenger;
 use App\Services\Model\Category\CategoryService;
 use App\Services\Model\City\CityService;
 use App\Services\Model\Currency\CurrencyService;
@@ -64,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(ExceptionHandler::class, Handler::class);
 
+        // WAFFRLI customer identity (2026-11-03): OTP text transport (fake | twilio).
+        $this->app->bind(TextMessageGateway::class, fn () => TextMessenger::gatewayFor((string) config('waffrli.messaging.driver', 'fake')));
+
         // WAFFRLI P0 (2026-10-30): replaceable delivery-distance strategy,
         // chosen by config('delivery.distance_strategy'). Haversine is a
         // provisional technical assumption, not a business rule.
@@ -108,6 +113,26 @@ class AppServiceProvider extends ServiceProvider
             $identifier = (string) ($request->input('email') ?: $request->input('phone_number') ?: $request->input('social_id'));
 
             return Limit::perMinute(10)->by($request->ip().'|'.$identifier);
+        });
+
+        // WAFFRLI customer API (2026-11-03).
+        RateLimiter::for('customer-otp', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by('customer-otp-ip:'.$request->ip()),
+                Limit::perMinute(3)->by('customer-otp-phone:'.(string) $request->input('phone')),
+            ];
+        });
+
+        RateLimiter::for('customer-otp-verify', function (Request $request) {
+            return Limit::perMinute(20)->by('customer-otp-verify-ip:'.$request->ip());
+        });
+
+        RateLimiter::for('customer-api', function (Request $request) {
+            return Limit::perMinute(180)->by('customer:'.($request->user('user')?->getKey() ?? $request->ip()));
+        });
+
+        RateLimiter::for('customer-checkout', function (Request $request) {
+            return Limit::perMinute(10)->by('customer-checkout:'.($request->user('user')?->getKey() ?? $request->ip()));
         });
 
         // WAFFRLI driver API (2026-11-02).

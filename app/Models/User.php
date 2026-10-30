@@ -46,6 +46,7 @@ class User extends BaseAuthModel
         // mass assignable: only App\Services\Customer\CustomerAccountService
         // changes them.
         'first_name' => 'first_name',
+        'avatar' => 'avatar',
         'last_name' => 'last_name',
         'phone' => 'phone',
         'otp_channel' => 'otp_channel',
