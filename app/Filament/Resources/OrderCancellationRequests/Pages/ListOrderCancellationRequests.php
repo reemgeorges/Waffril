@@ -7,5 +7,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListOrderCancellationRequests extends ListRecords
 {
+    use \App\Filament\Concerns\RefreshesOnOrderEvents;
+
     protected static string $resource = OrderCancellationRequestResource::class;
 }

@@ -40,6 +40,11 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->authGuard('admin_web')
             ->brandName('WAFFRLI')
+            // WAFFRLI (2026-11-03): operational alerts in the bell. Live over the
+            // shared Reverb server when configured (config/filament.php echo,
+            // channel admin.{id}); the 30s poll is the fallback.
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->colors(['primary' => Color::Orange])
             // Keyed by the group id each resource/page declares, so Filament
             // matches items to these (translated, ordered) groups.
@@ -73,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            ->renderHook(\Filament\View\PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
             ->authMiddleware([
                 Authenticate::class,
             ]);

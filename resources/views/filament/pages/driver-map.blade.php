@@ -1,5 +1,5 @@
 {{-- WAFFRLI (2026-11-01): drivers with an active delivery only, at their last
-     STORED position. Leaflet is served from public/vendor/leaflet; tiles and
+     STORED position. 2026-11-03: live refresh over Reverb when configured. Leaflet is served from public/vendor/leaflet; tiles and
      attribution come from config/waffrli.php. Popups are built with DOM nodes
      (textContent), never from HTML strings, so stored names cannot inject markup. --}}
 @php
@@ -10,6 +10,13 @@
     <div wire:poll.{{ $refreshSeconds }}s="refreshMap" style="display:flex;flex-direction:column;gap:1rem">
         <x-filament::section>
             <p style="font-size:.875rem;opacity:.8;margin:0">{{ __('admin.driver_map.notice', ['seconds' => $refreshSeconds]) }}</p>
+            <p style="font-size:.75rem;margin:.35rem 0 0" data-testid="driver-map-mode">
+                @if ($realtime)
+                    <x-filament::badge color="success" style="display:inline-flex">{{ __('admin.driver_map.live') }}</x-filament::badge>
+                @else
+                    <x-filament::badge color="gray" style="display:inline-flex">{{ __('admin.driver_map.polling', ['seconds' => $refreshSeconds]) }}</x-filament::badge>
+                @endif
+            </p>
 
             <div style="margin-top:1rem;display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:end">
                 <label style="display:block;font-size:.875rem">
@@ -50,7 +57,27 @@
                 layer: null,
                 labels: @js($labels),
                 centers: @js($cityCenters),
+                realtime: @js($realtime),
+                pending: null,
+                // Live updates: any GPS report or delivery status change on the
+                // shared Reverb server triggers ONE server re-read (refreshMap),
+                // which re-checks drivers.track and drops finished deliveries.
+                // The wire:poll above stays as the fallback.
+                listen() {
+                    const subscribe = () => {
+                        if (! window.Echo || this.subscribed) { return; }
+                        this.subscribed = true;
+                        const queue = () => {
+                            if (this.pending) { return; }
+                            this.pending = setTimeout(() => { this.pending = null; $wire.refreshMap(); }, 2000);
+                        };
+                        window.Echo.private('admin.drivers-map').listen('.driver.location', queue);
+                        window.Echo.private('admin.orders').listen('.order.status_changed', queue);
+                    };
+                    window.Echo ? subscribe() : window.addEventListener('EchoLoaded', subscribe, { once: true });
+                },
                 init() {
+                    if (this.realtime) { this.listen(); }
                     const boot = () => {
                         this.map = L.map(this.$refs.map, { scrollWheelZoom: true }).setView([33.5138, 36.2765], 11);
                         L.tileLayer(@js($tileUrl), { maxZoom: 19, attribution: @js($tileAttribution) }).addTo(this.map);

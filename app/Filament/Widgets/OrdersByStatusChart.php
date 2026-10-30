@@ -12,6 +12,8 @@ use Filament\Widgets\ChartWidget;
  */
 class OrdersByStatusChart extends ChartWidget
 {
+    use \App\Filament\Concerns\RefreshesOnOrderEvents;
+
     protected static ?int $sort = 3;
 
     protected ?string $maxHeight = '260px';

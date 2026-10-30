@@ -16,9 +16,10 @@ use Illuminate\Notifications\DatabaseNotification;
 
 /**
  * WAFFRLI (2026-10-31). Persisted database notifications (existing
- * `notifications` table) — read-only. No FCM push or real-time sending is
- * performed or simulated here: those integrations (FCM, Reverb) are not
- * installed in this phase.
+ * `notifications` table) — read-only. 2026-11-03: the same rows are what
+ * customers/drivers see in their apps (also delivered live over Reverb and
+ * by FCM push when configured); admins' own alerts appear in the bell.
+ * Marketing messages are sent from MarketingBroadcastResource.
  */
 class NotificationResource extends AdminResource
 {
@@ -48,6 +49,9 @@ class NotificationResource extends AdminResource
                 IconColumn::make('read_at')->label(__('admin.fields.read'))->boolean()->state(fn ($record) => $record->read_at !== null),
             ])
             ->filters([
+                // e.g. driver.problem_reported isolates delivery problem reports.
+                SelectFilter::make('type')->label(__('admin.fields.type'))
+                    ->options(fn () => DatabaseNotification::query()->distinct()->orderBy('type')->pluck('type', 'type')->map(fn ($t) => class_basename($t))->all()),
                 SelectFilter::make('notifiable_type')->label(__('admin.fields.recipient'))->options([
                     User::class => __('admin.resources.customer.plural'),
                     Driver::class => __('admin.resources.driver.plural'),

@@ -17,6 +17,8 @@ use Filament\Widgets\TableWidget;
  */
 class PendingOrdersTable extends TableWidget
 {
+    use \App\Filament\Concerns\RefreshesOnOrderEvents;
+
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';

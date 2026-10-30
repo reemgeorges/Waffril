@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Notifications\DriverDeliveryProblemReported;
 use App\Services\Audit\AdminAudit;
+use App\Services\Notifications\AdminAlerts;
 use App\Services\Order\OrderAdminService;
 use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
@@ -152,6 +153,7 @@ class DriverDeliveryService
         // Always kept in the audit trail (no admin actor: reported by a driver).
         AdminAudit::log('driver.problem_reported', $order, ['driver_id' => $driver->id, 'type' => $type, 'note' => $note]);
         Realtime::publish(new AdminOperationalEvent('order.problem_reported', (int) $order->id, $order->order_number));
+        AdminAlerts::send('order.problem_reported', (int) $order->id, $order->order_number);
 
         return ['order_id' => $order->id, 'order_number' => $order->order_number, 'type' => $type, 'notified_admins' => $recipients->count()];
     }

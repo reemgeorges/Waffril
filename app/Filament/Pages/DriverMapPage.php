@@ -17,10 +17,11 @@ use Illuminate\Support\Carbon;
  * - Markers use each driver's last STORED position (drivers.last_lat/lng,
  *   last_location_at); nothing here simulates GPS movement.
  * - A driver disappears as soon as no assigned / picked-up order remains.
- * - Positions refresh by polling the database (config
- *   waffrli.driver_map.refresh_seconds). The same payload (markers()) is
- *   what a future listener on the single shared Reverb WebSocket (private
- *   channel `admin.drivers-map`) would push; Reverb is not installed.
+ * - 2026-11-03: when the shared Reverb server is configured, the page
+ *   listens on `admin.drivers-map` (driver.location) and `admin.orders`
+ *   (order.status_changed) and re-reads markers() — so a finished,
+ *   cancelled or reassigned delivery disappears immediately. Polling the
+ *   database (waffrli.driver_map.refresh_seconds) remains the fallback.
  * - Every render and refresh re-checks `drivers.track`, so a revoked
  *   permission stops the data stream immediately.
  */
@@ -108,7 +109,7 @@ class DriverMapPage extends Page
             ->all();
     }
 
-    /** Polled from the page; also the hook a future Reverb listener would call. */
+    /** Polled from the page and called by the Reverb listener. */
     public function refreshMap(bool $fit = false): void
     {
         $this->dispatch('driver-map-updated', markers: $this->markers(), fit: $fit);
@@ -131,6 +132,7 @@ class DriverMapPage extends Page
             'cities' => City::query()->where('is_active', true)->orderBy('sort_order')->get()->mapWithKeys(fn (City $c) => [$c->id => $c->name])->all(),
             'statuses' => collect(self::STATUSES)->mapWithKeys(fn (OrderStatus $s) => [$s->value => $s->label()])->all(),
             'refreshSeconds' => max(5, (int) config('waffrli.driver_map.refresh_seconds', 30)),
+            'realtime' => (bool) config('filament.broadcasting.echo'),
             'staleMinutes' => (int) config('waffrli.driver_map.stale_after_minutes', 10),
             'tileUrl' => config('waffrli.driver_map.tile_url'),
             'tileAttribution' => config('waffrli.driver_map.tile_attribution'),

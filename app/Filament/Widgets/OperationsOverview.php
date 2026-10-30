@@ -17,6 +17,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class OperationsOverview extends StatsOverviewWidget
 {
+    use \App\Filament\Concerns\RefreshesOnOrderEvents;
+
     protected static ?int $sort = 1;
 
     protected ?string $pollingInterval = '60s';
