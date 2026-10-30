@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DriverCashSettlements\Pages;
 
+use App\Support\Settings\PlatformSettings;
 use App\Filament\Resources\DriverCashSettlements\DriverCashSettlementResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\Currency;
@@ -28,7 +29,11 @@ class ListDriverCashSettlements extends ListRecords
                         ->options(fn () => Driver::query()->orderBy('name')->pluck('name', 'id')),
                     Select::make('currency_id')->label(__('admin.fields.currency'))->required()
                         ->options(fn () => Currency::query()->where('is_active', true)->pluck('code', 'id')),
-                    DatePicker::make('business_date')->label(__('admin.fields.business_date'))->required()->default(now())->maxDate(now()),
+                    // Business days are in the platform timezone (not UTC): just after local
+                    // midnight "today" must already be the new day.
+                    DatePicker::make('business_date')->label(__('admin.fields.business_date'))->required()
+                        ->default(fn () => now(PlatformSettings::timezone())->toDateString())
+                        ->maxDate(fn () => now(PlatformSettings::timezone())->toDateString()),
                 ])
                 ->action(fn (array $data) => BusinessAction::run(fn ($admin) => app(DriverCashSettlementService::class)->prepare(
                     Driver::findOrFail($data['driver_id']), Currency::findOrFail($data['currency_id']),

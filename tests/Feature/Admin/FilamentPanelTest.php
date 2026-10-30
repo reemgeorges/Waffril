@@ -171,7 +171,7 @@ class FilamentPanelTest extends AdminPanelTestCase
         $this->actingAsAdmin($admin);
 
         Livewire::test(ListDriverCashSettlements::class)
-            ->callAction('prepare', ['driver_id' => $driver->id, 'currency_id' => $this->usd()->id, 'business_date' => now()->toDateString()]);
+            ->callAction('prepare', ['driver_id' => $driver->id, 'currency_id' => $this->usd()->id, 'business_date' => now(\App\Support\Settings\PlatformSettings::timezone())->toDateString()]); // business days are in the platform timezone
         $settlement = DriverCashSettlement::firstOrFail();
         $this->assertSame('25.0000', (string) $settlement->expected_amount);
 

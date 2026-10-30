@@ -68,7 +68,7 @@ class DemoOrderSeeder extends Seeder
             'DEMO-0013' => [[-2, 13, 0], 9, $pizza, 'aleppo-center', [['margherita', 2, ['small']]], ['currency' => 'SYP', 'wallet' => '15000'], $delivered(8)],
             'DEMO-0014' => [[-2, 13, 30], 5, $tech, 'center', [['usb-c-cable', 2, []]], ['currency' => 'EUR'],
                 [...$delivered(5), [70, 'refund', ['3.00', 'goodwill', 'Demo: late delivery goodwill refund']]]],
-            'DEMO-0015' => [[-1, 13, 0], 4, $market, 'center', [['labneh', 2, []], ['milk', 1, []]], [], $delivered(6)],
+            'DEMO-0015' => [[-2, 12, 0], 4, $market, 'center', [['labneh', 2, []], ['milk', 1, []]], [], $delivered(6)],
 
             // ---- Cancelled ----
             'DEMO-0016' => [[-4, 18, 0], 7, $market, 'north', [['chips', 3, []], ['water-6', 1, []]], [], [[3, 'cancel_customer', 'Demo: ordered by mistake']]],

@@ -38,7 +38,7 @@ class OperationsOverview extends StatsOverviewWidget
             $stats[] = Stat::make(__('admin.dashboard.pending_orders'), Order::where('status', OrderStatus::Pending->value)->count())->color('warning');
             $stats[] = Stat::make(__('admin.dashboard.urgent_orders'), Order::where('status', OrderStatus::Pending->value)->whereNotNull('urgent_at')->count())->color('danger');
             $stats[] = Stat::make(__('admin.dashboard.active_deliveries'), Order::whereIn('status', OrderStatus::active())->count())->color('primary');
-            $stats[] = Stat::make(__('admin.dashboard.delivered_today'), Order::where('status', OrderStatus::Delivered->value)->whereDate('delivered_at', today())->count())->color('success');
+            $stats[] = Stat::make(__('admin.dashboard.delivered_today'), Order::where('status', OrderStatus::Delivered->value)->where('delivered_at', '>=', now(\App\Support\Settings\PlatformSettings::timezone())->startOfDay()->utc())->count())->color('success');
             $stats[] = Stat::make(__('admin.dashboard.pending_cancellation_requests'),
                 OrderCancellationRequest::where('status', OrderCancellationRequest::STATUS_PENDING)->count());
         }
