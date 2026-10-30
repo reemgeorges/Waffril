@@ -2,6 +2,8 @@
 
 namespace App\Services\Order;
 
+use App\Notifications\CustomerOrderUpdate;
+use App\Services\Realtime\Notify;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
@@ -92,6 +94,9 @@ class RefundService
                 'amount' => Money::toStorage($value),
                 'reason' => $reasonCode,
             ], $admin);
+            if ($order->user) {
+                Notify::send($order->user, new CustomerOrderUpdate('refunded', $order));
+            }
 
             return $refund;
         });

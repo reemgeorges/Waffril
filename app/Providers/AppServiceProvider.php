@@ -70,6 +70,11 @@ class AppServiceProvider extends ServiceProvider
         // WAFFRLI customer identity (2026-11-03): OTP text transport (fake | twilio).
         $this->app->bind(TextMessageGateway::class, fn () => TextMessenger::gatewayFor((string) config('waffrli.messaging.driver', 'fake')));
 
+        // WAFFRLI (2026-11-03): push transport (fcm | fake), resolved per job.
+        $this->app->bind(\App\Contracts\Push\PushTransport::class, fn () => config('waffrli.push.driver') === 'fcm'
+            ? new \App\Services\Push\FcmHttpV1Transport
+            : new \App\Services\Push\FakePushTransport);
+
         // WAFFRLI P0 (2026-10-30): replaceable delivery-distance strategy,
         // chosen by config('delivery.distance_strategy'). Haversine is a
         // provisional technical assumption, not a business rule.

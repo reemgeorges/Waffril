@@ -99,6 +99,14 @@ Route::prefix('customer')->group(function () {
         Route::get('plus/requests', [CustomerPlusController::class, 'requests']);
         Route::post('plus/requests', [CustomerPlusController::class, 'submit'])->middleware('throttle:10,1');
 
-        // __CUSTOMER_ROUTES_BATCH_7__
+        Route::get('notifications', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'unreadCount']);
+        Route::post('notifications/read', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markAllRead']);
+        Route::post('notifications/{notification}/read', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markRead'])->whereUuid('notification');
+
+        Route::get('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'index']);
+        Route::post('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'store']);
+        Route::patch('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'update'])->whereNumber('deviceToken');
+        Route::delete('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'destroy'])->whereNumber('deviceToken');
     });
 });

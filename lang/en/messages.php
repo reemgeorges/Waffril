@@ -119,4 +119,11 @@ return [
     'realtime' => [
         'channel_forbidden' => 'You are not allowed to listen on this channel.',
     ],
+    // WAFFRLI (2026-11-03): push / device tokens.
+    'push' => [
+        'device_not_found' => 'Device not found.',
+        'device_registered' => 'Device registered for notifications.',
+        'device_updated' => 'Device updated.',
+        'device_removed' => 'Device removed; it will no longer receive notifications.',
+    ],
 ];

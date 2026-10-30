@@ -7,6 +7,8 @@ use App\Exceptions\BusinessRuleException;
 use App\Events\Realtime\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Notifications\CustomerOrderUpdate;
+use App\Services\Realtime\Notify;
 use App\Services\Realtime\Realtime;
 
 /**
@@ -75,6 +77,12 @@ class OrderStateMachine
         // WAFFRLI (2026-11-03): every transition reaches the order's customer,
         // drivers and operations over Reverb after the transaction commits.
         Realtime::publish(OrderStatusChanged::fromTransition($order, $from->value, $previousDriverId));
+        // The customer hears about progress, not about internal re-dispatching
+        // (a driver being unassigned returns the order to "accepted").
+        $silent = $to === OrderStatus::Accepted && in_array($from, [OrderStatus::Assigned, OrderStatus::PickedUp], true);
+        if (! $silent && array_key_exists($to->value, CustomerOrderUpdate::TEXTS) && $order->user) {
+            Notify::send($order->user, new CustomerOrderUpdate($to->value, $order));
+        }
 
         return $order;
     }

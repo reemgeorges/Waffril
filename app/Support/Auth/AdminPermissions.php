@@ -38,7 +38,7 @@ final class AdminPermissions
             ],
             'finance' => ['payments.view', 'payment_methods.manage', 'settlements.manage'],
             'plus' => ['plus.view', 'plus.manage', 'plus.approve'],
-            'system' => ['notifications.view', 'admins.manage', 'roles.manage', 'audit.view'],
+            'system' => ['notifications.view', 'notifications.marketing', 'admins.manage', 'roles.manage', 'audit.view'],
         ];
     }
 

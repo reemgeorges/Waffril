@@ -13,6 +13,8 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         // WAFFRLI (2026-11-03): messages "sent" by the recording broadcaster.
         \App\Support\Broadcasting\RecordingBroadcaster::reset();
+        \App\Services\Push\FakePushTransport::reset();
+        \App\Services\Push\ChannelPresence::$occupiedForTesting = [];
     }
 
     /**

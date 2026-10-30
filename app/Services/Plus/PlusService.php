@@ -2,6 +2,8 @@
 
 namespace App\Services\Plus;
 
+use App\Notifications\CustomerPlusUpdate;
+use App\Services\Realtime\Notify;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\Currency;
@@ -66,6 +68,10 @@ class PlusService
             'reviewed_at' => now(),
             'admin_note' => $note ?? $request->admin_note,
         ])->save();
+
+        if (in_array($status, [PlusRequest::STATUS_APPROVED, PlusRequest::STATUS_REJECTED], true) && $request->user) {
+            Notify::send($request->user, new CustomerPlusUpdate($status, $request));
+        }
     }
 
     public function approveNew(PlusRequest $request, Admin $admin, string $policy, ?int $customDays = null, ?CarbonInterface $startsAt = null, ?string $note = null): PlusCycle

@@ -74,6 +74,32 @@ return [
      * environment is local/testing, the fake transport is active AND this
      * token is set; it is never registered in production.
      */
+    /*
+    | Push notifications (FCM HTTP v1). Credentials ONLY from the environment:
+    | either FIREBASE_CREDENTIALS (path to a service-account JSON kept outside
+    | the repository) or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL +
+    | FIREBASE_PRIVATE_KEY. Driver `fake` records messages in memory (refused
+    | in production); nothing is pushed while `enabled` is false.
+    */
+    'push' => [
+        'enabled' => (bool) env('WAFFRLI_PUSH_ENABLED', false),
+        'driver' => env('WAFFRLI_PUSH_DRIVER', 'fake'),
+        'queue' => env('WAFFRLI_PUSH_QUEUE', 'default'),
+        'tries' => 3,
+        // Skip the push when the recipient's private Reverb channel is occupied
+        // (the app is open and already received the broadcast).
+        'skip_when_online' => (bool) env('WAFFRLI_PUSH_SKIP_WHEN_ONLINE', true),
+        'max_driver_devices' => 3,
+        'fcm' => [
+            'credentials' => env('FIREBASE_CREDENTIALS'),
+            'project_id' => env('FIREBASE_PROJECT_ID'),
+            'client_email' => env('FIREBASE_CLIENT_EMAIL'),
+            'private_key' => env('FIREBASE_PRIVATE_KEY'),
+            'timeout' => 10,
+        ],
+        'marketing_chunk' => 500,
+    ],
+
     'dev' => [
         'otp_peek_token' => env('WAFFRLI_DEV_OTP_PEEK_TOKEN'),
     ],

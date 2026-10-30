@@ -70,4 +70,10 @@ class Driver extends BaseAuthModel
     {
         return $this->hasMany(DriverCashSettlement::class);
     }
+
+    /** WAFFRLI (2026-11-03): live notifications on the private Reverb channel driver.{id}. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'driver.'.$this->getKey();
+    }
 }

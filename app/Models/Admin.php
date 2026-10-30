@@ -81,4 +81,10 @@ class Admin extends BaseAuthModel implements FilamentUser
     {
         return $this->hasRole(self::SUPER_ADMIN_ROLE, 'admin');
     }
+
+    /** WAFFRLI (2026-11-03): live notifications on the private Reverb channel admin.{id}. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'admin.'.$this->getKey();
+    }
 }

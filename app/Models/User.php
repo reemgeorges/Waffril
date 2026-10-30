@@ -161,4 +161,10 @@ class User extends BaseAuthModel
     {
         return $this->belongsTo(Admin::class, 'suspended_by_admin_id');
     }
+
+    /** WAFFRLI (2026-11-03): live notifications on the private Reverb channel user.{id}. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.'.$this->getKey();
+    }
 }

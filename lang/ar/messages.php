@@ -119,4 +119,11 @@ return [
     'realtime' => [
         'channel_forbidden' => 'غير مسموح لك بالاستماع إلى هذه القناة.',
     ],
+    // WAFFRLI (2026-11-03): push / device tokens.
+    'push' => [
+        'device_not_found' => 'الجهاز غير موجود.',
+        'device_registered' => 'تم تسجيل الجهاز لاستقبال الإشعارات.',
+        'device_updated' => 'تم تحديث الجهاز.',
+        'device_removed' => 'تمت إزالة الجهاز ولن يستقبل الإشعارات بعد الآن.',
+    ],
 ];

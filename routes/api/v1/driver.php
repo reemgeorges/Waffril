@@ -43,6 +43,11 @@ Route::prefix('driver')->group(function () {
         Route::get('cash/collections', [DriverCashController::class, 'collections']);
         Route::get('cash/settlements', [DriverCashController::class, 'settlements']);
 
+        Route::get('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'index']);
+        Route::post('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'store']);
+        Route::patch('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'update'])->whereNumber('deviceToken');
+        Route::delete('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'destroy'])->whereNumber('deviceToken');
+
         Route::get('notifications', [DriverNotificationController::class, 'index']);
         Route::post('notifications/read', [DriverNotificationController::class, 'markManyRead']);
         Route::post('notifications/{notification}/read', [DriverNotificationController::class, 'markRead'])->whereUuid('notification');

@@ -13,7 +13,9 @@ use App\Models\OrderCancellationRequest;
 use App\Models\OrderPayment;
 use App\Models\PlusCycle;
 use App\Notifications\DriverOrderUpdate;
+use App\Notifications\CustomerOrderUpdate;
 use App\Services\Audit\AdminAudit;
+use App\Services\Realtime\Notify;
 use App\Services\Catalog\BranchHoursService;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Plus\PlusService;
@@ -358,6 +360,9 @@ class OrderAdminService
             ])->save();
 
             AdminAudit::log('order.cancellation_request_rejected', $request->order, ['request_id' => $request->id], $admin);
+            if ($request->order?->user) {
+                Notify::send($request->order->user, new CustomerOrderUpdate('cancellation_rejected', $request->order));
+            }
 
             return $request;
         });

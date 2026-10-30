@@ -41,7 +41,8 @@ class WaffrliDemoSeeder extends Seeder
         // broadcasting and push are muted while seeding, restored afterwards.
         $broadcaster = config('broadcasting.default');
         $push = config('waffrli.push.enabled');
-        config(['broadcasting.default' => 'null', 'waffrli.push.enabled' => false]);
+        $muted = config('waffrli.notifications_muted');
+        config(['broadcasting.default' => 'null', 'waffrli.push.enabled' => false, 'waffrli.notifications_muted' => true]);
 
         try {
             $this->call([
@@ -54,7 +55,7 @@ class WaffrliDemoSeeder extends Seeder
             ]);
         } finally {
             $context->retireOperator();
-            config(['broadcasting.default' => $broadcaster, 'waffrli.push.enabled' => $push]);
+            config(['broadcasting.default' => $broadcaster, 'waffrli.push.enabled' => $push, 'waffrli.notifications_muted' => $muted]);
         }
     }
 }
