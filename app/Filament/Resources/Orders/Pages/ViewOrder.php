@@ -9,6 +9,7 @@ use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderCancellation;
 use App\Models\OrderPayment;
+use App\Services\Driver\DriverDeliveryService;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Order\OrderAdminService;
 use App\Services\Order\RefundService;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -47,6 +49,10 @@ class ViewOrder extends ViewRecord
                 ->visible(fn (Order $record) => $record->status === OrderStatus::Assigned && AdminPermissions::currentAllows('orders.assign'))
                 ->requiresConfirmation()
                 ->action(fn (Order $record) => BusinessAction::run(fn ($admin) => $this->service()->unassignDriver($record, $admin))),
+            // WAFFRLI driver API (2026-11-02): proof-of-delivery photo from the private disk.
+            Action::make('deliveryPhoto')->label(__('admin.orders.delivery_photo'))->icon('heroicon-o-camera')->color('gray')
+                ->visible(fn (Order $record) => filled($record->delivery_photo_path) && AdminPermissions::currentAllows('orders.view'))
+                ->action(fn (Order $record) => Storage::disk(DriverDeliveryService::PHOTO_DISK)->download($record->delivery_photo_path)),
             ActionGroup::make([$this->cancelAction(), $this->refundAction()])->label(__('admin.orders.more'))->button(),
         ];
     }

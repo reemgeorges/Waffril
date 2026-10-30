@@ -467,6 +467,7 @@ return [
     ],
     'orders' => [
         'accept' => 'Accept',
+        'delivery_photo' => 'Delivery photo',
         'after_pickup' => 'After pickup',
         'after_pickup_help' => 'Record what actually happened: driver handling, cash collected, wallet amount to give back.',
         'amounts' => 'Amounts (order currency)',
