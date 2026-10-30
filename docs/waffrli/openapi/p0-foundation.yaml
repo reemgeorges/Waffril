@@ -1,0 +1,1296 @@
+# WAFFRLI P0 Foundation (2026-10-30). Standalone spec — kept outside docs/openapi/modules
+# because the existing test suite deletes docs/openapi during teardown.
+openapi: 3.0.3
+info:
+  title: 'WAFFRLI — P0 Foundation API'
+  version: 0.1.0
+  description: 'Generated from the implemented P0 routes (2026-10-30). Envelope: {data, status, error, statusCode}. Send Accept-Language: ar|en.'
+servers:
+  -
+    url: /
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        data:
+          nullable: true
+        status:
+          type: boolean
+        error:
+          nullable: true
+          type: string
+        statusCode:
+          type: integer
+    TranslatableName:
+      type: object
+      required:
+        - ar
+        - en
+      properties:
+        ar:
+          type: string
+          maxLength: 150
+        en:
+          type: string
+          maxLength: 150
+    IdRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    SettingCreate:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+          pattern: '^[a-z0-9_.]+$'
+          maxLength: 100
+        value:
+          description: 'Any non-null JSON value; non-negative decimal (≤4 dp) when is_monetary'
+        is_monetary:
+          type: boolean
+    SettingUpdate:
+      type: object
+      required:
+        - id
+        - value
+      properties:
+        id:
+          type: integer
+        value:
+          description: 'Any non-null JSON value'
+    CurrencyCreate:
+      type: object
+      required:
+        - code
+        - name
+        - symbol
+        - decimals
+        - exchange_rate
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Za-z]{3}$'
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        symbol:
+          type: string
+          maxLength: 10
+        decimals:
+          type: integer
+          minimum: 0
+          maximum: 4
+        exchange_rate:
+          type: string
+          description: 'Decimal as string, up to 12 fractional digits'
+        is_active:
+          type: boolean
+    CurrencyUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        symbol:
+          type: string
+        decimals:
+          type: integer
+          minimum: 0
+          maximum: 4
+        exchange_rate:
+          type: string
+          description: 'Decimal as string, up to 12 fractional digits'
+      description: 'code, is_active and is_default are prohibited'
+    CityCreate:
+      type: object
+      required:
+        - name
+        - center_lat
+        - center_lng
+        - radius_km
+      properties:
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        center_lat:
+          type: number
+        center_lng:
+          type: number
+        radius_km:
+          type: number
+          exclusiveMinimum: true
+          minimum: 0
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+    CityUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        center_lat:
+          type: number
+        center_lng:
+          type: number
+        radius_km:
+          type: number
+        sort_order:
+          type: integer
+    GeoJsonPolygon:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - Polygon
+        coordinates:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: array
+            minItems: 4
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+              description: '[lng, lat]'
+      description: 'One closed outer ring; holes not supported'
+    DeliveryAreaCreate:
+      type: object
+      required:
+        - city_id
+        - name
+        - boundary
+      properties:
+        city_id:
+          type: integer
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        boundary:
+          $ref: '#/components/schemas/GeoJsonPolygon'
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+    DeliveryAreaUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        city_id:
+          type: integer
+        name:
+          $ref: '#/components/schemas/TranslatableName'
+        boundary:
+          $ref: '#/components/schemas/GeoJsonPolygon'
+        sort_order:
+          type: integer
+    DeliveryFeeRuleCreate:
+      type: object
+      required:
+        - distance_from_km
+        - distance_to_km
+        - base_fee
+        - per_km_fee
+      properties:
+        city_id:
+          type: integer
+          nullable: true
+          description: 'null with no area = global scope; required when delivery_area_id is set'
+        delivery_area_id:
+          type: integer
+          nullable: true
+        distance_from_km:
+          type: number
+        distance_to_km:
+          type: number
+          description: 'Exclusive upper bound, > distance_from_km'
+        base_fee:
+          type: string
+          description: 'Decimal as string, up to 4 fractional digits'
+        per_km_fee:
+          type: string
+          description: 'Decimal as string, up to 4 fractional digits'
+        is_active:
+          type: boolean
+    DeliveryFeeRuleUpdate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        city_id:
+          type: integer
+          nullable: true
+        delivery_area_id:
+          type: integer
+          nullable: true
+        distance_from_km:
+          type: number
+        distance_to_km:
+          type: number
+        base_fee:
+          type: string
+          description: 'Decimal as string, up to 4 fractional digits'
+        per_km_fee:
+          type: string
+          description: 'Decimal as string, up to 4 fractional digits'
+    DeliveryQuoteRequest:
+      type: object
+      required:
+        - city_id
+        - origin_lat
+        - origin_lng
+        - destination_lat
+        - destination_lng
+      properties:
+        city_id:
+          type: integer
+        origin_lat:
+          type: number
+        origin_lng:
+          type: number
+        destination_lat:
+          type: number
+        destination_lng:
+          type: number
+    DetectCityRequest:
+      type: object
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+paths:
+  /api/v1/admin/settings/all/paginated:
+    get:
+      summary: 'List settings (paginated)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `settings.manage`.'
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+        -
+          name: per_page
+          in: query
+          schema:
+            type: integer
+  /api/v1/admin/settings/all:
+    get:
+      summary: 'List all settings'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `settings.manage`.'
+  /api/v1/admin/settings/show:
+    post:
+      summary: 'Show one settings record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Not found'
+      description: 'Admin token + permission `settings.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/settings/create:
+    post:
+      summary: 'Create settings record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `settings.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingCreate'
+  /api/v1/admin/settings/update:
+    post:
+      summary: 'Update settings record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `settings.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingUpdate'
+  /api/v1/admin/currencies/all/paginated:
+    get:
+      summary: 'List currencies (paginated)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `currencies.manage`.'
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+        -
+          name: per_page
+          in: query
+          schema:
+            type: integer
+  /api/v1/admin/currencies/all:
+    get:
+      summary: 'List all currencies'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `currencies.manage`.'
+  /api/v1/admin/currencies/show:
+    post:
+      summary: 'Show one currencies record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Not found'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/currencies/create:
+    post:
+      summary: 'Create currencies record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyCreate'
+  /api/v1/admin/currencies/update:
+    post:
+      summary: 'Update currencies record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyUpdate'
+  /api/v1/admin/currencies/activate:
+    post:
+      summary: 'Activate currencies record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/currencies/deactivate:
+    post:
+      summary: 'Deactivate currencies record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/currencies/initialize-default:
+    post:
+      summary: 'Initialize the FIRST default currency (only while none exists)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        409:
+          description: 'A default already exists; switching is not available in P0'
+      description: 'Admin token + permission `currencies.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/cities/all/paginated:
+    get:
+      summary: 'List cities (paginated)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `cities.manage`.'
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+        -
+          name: per_page
+          in: query
+          schema:
+            type: integer
+  /api/v1/admin/cities/all:
+    get:
+      summary: 'List all cities'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `cities.manage`.'
+  /api/v1/admin/cities/show:
+    post:
+      summary: 'Show one cities record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Not found'
+      description: 'Admin token + permission `cities.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/cities/create:
+    post:
+      summary: 'Create cities record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `cities.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCreate'
+  /api/v1/admin/cities/update:
+    post:
+      summary: 'Update cities record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `cities.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityUpdate'
+  /api/v1/admin/cities/activate:
+    post:
+      summary: 'Activate cities record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `cities.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/cities/deactivate:
+    post:
+      summary: 'Deactivate cities record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `cities.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-areas/all/paginated:
+    get:
+      summary: 'List delivery areas (paginated)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `delivery.manage`.'
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+        -
+          name: per_page
+          in: query
+          schema:
+            type: integer
+  /api/v1/admin/delivery-areas/all:
+    get:
+      summary: 'List all delivery areas'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `delivery.manage`.'
+  /api/v1/admin/delivery-areas/show:
+    post:
+      summary: 'Show one delivery areas record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Not found'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-areas/create:
+    post:
+      summary: 'Create delivery areas record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryAreaCreate'
+  /api/v1/admin/delivery-areas/update:
+    post:
+      summary: 'Update delivery areas record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryAreaUpdate'
+  /api/v1/admin/delivery-areas/activate:
+    post:
+      summary: 'Activate delivery areas record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-areas/deactivate:
+    post:
+      summary: 'Deactivate delivery areas record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-fee-rules/all/paginated:
+    get:
+      summary: 'List delivery fee rules (paginated)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `delivery.manage`.'
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+        -
+          name: per_page
+          in: query
+          schema:
+            type: integer
+  /api/v1/admin/delivery-fee-rules/all:
+    get:
+      summary: 'List all delivery fee rules'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `delivery.manage`.'
+  /api/v1/admin/delivery-fee-rules/show:
+    post:
+      summary: 'Show one delivery fee rules record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Not found'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-fee-rules/create:
+    post:
+      summary: 'Create delivery fee rules record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryFeeRuleCreate'
+  /api/v1/admin/delivery-fee-rules/update:
+    post:
+      summary: 'Update delivery fee rules record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryFeeRuleUpdate'
+  /api/v1/admin/delivery-fee-rules/activate:
+    post:
+      summary: 'Activate delivery fee rules record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-fee-rules/deactivate:
+    post:
+      summary: 'Deactivate delivery fee rules record'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        422:
+          description: 'Business rule violated'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdRequest'
+  /api/v1/admin/delivery-fee-rules/quote:
+    post:
+      summary: 'Preview coverage and fee for an origin/destination (read-only)'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Admin token + permission `delivery.manage`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryQuoteRequest'
+  /api/v1/user/cities:
+    get:
+      summary: 'Active service cities'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+      description: 'Customer (user) token.'
+  /api/v1/user/cities/detect:
+    post:
+      summary: 'Detect the service city for a GPS position'
+      security:
+        -
+          bearerAuth: []
+      responses:
+        200:
+          description: 'OK (envelope)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          description: 'Validation error (envelope)'
+        401:
+          description: Unauthenticated
+        403:
+          description: 'Missing permission'
+        404:
+          description: 'Outside every service city'
+        429:
+          description: 'Throttled (60/min)'
+      description: 'Customer (user) token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetectCityRequest'

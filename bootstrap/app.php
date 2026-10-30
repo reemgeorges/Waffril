@@ -38,6 +38,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
 
+        // WAFFRLI P0 (2026-10-30): ar/en locale from Accept-Language for API
+        // routes; without the header the configured locale is unchanged.
+        $middleware->appendToGroup('api', \App\Http\Middleware\SetRequestLocale::class);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
 

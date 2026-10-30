@@ -129,6 +129,9 @@ trait GeneralTrait
             case 1452: // FK violation
                 return $this->requiredField(__('messages.db_fk_violation'));
 
+            case 3819: // MySQL 8 CHECK constraint violated (WAFFRLI P0, 2026-10-30)
+                return $this->requiredField(__('messages.db_check_violation'));
+
             default:
                 // SECURITY (Phase 0.1, 2026-10-25): never leak raw SQL, bound
                 // parameters, table/column names or driver-specific error

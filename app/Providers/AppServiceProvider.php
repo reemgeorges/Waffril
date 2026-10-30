@@ -28,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
 
     'UserAuthService' => UserAuthService::class,
 
+    // WAFFRLI P0 Foundation (2026-10-30)
+    'SettingManagementService' => \App\Services\Model\Setting\SettingManagementService::class,
+
+    'CurrencyService' => \App\Services\Model\Currency\CurrencyService::class,
+
+    'CityService' => \App\Services\Model\City\CityService::class,
+
+    'DeliveryAreaService' => \App\Services\Model\DeliveryArea\DeliveryAreaService::class,
+
+    'DeliveryFeeRuleService' => \App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService::class,
 
      ];
     /**
@@ -42,6 +52,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(\Illuminate\Contracts\Debug\ExceptionHandler::class, Handler::class);
+
+        // WAFFRLI P0 (2026-10-30): replaceable delivery-distance strategy,
+        // chosen by config('delivery.distance_strategy'). Haversine is a
+        // provisional technical assumption, not a business rule.
+        $this->app->bind(\App\Contracts\Delivery\DistanceCalculator::class, function ($app) {
+            $strategy = config('delivery.distance_strategy', 'haversine');
+            $class = config("delivery.distance_strategies.{$strategy}");
+
+            if (! $class) {
+                throw new \InvalidArgumentException("Unknown delivery distance strategy [{$strategy}].");
+            }
+
+            return $app->make($class);
+        });
     }
 
     /**
