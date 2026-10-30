@@ -1,0 +1,34 @@
+meta {
+  name: Mark all as read
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/notifications/read
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("marked count returned", function () {
+    expect(res.getBody().data.marked).to.be.a("number");
+  });
+}

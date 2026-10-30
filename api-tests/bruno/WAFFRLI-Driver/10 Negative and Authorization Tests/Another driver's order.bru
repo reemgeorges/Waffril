@@ -1,0 +1,22 @@
+meta {
+  name: Another driver's order
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/orders/{{foreign_order_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("hidden as 404 (never exposed)", function () {
+    expect(res.getStatus()).to.equal(404);
+    expect(res.getBody().data).to.equal(null);
+  });
+}
+
+docs {
+  Set WAFFRLI_FOREIGN_ORDER_ID in .env to an order assigned to a different driver.
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Pick up order
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/pickup
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("picked up (or already picked up earlier)", function () {
+    if (bru.getVar("order_status") === "assigned") {
+      expect(res.getStatus()).to.equal(200);
+      expect(res.getBody().data.order.status).to.equal("picked_up");
+    } else {
+      expect(res.getStatus()).to.equal(422);
+    }
+  });
+}

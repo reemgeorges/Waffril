@@ -1,0 +1,36 @@
+meta {
+  name: Set available
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/api/v1/driver/availability
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "availability": "available"
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("available", function () {
+    expect(res.getBody().data.availability).to.equal("available");
+  });
+}

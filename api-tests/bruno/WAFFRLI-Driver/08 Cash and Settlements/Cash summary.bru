@@ -1,0 +1,33 @@
+meta {
+  name: Cash summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/cash/summary
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("one row per currency, amounts are strings", function () {
+    res.getBody().data.currencies.forEach(c => {
+      expect(c.currency).to.match(/^[A-Z]{3}$/);
+      expect(c.collected_unsettled).to.be.a("string");
+    });
+  });
+}

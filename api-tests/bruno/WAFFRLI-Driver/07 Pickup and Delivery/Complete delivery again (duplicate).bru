@@ -1,0 +1,32 @@
+meta {
+  name: Complete delivery again (duplicate)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/deliver
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "cash_collected": "{{cash_due}}"
+  }
+}
+
+tests {
+  test("HTTP 409", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

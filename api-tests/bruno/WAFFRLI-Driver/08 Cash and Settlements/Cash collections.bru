@@ -1,0 +1,35 @@
+meta {
+  name: Cash collections
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/cash/collections
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("the delivered order's cash is listed in its currency", function () {
+    const row = res.getBody().data.collections.find(c => String(c.order_id) === bru.getVar("order_id"));
+    if (Number(bru.getVar("cash_due")) > 0) {
+      expect(row).to.not.equal(undefined);
+      expect(row.currency).to.equal(bru.getVar("currency_code"));
+      expect(Number(row.amount_collected)).to.equal(Number(bru.getVar("cash_due")));
+    }
+  });
+}

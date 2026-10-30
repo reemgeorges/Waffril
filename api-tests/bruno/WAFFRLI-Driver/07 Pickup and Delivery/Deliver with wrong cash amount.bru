@@ -1,0 +1,23 @@
+meta {
+  name: Deliver with wrong cash amount
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/deliver
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "cash_collected": "0.01"
+  }
+}
+
+tests {
+  test("refused unless 0.01 happens to be due", function () {
+    expect(res.getStatus()).to.equal(bru.getVar("cash_due") === "0.01" ? 200 : 422);
+  });
+}

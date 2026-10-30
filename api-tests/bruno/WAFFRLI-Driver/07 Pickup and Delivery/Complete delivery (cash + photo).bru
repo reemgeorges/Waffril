@@ -1,0 +1,48 @@
+meta {
+  name: Complete delivery (cash + photo)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/deliver
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  cash_collected: {{cash_due}}
+  currency: {{currency_code}}
+  photo: @file(fixtures/delivery-proof.png)
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  const o = res.getBody().data.order;
+  test("delivered", function () {
+    expect(o.status).to.equal("delivered");
+    expect(o.timeline.delivered_at).to.be.a("string");
+    expect(o.has_delivery_photo).to.equal(true);
+  });
+  test("collected exactly the cash due, in the frozen currency", function () {
+    expect(o.payment.currency.code).to.equal(bru.getVar("currency_code"));
+    expect(Number(o.payment.cash_collected)).to.equal(Number(bru.getVar("cash_due")));
+    expect(Number(o.payment.cash_to_collect)).to.equal(0);
+  });
+}
+
+docs {
+  cash_collected must equal payment.cash_to_collect; photo is optional (jpg/png/webp, max 5 MB).
+}

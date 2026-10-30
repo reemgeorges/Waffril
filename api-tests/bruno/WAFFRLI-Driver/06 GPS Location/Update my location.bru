@@ -1,0 +1,43 @@
+meta {
+  name: Update my location
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/location
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "lat": {{latitude}},
+    "lng": {{longitude}}
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("stored position echoed", function () {
+    const l = res.getBody().data.location;
+    expect(l.lat).to.equal(Number(bru.interpolate("{{latitude}}")));
+    expect(l.recorded_at).to.be.a("string");
+  });
+}
+
+docs {
+  Accepted only while you have an assigned or picked-up delivery (rate limit: 12 per minute).
+}

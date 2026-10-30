@@ -1,0 +1,35 @@
+meta {
+  name: Get my profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/me
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("it is me", function () {
+    expect(String(res.getBody().data.driver.id)).to.equal(bru.getVar("driver_id"));
+  });
+  test("availability block present", function () {
+    const a = res.getBody().data.driver.availability;
+    expect(a.status).to.be.oneOf(["available", "offline"]);
+    expect(a.has_active_delivery).to.be.a("boolean");
+  });
+}

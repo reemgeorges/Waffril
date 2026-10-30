@@ -1,0 +1,43 @@
+meta {
+  name: List my active orders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/orders/active
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const orders = res.getBody().data.orders;
+  if (orders.length > 0) {
+    bru.setVar("order_id", String(orders[0].id));
+    bru.setVar("order_status", orders[0].status);
+    bru.setVar("cash_due", orders[0].payment.cash_to_collect);
+    bru.setVar("currency_code", orders[0].payment.currency.code);
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("only assigned / picked-up orders", function () {
+    res.getBody().data.orders.forEach(o => expect(o.status).to.be.oneOf(["assigned", "picked_up"]));
+  });
+  test("demo driver has an active order to work with", function () {
+    expect(res.getBody().data.orders.length).to.be.greaterThan(0);
+  });
+}

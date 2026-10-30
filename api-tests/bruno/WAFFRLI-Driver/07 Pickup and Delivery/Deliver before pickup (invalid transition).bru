@@ -1,0 +1,27 @@
+meta {
+  name: Deliver before pickup (invalid transition)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/deliver
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "cash_collected": "{{cash_due}}"
+  }
+}
+
+tests {
+  test("refused while the order is not picked up", function () {
+    if (bru.getVar("order_status") === "assigned") {
+      expect(res.getStatus()).to.equal(422);
+    } else {
+      expect(res.getStatus()).to.be.oneOf([200, 409, 422]);
+    }
+  });
+}

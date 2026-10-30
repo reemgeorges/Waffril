@@ -1,0 +1,30 @@
+meta {
+  name: Invalid token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/me
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  req.setHeader("Authorization", "Bearer 999|not-a-real-token");
+}
+
+tests {
+  test("HTTP 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Someone else's notification
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/notifications/00000000-0000-4000-8000-000000000000/read
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

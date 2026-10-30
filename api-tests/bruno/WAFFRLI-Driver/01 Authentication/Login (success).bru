@@ -1,0 +1,56 @@
+meta {
+  name: Login (success)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{driver_phone}}",
+    "password": "{{driver_password}}",
+    "device_name": "Bruno"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setVar("driver_token", res.getBody().data.token);
+    bru.setVar("driver_id", String(res.getBody().data.driver.id));
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("returns a bearer token and the driver", function () {
+    const d = res.getBody().data;
+    expect(d.token).to.be.a("string").and.not.empty;
+    expect(d.token_type).to.equal("Bearer");
+    expect(d.driver.phone).to.equal(bru.interpolate("{{driver_phone}}"));
+  });
+  test("never returns credentials", function () {
+    const raw = JSON.stringify(res.getBody().data.driver).toLowerCase();
+    expect(raw).to.not.contain("password");
+  });
+}
+
+docs {
+  Captures driver_token and driver_id as runtime variables (never saved to disk).
+}

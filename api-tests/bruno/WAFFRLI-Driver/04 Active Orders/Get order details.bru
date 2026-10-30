@@ -1,0 +1,42 @@
+meta {
+  name: Get order details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  const o = res.getBody().data.order;
+  test("same order", function () {
+    expect(String(o.id)).to.equal(bru.getVar("order_id"));
+  });
+  test("cash amount and currency are consistent", function () {
+    expect(o.payment.cash_to_collect).to.equal(bru.getVar("cash_due"));
+    expect(o.payment.currency.code).to.equal(bru.getVar("currency_code"));
+    const total = Number(o.payment.order_total);
+    const parts = Number(o.payment.cash_to_collect) + Number(o.payment.prepaid_amount);
+    expect(Math.abs(total - parts)).to.be.lessThan(Math.pow(10, -o.payment.currency.decimals) + 1e-9);
+  });
+  test("customer contact present for the active delivery", function () {
+    expect(o.customer).to.not.equal(null);
+    expect(o.delivery.lat).to.be.a("number");
+  });
+}
