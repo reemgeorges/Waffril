@@ -14,6 +14,7 @@ use App\Models\Setting;
 use App\Models\StoreCategory;
 use App\Models\User;
 use App\Services\Catalog\BranchHoursService;
+use App\Support\Database\JsonSearch;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -89,9 +90,8 @@ class CustomerCatalogService
     {
         $page = $this->branchQuery($this->deliveryCity($user))
             ->when($filters['store_category_id'] ?? null, fn ($q, $id) => $q->whereHas('store.categories', fn ($c) => $c->whereKey($id)))
-            ->when($filters['search'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
-                ->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%")
-                ->orWhereHas('store', fn ($s) => $s->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%"))))
+            ->when($filters['search'] ?? null, fn ($q, $term) => $q->where(fn ($w) => JsonSearch::apply($w, 'name', $term)
+                ->orWhereHas('store', fn ($s) => JsonSearch::apply($s, 'name', $term))))
             ->with(['store.categories', 'openingHours', 'hourExceptions' => fn ($q) => $q->where('ends_at', '>', now())])
             ->orderBy('id')->paginate($perPage);
 
@@ -144,7 +144,7 @@ class CustomerCatalogService
         $page = BranchProduct::query()->where('branch_id', $branch->id)
             ->whereHas('product', fn ($q) => $q->where('is_active', true))
             ->when($filters['category_id'] ?? null, fn ($q, $id) => $q->whereHas('product.categories', fn ($c) => $c->whereKey($id)))
-            ->when($filters['search'] ?? null, fn ($q, $term) => $q->whereHas('product', fn ($p) => $p->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%")))
+            ->when($filters['search'] ?? null, fn ($q, $term) => $q->whereHas('product', fn ($p) => JsonSearch::apply($p, 'name', $term)))
             ->when(! ($filters['include_unavailable'] ?? false), fn ($q) => $q->where('is_available', true))
             ->with(['product.categories'])->orderBy('id')->paginate($perPage);
 
@@ -183,14 +183,13 @@ class CustomerCatalogService
     public function search(User $user, string $term, int $limit = 20): array
     {
         $city = $this->deliveryCity($user);
-        $branches = $this->branchQuery($city)->where(fn ($w) => $w
-            ->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%")
-            ->orWhereHas('store', fn ($s) => $s->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%")))
+        $branches = $this->branchQuery($city)->where(fn ($w) => JsonSearch::apply($w, 'name', $term)
+            ->orWhereHas('store', fn ($s) => JsonSearch::apply($s, 'name', $term)))
             ->with(['store.categories', 'openingHours', 'hourExceptions' => fn ($q) => $q->where('ends_at', '>', now())])->limit($limit)->get();
 
         $products = BranchProduct::query()->where('is_available', true)
             ->whereIn('branch_id', $this->branchQuery($city)->select('id'))
-            ->whereHas('product', fn ($p) => $p->where('is_active', true)->where(fn ($w) => $w->where('name->en', 'like', "%{$term}%")->orWhere('name->ar', 'like', "%{$term}%")))
+            ->whereHas('product', fn ($p) => JsonSearch::apply($p->where('is_active', true), 'name', $term))
             ->with(['product.categories', 'branch.store'])->limit($limit)->get();
         $offers = Offer::query()->currentlyActive()->whereIn('store_id', $products->pluck('store_id')->unique())->whereNotNull('product_id')->get();
 

@@ -3,9 +3,13 @@
 use App\Http\Controllers\City\CustomerCityController;
 use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerAuthController;
+use App\Http\Controllers\Customer\CustomerCartController;
 use App\Http\Controllers\Customer\CustomerCatalogController;
 use App\Http\Controllers\Customer\CustomerEngagementController;
+use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Customer\CustomerPlusController;
 use App\Http\Controllers\Customer\CustomerProfileController;
+use App\Http\Controllers\Customer\CustomerWalletController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,6 +69,35 @@ Route::prefix('customer')->group(function () {
         Route::delete('products/{product}/favorite', [CustomerEngagementController::class, 'removeFavorite'])->whereNumber('product');
         Route::post('products/{product}/rating', [CustomerEngagementController::class, 'rate'])->whereNumber('product');
 
-        // __CUSTOMER_ROUTES_BATCH_4__
+        // Carts (one per branch) and checkout.
+        Route::get('carts', [CustomerCartController::class, 'index']);
+        Route::get('carts/{cart}', [CustomerCartController::class, 'show'])->whereNumber('cart');
+        Route::delete('carts/{cart}', [CustomerCartController::class, 'clear'])->whereNumber('cart');
+        Route::post('cart/items', [CustomerCartController::class, 'addItem']);
+        Route::patch('cart/items/{item}', [CustomerCartController::class, 'updateItem'])->whereNumber('item');
+        Route::delete('cart/items/{item}', [CustomerCartController::class, 'removeItem'])->whereNumber('item');
+        Route::post('carts/{cart}/checkout', [CustomerCartController::class, 'checkout'])->whereNumber('cart')->middleware('throttle:customer-checkout');
+
+        // Orders.
+        Route::get('orders', [CustomerOrderController::class, 'index']);
+        Route::get('orders/{order}', [CustomerOrderController::class, 'show'])->whereNumber('order');
+        Route::post('orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->whereNumber('order');
+        Route::post('orders/{order}/cancellation-request', [CustomerOrderController::class, 'requestCancellation'])->whereNumber('order');
+
+        // Wallet, payments, currencies (read-only).
+        Route::get('wallet', [CustomerWalletController::class, 'wallets']);
+        Route::get('wallet/transactions', [CustomerWalletController::class, 'transactions']);
+        Route::get('payments', [CustomerWalletController::class, 'payments']);
+        Route::get('refunds', [CustomerWalletController::class, 'refunds']);
+        Route::get('currencies', [CustomerWalletController::class, 'currencies']);
+
+        // WAFFRLI PLUS.
+        Route::get('plus/plans', [CustomerPlusController::class, 'plans']);
+        Route::get('plus/membership', [CustomerPlusController::class, 'membership']);
+        Route::get('plus/eligible-discounts', [CustomerPlusController::class, 'eligibleDiscounts']);
+        Route::get('plus/requests', [CustomerPlusController::class, 'requests']);
+        Route::post('plus/requests', [CustomerPlusController::class, 'submit'])->middleware('throttle:10,1');
+
+        // __CUSTOMER_ROUTES_BATCH_7__
     });
 });
