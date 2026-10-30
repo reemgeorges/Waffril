@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -55,8 +56,8 @@ class Driver extends BaseAuthModel
     public function activeOrders(): HasMany
     {
         return $this->hasMany(Order::class)->whereIn('status', [
-            \App\Enums\OrderStatus::Assigned->value,
-            \App\Enums\OrderStatus::PickedUp->value,
+            OrderStatus::Assigned->value,
+            OrderStatus::PickedUp->value,
         ]);
     }
 

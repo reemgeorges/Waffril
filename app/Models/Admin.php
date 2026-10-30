@@ -22,6 +22,13 @@ class Admin extends BaseAuthModel implements FilamentUser
     use HasFactory, HasRoles, Notifiable;
 
     /**
+     * WAFFRLI (2026-10-31): roles/permissions always live on the 'admin'
+     * guard. Without this, Spatie infers the guard from the active default,
+     * which becomes 'admin_web' after a Filament session login.
+     */
+    protected string $guard_name = 'admin';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>

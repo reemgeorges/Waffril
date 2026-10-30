@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use App\Models\BaseAuthModel;
-
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 
 class User extends BaseAuthModel
@@ -105,57 +106,57 @@ class User extends BaseAuthModel
         return $this->account_status === self::ACCOUNT_SUSPENDED;
     }
 
-    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function addresses(): HasMany
     {
         return $this->hasMany(UserAddress::class);
     }
 
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
-    public function wallets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function wallets(): HasMany
     {
         return $this->hasMany(Wallet::class);
     }
 
-    public function carts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function carts(): HasMany
     {
         return $this->hasMany(Cart::class);
     }
 
-    public function plusMembership(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function plusMembership(): HasOne
     {
         return $this->hasOne(PlusMembership::class);
     }
 
-    public function plusRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function plusRequests(): HasMany
     {
         return $this->hasMany(PlusRequest::class);
     }
 
-    public function plusCycles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function plusCycles(): HasMany
     {
         return $this->hasMany(PlusCycle::class);
     }
 
-    public function favoriteProducts(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function favoriteProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'favorites')->withPivot('created_at');
     }
 
-    public function productRatings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function productRatings(): HasMany
     {
         return $this->hasMany(ProductRating::class);
     }
 
-    public function displayCurrency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function displayCurrency(): BelongsTo
     {
         return $this->belongsTo(Currency::class, 'display_currency_id');
     }
 
-    public function suspendedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function suspendedBy(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'suspended_by_admin_id');
     }

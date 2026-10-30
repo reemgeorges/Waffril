@@ -3,6 +3,7 @@
 use App\Support\Database\SchemaConstraints;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -30,7 +31,7 @@ return new class extends Migration
     public function down(): void
     {
         if (SchemaConstraints::isMySql()) {
-            \Illuminate\Support\Facades\DB::statement('ALTER TABLE `otps` DROP CHECK `chk_otps_binding`');
+            DB::statement('ALTER TABLE `otps` DROP CHECK `chk_otps_binding`');
         }
 
         // Only reversible when no destination-only rows exist.

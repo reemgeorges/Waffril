@@ -2,14 +2,13 @@
 
 namespace App\Services\Model\DeliveryFeeRule;
 
+use App\Exceptions\BusinessRuleException;
 use App\Http\Requests\Basic\BasicRequest;
 use App\Http\Resources\Model\DeliveryFeeRuleResource;
-use App\Http\Traits\GeneralTrait;
 use App\Models\DeliveryArea;
 use App\Models\DeliveryFeeRule;
 use App\Services\Basic\BasicCrudService;
 use App\Services\Basic\ModelColumnsService;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,8 +21,6 @@ use Illuminate\Support\Facades\DB;
  */
 class DeliveryFeeRuleService extends BasicCrudService
 {
-    use GeneralTrait;
-
     protected function setVariables(): void
     {
         $this->modelColumnsService = ModelColumnsService::getServiceFor(
@@ -35,44 +32,53 @@ class DeliveryFeeRuleService extends BasicCrudService
 
     public function create(BasicRequest $request): mixed
     {
-        $data = $request->validated();
-        $data['updated_by_admin_id'] = $request->user()?->getKey();
-
-        $this->object = DB::transaction(function () use ($data) {
-            $this->assertAreaBelongsToCity($data['city_id'] ?? null, $data['delivery_area_id'] ?? null);
-            if ($data['is_active'] ?? true) {
-                $this->assertNoOverlap($data['city_id'] ?? null, $data['delivery_area_id'] ?? null, $data['distance_from_km'], $data['distance_to_km']);
-            }
-
-            return DeliveryFeeRule::create($data);
-        });
+        $this->object = $this->persist($request->validated(), null, $request->user()?->getKey());
 
         return $this->resource::make($this->object->fresh());
     }
 
     public function update(BasicRequest $request): mixed
     {
-        $this->object = DB::transaction(function () use ($request) {
-            $rule = DeliveryFeeRule::query()->lockForUpdate()->findOrFail($request->input('id'));
-            $data = $request->validated();
-            unset($data['id']);
+        $rule = DeliveryFeeRule::findOrFail($request->input('id'));
+        $data = $request->validated();
+        unset($data['id']);
+        $this->object = $this->persist($data, $rule, $request->user()?->getKey());
 
-            $merged = array_merge($rule->only(['city_id', 'delivery_area_id', 'distance_from_km', 'distance_to_km', 'is_active']), $data);
+        return $this->resource::make($this->object->fresh());
+    }
+
+    /**
+     * 2026-10-31: single entry point for creating/updating a rule with all
+     * scope and band checks — used by the P0 API and the admin panel.
+     */
+    public function persist(array $data, ?DeliveryFeeRule $rule, ?int $adminId): DeliveryFeeRule
+    {
+        return DB::transaction(function () use ($data, $rule, $adminId) {
+            $rule = $rule ? DeliveryFeeRule::query()->lockForUpdate()->findOrFail($rule->getKey()) : null;
+            $merged = array_merge(
+                ['city_id' => null, 'delivery_area_id' => null, 'is_active' => true],
+                $rule?->only(['city_id', 'delivery_area_id', 'distance_from_km', 'distance_to_km', 'is_active']) ?? [],
+                $data
+            );
+
             $this->assertAreaBelongsToCity($merged['city_id'], $merged['delivery_area_id']);
             if ((float) $merged['distance_to_km'] <= (float) $merged['distance_from_km']) {
                 $this->fail(__('messages.delivery_fee_rule_invalid_band'));
             }
             if ($merged['is_active']) {
-                $this->assertNoOverlap($merged['city_id'], $merged['delivery_area_id'], $merged['distance_from_km'], $merged['distance_to_km'], $rule->id);
+                $this->assertNoOverlap($merged['city_id'], $merged['delivery_area_id'], $merged['distance_from_km'], $merged['distance_to_km'], $rule?->id);
             }
 
-            $data['updated_by_admin_id'] = $request->user()?->getKey();
-            $rule->update($data);
+            $data['updated_by_admin_id'] = $adminId;
 
-            return $rule;
+            if ($rule) {
+                $rule->update($data);
+
+                return $rule;
+            }
+
+            return DeliveryFeeRule::create($data);
         });
-
-        return $this->resource::make($this->object->fresh());
     }
 
     public function activate(Request $request): bool
@@ -121,6 +127,6 @@ class DeliveryFeeRuleService extends BasicCrudService
 
     protected function fail(string $message, int $status = 422): never
     {
-        throw new HttpResponseException($this->apiResponse(null, false, $message, $status));
+        throw new BusinessRuleException($message, $status);
     }
 }

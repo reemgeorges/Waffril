@@ -2,7 +2,6 @@
 
 namespace App\Support\Auth;
 
-use App\Models\Admin;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**
@@ -43,13 +42,14 @@ final class PlatformPermissions
     }
 
     /**
-     * True only for an Admin actor holding the permission on the admin
-     * guard (directly or through a role). checkPermissionTo() returns
-     * false instead of throwing when the permission was never seeded.
+     * True only for an active Admin actor holding the permission on the
+     * admin guard (directly or through a role), or a Super Admin.
+     * checkPermissionTo() returns false instead of throwing when the
+     * permission was never seeded. Delegates to AdminPermissions
+     * (2026-10-31) so the API and the Filament panel share one rule.
      */
     public static function allows(?Authenticatable $actor, string $permission): bool
     {
-        return $actor instanceof Admin
-            && $actor->checkPermissionTo($permission, self::GUARD);
+        return AdminPermissions::allows($actor, $permission);
     }
 }

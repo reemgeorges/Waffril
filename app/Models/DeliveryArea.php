@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Geo\Polygon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -38,6 +39,20 @@ class DeliveryArea extends BasePlatformModel
     protected array $dynamicFilterColumns = ['city_id', 'is_active'];
 
     protected array $sortableColumns = ['sort_order', 'created_at'];
+
+    /**
+     * 2026-10-31: the bounding box is (re)derived from the boundary on
+     * every save, whichever code path writes the area (P0 API service or
+     * the admin panel).
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $area) {
+            if (is_array($area->boundary) && Polygon::validationError($area->boundary) === null) {
+                $area->fill(Polygon::boundingBox($area->boundary));
+            }
+        });
+    }
 
     public function city(): BelongsTo
     {

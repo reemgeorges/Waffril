@@ -154,7 +154,7 @@ return new class extends Migration
         SchemaConstraints::addCheck(
             'plus_store_discounts',
             'chk_psd_shape',
-            "(is_excluded = 1 AND plus_membership_id IS NOT NULL AND discount_type IS NULL) OR "
+            '(is_excluded = 1 AND plus_membership_id IS NOT NULL AND discount_type IS NULL) OR '
             ."(is_excluded = 0 AND discount_type IN ('percent', 'fixed') AND discount_value > 0 "
             ."AND (discount_type <> 'percent' OR discount_value <= 100))"
         );

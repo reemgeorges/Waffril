@@ -2,15 +2,16 @@
 
 namespace App\Http\Traits;
 
+use App\Exceptions\BusinessRuleException;
+use App\Exceptions\Otp\OtpException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\AuthenticationException;
-use Spatie\Permission\Exceptions\UnauthorizedException as SpatieUnauthorized;
-use App\Exceptions\Otp\OtpException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Exceptions\UnauthorizedException as SpatieUnauthorized;
 
 trait GeneralTrait
 {
@@ -18,14 +19,15 @@ trait GeneralTrait
     {
         $array = [
             'data' => $data,
-            'status' => $status ,
+            'status' => $status,
             'error' => $error,
-            'statusCode' => $statusCode
+            'statusCode' => $statusCode,
         ];
+
         return response($array, $statusCode);
     }
 
-    public function unAuthorizeResponse($message='Unauthorize')
+    public function unAuthorizeResponse($message = 'Unauthorize')
     {
         return $this->apiResponse(null, 0, $message, 401);
     }
@@ -42,10 +44,10 @@ trait GeneralTrait
 
     public function internalServer($message)
     {
-        return $this->apiResponse(null, false,$message, 500);
+        return $this->apiResponse(null, false, $message, 500);
     }
 
-    public function forbiddenResponse($message = "Forbidden")
+    public function forbiddenResponse($message = 'Forbidden')
     {
         return $this->apiResponse(null, false, $message, 403);
     }
@@ -54,10 +56,12 @@ trait GeneralTrait
     {
         if ($e instanceof ModelNotFoundException) {
             $modelName = class_basename($e->getModel());
+
             return $this->notFoundResponse("$modelName not found");
 
         } elseif ($e instanceof ValidationException) {
             $errors = $e->validator->errors();
+
             return response()->json([
                 'data' => null,
                 'status' => false,
@@ -84,6 +88,11 @@ trait GeneralTrait
             // envelope with the exception's own status code (429 for
             // throttling, 422/500 for configuration problems).
             return $this->apiResponse(null, false, $e->getMessage(), $e->getStatusCode());
+
+        } elseif ($e instanceof BusinessRuleException) {
+            // WAFFRLI (2026-10-31): domain-rule refusal from a reusable
+            // service; its message is written to be client-safe.
+            return $this->apiResponse(null, false, $e->getMessage(), $e->getStatus());
 
         } elseif ($e instanceof QueryException) {
             return $this->handleQueryException($e);
@@ -117,7 +126,7 @@ trait GeneralTrait
 
     protected function handleQueryException(QueryException $e)
     {
-        $errorCode = (isset($e->errorInfo[1]))? $e->errorInfo[1] : 0;
+        $errorCode = (isset($e->errorInfo[1])) ? $e->errorInfo[1] : 0;
 
         switch ($errorCode) {
             case 1062: // Duplicate entry
@@ -141,7 +150,7 @@ trait GeneralTrait
                 // matching the existing handleException() catch-all gate.
                 $message = app()->environment('production')
                     ? 'A database error occurred. Please try again later.'
-                    : 'Database error: ' . $e->getMessage();
+                    : 'Database error: '.$e->getMessage();
 
                 return $this->internalServer($message);
         }

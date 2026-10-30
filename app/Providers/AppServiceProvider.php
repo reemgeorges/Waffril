@@ -2,44 +2,55 @@
 
 namespace App\Providers;
 
+use App\Contracts\Delivery\DistanceCalculator;
+use App\Exceptions\Handler;
+use App\Policies\NotificationPolicy;
+use App\Policies\RolePolicy;
+use App\Services\Functional\AdminAuthService;
+use App\Services\Functional\UserAuthService;
+use App\Services\Model\Category\CategoryService;
+use App\Services\Model\City\CityService;
+use App\Services\Model\Currency\CurrencyService;
+use App\Services\Model\DeliveryArea\DeliveryAreaService;
+use App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService;
+use App\Services\Model\Setting\SettingManagementService;
+use App\Services\Model\Test\TestService;
+use App\Services\Model\User\UserService;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use App\Services\Functional\AdminAuthService;
-
-use App\Services\Functional\UserAuthService;
-use App\Exceptions\Handler;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
-   protected $facades = [
-    'CategoryService' => \App\Services\Model\Category\CategoryService::class,
+    protected $facades = [
+        'CategoryService' => CategoryService::class,
 
-    'TestService' => \App\Services\Model\Test\TestService::class,
+        'TestService' => TestService::class,
 
-    'UserService' => \App\Services\Model\User\UserService::class,
+        'UserService' => UserService::class,
 
-    
+        'AdminAuthService' => AdminAuthService::class,
 
+        'UserAuthService' => UserAuthService::class,
 
+        // WAFFRLI P0 Foundation (2026-10-30)
+        'SettingManagementService' => SettingManagementService::class,
 
-    'AdminAuthService' => AdminAuthService::class,
+        'CurrencyService' => CurrencyService::class,
 
-    'UserAuthService' => UserAuthService::class,
+        'CityService' => CityService::class,
 
-    // WAFFRLI P0 Foundation (2026-10-30)
-    'SettingManagementService' => \App\Services\Model\Setting\SettingManagementService::class,
+        'DeliveryAreaService' => DeliveryAreaService::class,
 
-    'CurrencyService' => \App\Services\Model\Currency\CurrencyService::class,
+        'DeliveryFeeRuleService' => DeliveryFeeRuleService::class,
 
-    'CityService' => \App\Services\Model\City\CityService::class,
+    ];
 
-    'DeliveryAreaService' => \App\Services\Model\DeliveryArea\DeliveryAreaService::class,
-
-    'DeliveryFeeRuleService' => \App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService::class,
-
-     ];
     /**
      * Register any application services.
      */
@@ -51,12 +62,12 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
-        $this->app->singleton(\Illuminate\Contracts\Debug\ExceptionHandler::class, Handler::class);
+        $this->app->singleton(ExceptionHandler::class, Handler::class);
 
         // WAFFRLI P0 (2026-10-30): replaceable delivery-distance strategy,
         // chosen by config('delivery.distance_strategy'). Haversine is a
         // provisional technical assumption, not a business rule.
-        $this->app->bind(\App\Contracts\Delivery\DistanceCalculator::class, function ($app) {
+        $this->app->bind(DistanceCalculator::class, function ($app) {
             $strategy = config('delivery.distance_strategy', 'haversine');
             $class = config("delivery.distance_strategies.{$strategy}");
 
@@ -74,6 +85,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerAuthRateLimiters();
+
+        // WAFFRLI (2026-10-31): policies for vendor models used by the admin panel.
+        Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(DatabaseNotification::class, NotificationPolicy::class);
     }
 
     /**

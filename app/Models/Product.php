@@ -59,6 +59,12 @@ class Product extends BaseModel
         return $this->hasMany(BranchProduct::class);
     }
 
+    /** Per-branch option prices of this product (branch_product_options.product_id). */
+    public function branchOptionPrices(): HasMany
+    {
+        return $this->hasMany(BranchProductOption::class);
+    }
+
     public function ratings(): HasMany
     {
         return $this->hasMany(ProductRating::class);
