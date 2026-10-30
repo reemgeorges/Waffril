@@ -37,4 +37,19 @@ class City extends BasePlatformModel
     {
         return $this->hasMany(DeliveryArea::class);
     }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class);
+    }
+
+    public function drivers(): HasMany
+    {
+        return $this->hasMany(Driver::class);
+    }
+
+    public function deliveryFeeRules(): HasMany
+    {
+        return $this->hasMany(DeliveryFeeRule::class);
+    }
 }

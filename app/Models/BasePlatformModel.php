@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
 /**
- * WAFFRLI P0 (2026-10-30) — base for platform reference data that is
- * deactivated, never deleted (settings, currencies, cities, delivery
- * areas, delivery fee rules).
+ * WAFFRLI P0 (2026-10-30) — base for every table WITHOUT a `deleted_at`
+ * column: platform reference data that is deactivated rather than deleted
+ * (settings, currencies, cities, delivery areas/fee rules) and, since
+ * 2026-10-31, transactional/ledger rows that are never soft-deleted
+ * (orders, payments, wallet ledger, PLUS cycles, branch pricing, ...).
  *
  * BaseModel always mixes in SoftDeletes, which requires a `deleted_at`
  * column the approved schema deliberately does not have for these

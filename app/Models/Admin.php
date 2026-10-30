@@ -3,12 +3,21 @@
 namespace App\Models;
 
 use Database\Factories\AdminFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class Admin extends BaseAuthModel
+/**
+ * WAFFRLI (2026-10-31): also the Filament admin-panel user (session guard
+ * `admin_web`, same `admins` table and Spatie roles/permissions as the
+ * `admin` Sanctum guard). Only active, non-deleted admins may enter.
+ */
+class Admin extends BaseAuthModel implements FilamentUser
 {
+    public const SUPER_ADMIN_ROLE = 'super-admin';
+
     /** @use HasFactory<AdminFactory> */
     use HasFactory, HasRoles, Notifiable;
 
@@ -54,5 +63,15 @@ class Admin extends BaseAuthModel
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return (bool) $this->is_active && ! $this->trashed();
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(self::SUPER_ADMIN_ROLE, 'admin');
     }
 }

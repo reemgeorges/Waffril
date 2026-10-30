@@ -39,7 +39,21 @@ class User extends BaseAuthModel
         'email_status' => 'email_status',
         'phone_status' => 'phone_status',
         'language' => 'language',
+        // WAFFRLI (2026-10-31): approved customer identity columns — see
+        // 2026_10_31_100000_add_waffrli_identity_columns_to_users_table.php.
+        // account_status / suspension / deletion columns are deliberately NOT
+        // mass assignable: only App\Services\Customer\CustomerAccountService
+        // changes them.
+        'first_name' => 'first_name',
+        'last_name' => 'last_name',
+        'phone' => 'phone',
+        'otp_channel' => 'otp_channel',
+        'display_currency_id' => 'display_currency_id',
     ];
+
+    public const ACCOUNT_ACTIVE = 'active';
+
+    public const ACCOUNT_SUSPENDED = 'suspended';
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -49,6 +63,10 @@ class User extends BaseAuthModel
         'phone_status' => 'boolean',
         'activated_at' => 'datetime',
         'phone_verified_at' => 'datetime',
+        'suspended_at' => 'datetime',
+        'profile_completed_at' => 'datetime',
+        'recovery_until' => 'datetime',
+        'anonymized_at' => 'datetime',
     ];
 
     /**
@@ -59,6 +77,7 @@ class User extends BaseAuthModel
     protected $hidden = [
         'password',
         'remember_token',
+        'verified_email',
     ];
 
     /**
@@ -72,5 +91,72 @@ class User extends BaseAuthModel
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function fullName(): string
+    {
+        $full = trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
+
+        return $full !== '' ? $full : (string) $this->name;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->account_status === self::ACCOUNT_SUSPENDED;
+    }
+
+    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function wallets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Wallet::class);
+    }
+
+    public function carts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Cart::class);
+    }
+
+    public function plusMembership(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PlusMembership::class);
+    }
+
+    public function plusRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PlusRequest::class);
+    }
+
+    public function plusCycles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PlusCycle::class);
+    }
+
+    public function favoriteProducts(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'favorites')->withPivot('created_at');
+    }
+
+    public function productRatings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductRating::class);
+    }
+
+    public function displayCurrency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'display_currency_id');
+    }
+
+    public function suspendedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'suspended_by_admin_id');
     }
 }
