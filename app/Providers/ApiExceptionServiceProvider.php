@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 class ApiExceptionServiceProvider extends ServiceProvider
 {
     use GeneralTrait;
+
     /**
      * Register services.
      */
@@ -29,8 +30,9 @@ class ApiExceptionServiceProvider extends ServiceProvider
                 return $this->unAuthorizeResponse();
             }
 
-
-            return redirect()->guest(route('login'));
+            // WAFFRLI (2026-10-31): honour the guard's own login URL (the
+            // Filament admin panel sets one); fall back to the legacy named route.
+            return redirect()->guest($e->redirectTo($request) ?? route('login'));
         });
     }
 }

@@ -60,6 +60,14 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+
+        // WAFFRLI (2026-10-31): session guard for the Filament admin panel
+        // (/admin). Same `admins` provider, roles and permissions as the
+        // `admin` Sanctum guard; customers and drivers can never use it.
+        'admin_web' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
     ],
 
     /*
