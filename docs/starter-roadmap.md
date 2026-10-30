@@ -3484,9 +3484,13 @@ Verification:
 
 - PHPUnit: 471 tests on SQLite (13 skipped: 9 pre-existing, 4 MySQL-only) and 471 on MySQL 8 (0 skipped), all passing. Both runs were on the batch 9 state.
 - Bruno CLI 2.15.1 on a MySQL 8 demo database with a local Reverb server: customer collection 91 requests / 286 tests, driver collection 37 / 126, all passing.
+- Browser (Playwright/Chromium) check of the Filament driver map against a real local Reverb server:
+  - the WebSocket connected and `private-admin.drivers-map` was authorized by the admin session;
+  - a real `POST /api/v1/driver/location` reached the page as `driver.location`;
+  - the marker moved after about 2.2 s, against a 30 s polling fallback.
 
 Not done or not verifiable here:
 
 - real SMS, WhatsApp and FCM delivery (provider credentials needed);
 - a load test of Reverb;
-- browser verification of the Filament live map over a real WebSocket. Covered instead by server-side tests plus a rendered-page check.
+- a Reverb deployment behind TLS (wss) on a real host.

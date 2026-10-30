@@ -121,7 +121,18 @@ Push messages are sent for:
 - **Notifications screen:** a type filter, e.g. `driver.problem_reported` for delivery problem reports.
 - **Currency re-denominations:** see `currency-switch.md`.
 
-## 4. Local run
+## 4. Verified locally (2026-11-03)
+
+- PHPUnit:
+  - `tests/Feature/Realtime/RealtimeChannelsTest.php` (7): signatures, ownership, revocation, guard isolation, 503 without Reverb;
+  - `FilamentRealtimeTest.php` (4);
+  - `tests/Feature/Push/PushNotificationsTest.php` (8).
+- Browser: Playwright/Chromium against `php artisan reverb:start` and `php artisan serve` on a MySQL 8 demo database.
+  - The admin session authorized `private-admin.drivers-map`.
+  - A driver's `POST /api/v1/driver/location` arrived as `driver.location`.
+  - The map marker moved after about 2.2 s (2 s throttle; polling fallback 30 s).
+
+## 5. Local run
 
 ```bash
 php artisan reverb:start
@@ -135,7 +146,7 @@ php artisan queue:work
 php artisan serve
 ```
 
-## 5. Production checklist (not executed by this work)
+## 6. Production checklist (not executed by this work)
 
 1. Set the Reverb variables with fresh random values. Put Reverb behind TLS (wss) with a reverse proxy, and restrict `REVERB_ALLOWED_ORIGINS` to the admin origin.
 2. Run `php artisan reverb:start` and `php artisan queue:work` under a supervisor. Use `reverb:restart` after deploys.
