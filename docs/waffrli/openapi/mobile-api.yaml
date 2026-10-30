@@ -1,0 +1,2685 @@
+openapi: 3.0.3
+info:
+  title: 'WAFFRLI Customer and Driver API'
+  version: 1.0.0
+  description: |-
+    Generated from the implemented routes by `php artisan waffrli:api-contract` (do not edit by hand).
+    Every response uses the envelope {data, status, error, statusCode}. Machine values (statuses, types) are stable;
+    *_label fields and messages follow Accept-Language (ar | en, default APP_LOCALE).
+    Executable request/response examples: api-tests/bruno/WAFFRLI-Customer and WAFFRLI-Driver.
+servers:
+  -
+    url: /
+    description: 'Same host as the API'
+tags:
+  -
+    name: customer
+    description: 'Customer app (Sanctum `user` token from phone OTP)'
+  -
+    name: driver
+    description: 'Driver app (Sanctum `driver` token)'
+paths:
+  /api/v1/customer/addresses:
+    get:
+      tags:
+        - customer
+      operationId: customer.addresses.get
+      summary: 'Customeraddresscontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - customer
+      operationId: customer.addresses.post
+      summary: 'Customeraddresscontroller Store'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/addresses/{address}':
+    delete:
+      tags:
+        - customer
+      operationId: customer.addressesAddress.delete
+      summary: 'Customeraddresscontroller Destroy'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: address
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - customer
+      operationId: customer.addressesAddress.patch
+      summary: 'Customeraddresscontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: address
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/addresses/{address}/default':
+    post:
+      tags:
+        - customer
+      operationId: customer.addressesAddressDefault.post
+      summary: 'Customeraddresscontroller Makedefault'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: address
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/auth/logout:
+    post:
+      tags:
+        - customer
+      operationId: customer.authLogout.post
+      summary: 'Customerauthcontroller Logout'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/auth/otp/request:
+    post:
+      tags:
+        - customer
+      operationId: customer.authOtpRequest.post
+      summary: 'Customerauthcontroller Requestotp'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-otp
+  /api/v1/customer/auth/otp/verify:
+    post:
+      tags:
+        - customer
+      operationId: customer.authOtpVerify.post
+      summary: 'Customerauthcontroller Verifyotp'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-otp-verify
+  /api/v1/customer/auth/recovery/request:
+    post:
+      tags:
+        - customer
+      operationId: customer.authRecoveryRequest.post
+      summary: 'Customerauthcontroller Requestrecovery'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-otp
+  /api/v1/customer/auth/recovery/verify:
+    post:
+      tags:
+        - customer
+      operationId: customer.authRecoveryVerify.post
+      summary: 'Customerauthcontroller Recover'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-otp-verify
+  /api/v1/customer/auth/register:
+    post:
+      tags:
+        - customer
+      operationId: customer.authRegister.post
+      summary: 'Customerauthcontroller Register'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-otp-verify
+  /api/v1/customer/branches:
+    get:
+      tags:
+        - customer
+      operationId: customer.branches.get
+      summary: 'Customercatalogcontroller Branches'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/branches/{branch}':
+    get:
+      tags:
+        - customer
+      operationId: customer.branchesBranch.get
+      summary: 'Customercatalogcontroller Branch'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: branch
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/branches/{branch}/products':
+    get:
+      tags:
+        - customer
+      operationId: customer.branchesBranchProducts.get
+      summary: 'Customercatalogcontroller Branchproducts'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: branch
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/branches/{branch}/products/{product}':
+    get:
+      tags:
+        - customer
+      operationId: customer.branchesBranchProductsProduct.get
+      summary: 'Customercatalogcontroller Product'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: branch
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: product
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/broadcasting/auth:
+    post:
+      tags:
+        - customer
+      operationId: customer.broadcastingAuth.post
+      summary: 'Broadcast Auth Controller'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/cart/items:
+    post:
+      tags:
+        - customer
+      operationId: customer.cartItems.post
+      summary: 'Customercartcontroller Additem'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/cart/items/{item}':
+    delete:
+      tags:
+        - customer
+      operationId: customer.cartItemsItem.delete
+      summary: 'Customercartcontroller Removeitem'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: item
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - customer
+      operationId: customer.cartItemsItem.patch
+      summary: 'Customercartcontroller Updateitem'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: item
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/carts:
+    get:
+      tags:
+        - customer
+      operationId: customer.carts.get
+      summary: 'Customercartcontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/carts/{cart}':
+    delete:
+      tags:
+        - customer
+      operationId: customer.cartsCart.delete
+      summary: 'Customercartcontroller Clear'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: cart
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    get:
+      tags:
+        - customer
+      operationId: customer.cartsCart.get
+      summary: 'Customercartcontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: cart
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/carts/{cart}/checkout':
+    post:
+      tags:
+        - customer
+      operationId: customer.cartsCartCheckout.post
+      summary: 'Customercartcontroller Checkout'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: cart
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - customer-checkout
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/cities:
+    get:
+      tags:
+        - customer
+      operationId: customer.cities.get
+      summary: 'Customercitycontroller Active'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/cities/detect:
+    post:
+      tags:
+        - customer
+      operationId: customer.citiesDetect.post
+      summary: 'Customercitycontroller Detect'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - '60,1'
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/context:
+    get:
+      tags:
+        - customer
+      operationId: customer.context.get
+      summary: 'Customerprofilecontroller Context'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/currencies:
+    get:
+      tags:
+        - customer
+      operationId: customer.currencies.get
+      summary: 'Customerwalletcontroller Currencies'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/device-tokens:
+    get:
+      tags:
+        - customer
+      operationId: customer.deviceTokens.get
+      summary: 'Devicetokencontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - customer
+      operationId: customer.deviceTokens.post
+      summary: 'Devicetokencontroller Store'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/device-tokens/{deviceToken}':
+    delete:
+      tags:
+        - customer
+      operationId: customer.deviceTokensDeviceToken.delete
+      summary: 'Devicetokencontroller Destroy'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: deviceToken
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - customer
+      operationId: customer.deviceTokensDeviceToken.patch
+      summary: 'Devicetokencontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: deviceToken
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/favorites:
+    get:
+      tags:
+        - customer
+      operationId: customer.favorites.get
+      summary: 'Customerengagementcontroller Favorites'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/me:
+    delete:
+      tags:
+        - customer
+      operationId: customer.me.delete
+      summary: 'Customerprofilecontroller Requestdeletion'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    get:
+      tags:
+        - customer
+      operationId: customer.me.get
+      summary: 'Customerprofilecontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - customer
+      operationId: customer.me.patch
+      summary: 'Customerprofilecontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/me/avatar:
+    delete:
+      tags:
+        - customer
+      operationId: customer.meAvatar.delete
+      summary: 'Customerprofilecontroller Deleteavatar'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - customer
+      operationId: customer.meAvatar.post
+      summary: 'Customerprofilecontroller Uploadavatar'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/me/email/verification:
+    post:
+      tags:
+        - customer
+      operationId: customer.meEmailVerification.post
+      summary: 'Customerprofilecontroller Sendemailverification'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - '6,1'
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/me/email/verify:
+    post:
+      tags:
+        - customer
+      operationId: customer.meEmailVerify.post
+      summary: 'Customerprofilecontroller Verifyemail'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - '10,1'
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/notifications:
+    get:
+      tags:
+        - customer
+      operationId: customer.notifications.get
+      summary: 'Customernotificationcontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/notifications/read:
+    post:
+      tags:
+        - customer
+      operationId: customer.notificationsRead.post
+      summary: 'Customernotificationcontroller Markallread'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/notifications/unread-count:
+    get:
+      tags:
+        - customer
+      operationId: customer.notificationsUnreadCount.get
+      summary: 'Customernotificationcontroller Unreadcount'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/notifications/{notification}/read':
+    post:
+      tags:
+        - customer
+      operationId: customer.notificationsNotificationRead.post
+      summary: 'Customernotificationcontroller Markread'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: notification
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/offers:
+    get:
+      tags:
+        - customer
+      operationId: customer.offers.get
+      summary: 'Customercatalogcontroller Offers'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/orders:
+    get:
+      tags:
+        - customer
+      operationId: customer.orders.get
+      summary: 'Customerordercontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/orders/{order}':
+    get:
+      tags:
+        - customer
+      operationId: customer.ordersOrder.get
+      summary: 'Customerordercontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/orders/{order}/cancel':
+    post:
+      tags:
+        - customer
+      operationId: customer.ordersOrderCancel.post
+      summary: 'Customerordercontroller Cancel'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/orders/{order}/cancellation-request':
+    post:
+      tags:
+        - customer
+      operationId: customer.ordersOrderCancellationRequest.post
+      summary: 'Customerordercontroller Requestcancellation'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/payments:
+    get:
+      tags:
+        - customer
+      operationId: customer.payments.get
+      summary: 'Customerwalletcontroller Payments'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/plus/eligible-discounts:
+    get:
+      tags:
+        - customer
+      operationId: customer.plusEligibleDiscounts.get
+      summary: 'Customerpluscontroller Eligiblediscounts'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/plus/membership:
+    get:
+      tags:
+        - customer
+      operationId: customer.plusMembership.get
+      summary: 'Customerpluscontroller Membership'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/plus/plans:
+    get:
+      tags:
+        - customer
+      operationId: customer.plusPlans.get
+      summary: 'Customerpluscontroller Plans'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/plus/requests:
+    get:
+      tags:
+        - customer
+      operationId: customer.plusRequests.get
+      summary: 'Customerpluscontroller Requests'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - customer
+      operationId: customer.plusRequests.post
+      summary: 'Customerpluscontroller Submit'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - '10,1'
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/product-categories:
+    get:
+      tags:
+        - customer
+      operationId: customer.productCategories.get
+      summary: 'Customercatalogcontroller Productcategories'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/products/{product}/favorite':
+    delete:
+      tags:
+        - customer
+      operationId: customer.productsProductFavorite.delete
+      summary: 'Customerengagementcontroller Removefavorite'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: product
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - customer
+      operationId: customer.productsProductFavorite.post
+      summary: 'Customerengagementcontroller Addfavorite'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: product
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/products/{product}/rating':
+    post:
+      tags:
+        - customer
+      operationId: customer.productsProductRating.post
+      summary: 'Customerengagementcontroller Rate'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: product
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/refunds:
+    get:
+      tags:
+        - customer
+      operationId: customer.refunds.get
+      summary: 'Customerwalletcontroller Refunds'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/search:
+    get:
+      tags:
+        - customer
+      operationId: customer.search.get
+      summary: 'Customercatalogcontroller Search'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+        - '60,1'
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/store-categories:
+    get:
+      tags:
+        - customer
+      operationId: customer.storeCategories.get
+      summary: 'Customercatalogcontroller Storecategories'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/wallet:
+    get:
+      tags:
+        - customer
+      operationId: customer.wallet.get
+      summary: 'Customerwalletcontroller Wallets'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/customer/wallet/transactions:
+    get:
+      tags:
+        - customer
+      operationId: customer.walletTransactions.get
+      summary: 'Customerwalletcontroller Transactions'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/availability:
+    get:
+      tags:
+        - driver
+      operationId: driver.availability.get
+      summary: 'Driveravailabilitycontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - driver
+      operationId: driver.availability.patch
+      summary: 'Driveravailabilitycontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/broadcasting/auth:
+    post:
+      tags:
+        - driver
+      operationId: driver.broadcastingAuth.post
+      summary: 'Broadcast Auth Controller'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/cash/collections:
+    get:
+      tags:
+        - driver
+      operationId: driver.cashCollections.get
+      summary: 'Drivercashcontroller Collections'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/cash/settlements:
+    get:
+      tags:
+        - driver
+      operationId: driver.cashSettlements.get
+      summary: 'Drivercashcontroller Settlements'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/cash/summary:
+    get:
+      tags:
+        - driver
+      operationId: driver.cashSummary.get
+      summary: 'Drivercashcontroller Summary'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/device-tokens:
+    get:
+      tags:
+        - driver
+      operationId: driver.deviceTokens.get
+      summary: 'Devicetokencontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+    post:
+      tags:
+        - driver
+      operationId: driver.deviceTokens.post
+      summary: 'Devicetokencontroller Store'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/device-tokens/{deviceToken}':
+    delete:
+      tags:
+        - driver
+      operationId: driver.deviceTokensDeviceToken.delete
+      summary: 'Devicetokencontroller Destroy'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: deviceToken
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+    patch:
+      tags:
+        - driver
+      operationId: driver.deviceTokensDeviceToken.patch
+      summary: 'Devicetokencontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: deviceToken
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/location:
+    post:
+      tags:
+        - driver
+      operationId: driver.location.post
+      summary: 'Driverlocationcontroller Update'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+        - driver-location
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/login:
+    post:
+      tags:
+        - driver
+      operationId: driver.login.post
+      summary: 'Driverauthcontroller Login'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-login
+  /api/v1/driver/logout:
+    post:
+      tags:
+        - driver
+      operationId: driver.logout.post
+      summary: 'Driverauthcontroller Logout'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/me:
+    get:
+      tags:
+        - driver
+      operationId: driver.me.get
+      summary: 'Driverauthcontroller Me'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/notifications:
+    get:
+      tags:
+        - driver
+      operationId: driver.notifications.get
+      summary: 'Drivernotificationcontroller Index'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/notifications/read:
+    post:
+      tags:
+        - driver
+      operationId: driver.notificationsRead.post
+      summary: 'Drivernotificationcontroller Markmanyread'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/notifications/{notification}/read':
+    post:
+      tags:
+        - driver
+      operationId: driver.notificationsNotificationRead.post
+      summary: 'Drivernotificationcontroller Markread'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: notification
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/orders/active:
+    get:
+      tags:
+        - driver
+      operationId: driver.ordersActive.get
+      summary: 'Driverordercontroller Active'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/orders/history:
+    get:
+      tags:
+        - driver
+      operationId: driver.ordersHistory.get
+      summary: 'Driverordercontroller History'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/orders/{order}':
+    get:
+      tags:
+        - driver
+      operationId: driver.ordersOrder.get
+      summary: 'Driverordercontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/orders/{order}/deliver':
+    post:
+      tags:
+        - driver
+      operationId: driver.ordersOrderDeliver.post
+      summary: 'Driverordercontroller Deliver'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/orders/{order}/pickup':
+    post:
+      tags:
+        - driver
+      operationId: driver.ordersOrderPickup.post
+      summary: 'Driverordercontroller Pickup'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/orders/{order}/problems':
+    post:
+      tags:
+        - driver
+      operationId: driver.ordersOrderProblems.post
+      summary: 'Driverordercontroller Reportproblem'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/password:
+    post:
+      tags:
+        - driver
+      operationId: driver.password.post
+      summary: 'Driverauthcontroller Changepassword'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  /api/v1/driver/profile:
+    patch:
+      tags:
+        - driver
+      operationId: driver.profile.patch
+      summary: 'Driverauthcontroller Updateprofile'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      schema:
+        type: string
+        enum:
+          - ar
+          - en
+      description: 'Response language (labels, messages, errors).'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Required for checkout; a replay returns the same order.'
+  schemas:
+    Envelope:
+      type: object
+      required:
+        - data
+        - status
+        - error
+        - statusCode
+      properties:
+        data:
+          nullable: true
+          description: 'Payload (null on errors).'
+        status:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+          description: 'Localized message on errors.'
+        statusCode:
+          type: integer
+  responses:
+    Ok:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    BadRequest:
+      description: 'Validation error (first message in `error`).'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    Unauthenticated:
+      description: 'Missing or revoked token.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    Forbidden:
+      description: 'Account suspended/inactive or not allowed.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    NotFound:
+      description: 'Not found or not yours.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    Conflict:
+      description: 'State conflict (e.g. order already accepted, ordering paused).'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    Unprocessable:
+      description: 'Business rule violated.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
+    TooManyRequests:
+      description: 'Rate limited.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Envelope'
