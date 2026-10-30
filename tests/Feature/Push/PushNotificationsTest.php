@@ -189,7 +189,7 @@ class PushNotificationsTest extends CustomerTestCase
     public function test_marketing_broadcast_requires_permission_and_targets_active_customers(): void
     {
         config(['waffrli.push.enabled' => true]);
-        $data = ['title_en' => 'Weekend', 'title_ar' => 'عطلة', 'body_en' => 'Free delivery all weekend', 'body_ar' => 'توصيل مجاني', 'audience' => 'city', 'city_id' => City::where('name->en', 'Aleppo')->value('id')];
+        $data = ['title' => ['ar' => 'عطلة', 'en' => 'Weekend'], 'body' => ['ar' => 'توصيل مجاني', 'en' => 'Free delivery all weekend'], 'audience' => 'city', 'city_id' => City::where('name->en', 'Aleppo')->value('id')];
 
         try {
             app(MarketingBroadcastService::class)->create($this->admin(['orders.view']), $data);

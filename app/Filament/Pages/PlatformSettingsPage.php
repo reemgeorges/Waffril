@@ -14,6 +14,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -87,6 +88,10 @@ class PlatformSettingsPage extends Page
             'rating' => TextInput::make($name)->label($label)->numeric()->minValue(1)->maxValue(5)->helperText(__('admin.help.placeholder_rating')),
             'phone' => TextInput::make($name)->label($label)->tel()->regex('/^\+[1-9]\d{6,14}$/')->helperText(__('admin.help.e164')),
             'timezone' => Select::make($name)->label($label)->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))->searchable()->required(),
+            'translated' => Grid::make(2)->columnSpanFull()->schema([
+                TextInput::make("{$name}.ar")->label($label.' (AR)')->maxLength(500)->extraInputAttributes(['dir' => 'rtl']),
+                TextInput::make("{$name}.en")->label($label.' (EN)')->maxLength(500)->extraInputAttributes(['dir' => 'ltr']),
+            ]),
             default => TextInput::make($name)->label($label)->maxLength(500),
         };
     }

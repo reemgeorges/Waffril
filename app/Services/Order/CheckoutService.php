@@ -100,7 +100,7 @@ class CheckoutService
     public function placeOrder(User $user, Branch $branch, array $lines, array $data): Order
     {
         if (! PlatformSettings::get('orders.accepting_new')) {
-            throw new BusinessRuleException(__('messages.customer.ordering_paused'), 409);
+            throw new BusinessRuleException(PlatformSettings::text('maintenance.message') ?? __('messages.customer.ordering_paused'), 409);
         }
 
         // Serialize with a default-currency switch (CurrencyRedenominationService

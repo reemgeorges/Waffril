@@ -252,7 +252,7 @@ trait WaffrliFixtures
         DB::table('currency_redenominations')->insert(['from_currency_id' => $usd->id, 'to_currency_id' => $syp->id, 'conversion_rate' => 13000, 'idempotency_key' => 'r1', 'requested_by_admin_id' => $admin->id]);
         DB::table('settings')->insert(['key' => 'general.platform_name', 'value' => '"Waffrli"']);
         DB::table('otps')->insert(['verifiable_type' => User::class, 'verifiable_id' => $user->id, 'purpose' => 'login', 'channel' => 'sms', 'code_hash' => 'x', 'max_attempts' => 5, 'expires_at' => now()->addMinutes(5)]);
-        DB::table('marketing_broadcasts')->insert(['admin_id' => $admin->id, 'title_en' => 'Hi', 'title_ar' => 'مرحبا', 'body_en' => 'News', 'body_ar' => 'أخبار', 'status' => 'sent', 'recipients_count' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('marketing_broadcasts')->insert(['admin_id' => $admin->id, 'title' => '{"ar":"مرحبا","en":"Hi"}', 'body' => '{"ar":"أخبار","en":"News"}', 'status' => 'sent', 'recipients_count' => 1, 'created_at' => now(), 'updated_at' => now()]);
 
         return compact('admin', 'usd', 'syp', 'city', 'store', 'branch', 'product', 'user', 'group', 'option', 'plan', 'areaId');
     }

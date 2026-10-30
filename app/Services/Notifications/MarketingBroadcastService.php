@@ -35,8 +35,8 @@ class MarketingBroadcastService
 
         $broadcast = MarketingBroadcast::create([
             'admin_id' => $admin->id,
-            'title_en' => $data['title_en'], 'title_ar' => $data['title_ar'],
-            'body_en' => $data['body_en'], 'body_ar' => $data['body_ar'],
+            'title' => ['ar' => $data['title']['ar'], 'en' => $data['title']['en']],
+            'body' => ['ar' => $data['body']['ar'], 'en' => $data['body']['en']],
             'audience' => $data['audience'] ?? MarketingBroadcast::AUDIENCE_ALL,
             'city_id' => ($data['audience'] ?? null) === MarketingBroadcast::AUDIENCE_CITY ? $data['city_id'] : null,
         ]);

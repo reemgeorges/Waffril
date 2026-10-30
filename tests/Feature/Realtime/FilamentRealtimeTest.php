@@ -121,7 +121,7 @@ class FilamentRealtimeTest extends CustomerTestCase
         $sender = $this->admin(['notifications.marketing']);
         $this->actingAs($sender, 'admin_web');
         Livewire::test(ListMarketingBroadcasts::class)
-            ->callAction(TestAction::make('send'), ['title_en' => 'Hello', 'title_ar' => 'مرحبا', 'body_en' => 'New stores this week', 'body_ar' => 'متاجر جديدة', 'audience' => 'all_customers'])
+            ->callAction(TestAction::make('send'), ['title' => ['ar' => 'مرحبا', 'en' => 'Hello'], 'body' => ['ar' => 'متاجر جديدة', 'en' => 'New stores this week'], 'audience' => 'all_customers'])
             ->assertHasNoFormErrors();
 
         $broadcast = MarketingBroadcast::sole();

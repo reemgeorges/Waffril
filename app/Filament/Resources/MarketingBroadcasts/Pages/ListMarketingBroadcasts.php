@@ -25,10 +25,10 @@ class ListMarketingBroadcasts extends ListRecords
                 ->visible(fn () => AdminPermissions::currentAllows('notifications.marketing'))
                 ->requiresConfirmation()
                 ->schema([
-                    TextInput::make('title_en')->label(__('admin.marketing.title_en'))->required()->maxLength(120),
-                    TextInput::make('title_ar')->label(__('admin.marketing.title_ar'))->required()->maxLength(120),
-                    Textarea::make('body_en')->label(__('admin.marketing.body_en'))->required()->maxLength(500),
-                    Textarea::make('body_ar')->label(__('admin.marketing.body_ar'))->required()->maxLength(500),
+                    TextInput::make('title.ar')->label(__('admin.marketing.title_ar'))->required()->maxLength(120)->extraInputAttributes(['dir' => 'rtl']),
+                    TextInput::make('title.en')->label(__('admin.marketing.title_en'))->required()->maxLength(120)->extraInputAttributes(['dir' => 'ltr']),
+                    Textarea::make('body.ar')->label(__('admin.marketing.body_ar'))->required()->maxLength(500)->extraInputAttributes(['dir' => 'rtl']),
+                    Textarea::make('body.en')->label(__('admin.marketing.body_en'))->required()->maxLength(500)->extraInputAttributes(['dir' => 'ltr']),
                     Select::make('audience')->label(__('admin.marketing.audience'))->required()->live()
                         ->default(MarketingBroadcast::AUDIENCE_ALL)
                         ->options([

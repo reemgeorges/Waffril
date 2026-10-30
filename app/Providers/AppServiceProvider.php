@@ -97,6 +97,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerAuthRateLimiters();
 
+        // WAFFRLI (2026-11-04): database translations (spatie/laravel-translatable).
+        // A missing translation falls back to APP_FALLBACK_LOCALE, then to any
+        // language that exists, so an Arabic-only value never renders empty.
+        \Spatie\Translatable\Facades\Translatable::fallback(fallbackAny: true);
+
         // WAFFRLI (2026-11-03): domain events → realtime operations alerts.
         \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\RealtimeDomainSubscriber::class);
 

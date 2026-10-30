@@ -19,11 +19,9 @@ class MarketingMessage extends AppNotification
 
     protected function texts(): array
     {
-        $b = $this->broadcast;
-
         return [
-            'title' => ['en' => $b->title_en, 'ar' => $b->title_ar],
-            'body' => ['en' => $b->body_en, 'ar' => $b->body_ar],
+            'title' => $this->broadcast->getTranslations('title'),
+            'body' => $this->broadcast->getTranslations('body'),
         ];
     }
 

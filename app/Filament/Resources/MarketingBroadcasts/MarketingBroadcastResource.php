@@ -41,7 +41,7 @@ class MarketingBroadcastResource extends AdminResource
             ->description(__('admin.marketing.notice'))
             ->columns([
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('title_'.(app()->getLocale() === 'ar' ? 'ar' : 'en'))->label(__('admin.marketing.title_en'))->limit(40),
+                TextColumn::make('title')->label(__('admin.fields.name'))->limit(40),
                 TextColumn::make('audience')->label(__('admin.marketing.audience'))
                     ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.'.$state).($record->city ? ' — '.$record->city->name : '')),
                 TextColumn::make('status')->label(__('admin.marketing.status'))->badge()
