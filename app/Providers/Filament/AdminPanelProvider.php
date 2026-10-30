@@ -41,15 +41,17 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('admin_web')
             ->brandName('WAFFRLI')
             ->colors(['primary' => Color::Orange])
+            // Keyed by the group id each resource/page declares, so Filament
+            // matches items to these (translated, ordered) groups.
             ->navigationGroups([
-                NavigationGroup::make('operations')->label(fn () => __('admin.nav.operations')),
-                NavigationGroup::make('customers')->label(fn () => __('admin.nav.customers')),
-                NavigationGroup::make('drivers')->label(fn () => __('admin.nav.drivers')),
-                NavigationGroup::make('catalog')->label(fn () => __('admin.nav.catalog')),
-                NavigationGroup::make('finance')->label(fn () => __('admin.nav.finance')),
-                NavigationGroup::make('plus')->label(fn () => __('admin.nav.plus')),
-                NavigationGroup::make('platform')->label(fn () => __('admin.nav.platform')),
-                NavigationGroup::make('system')->label(fn () => __('admin.nav.system')),
+                'operations' => NavigationGroup::make()->label(fn () => __('admin.nav.operations')),
+                'customers' => NavigationGroup::make()->label(fn () => __('admin.nav.customers')),
+                'drivers' => NavigationGroup::make()->label(fn () => __('admin.nav.drivers')),
+                'catalog' => NavigationGroup::make()->label(fn () => __('admin.nav.catalog')),
+                'finance' => NavigationGroup::make()->label(fn () => __('admin.nav.finance')),
+                'plus' => NavigationGroup::make()->label(fn () => __('admin.nav.plus')),
+                'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform')),
+                'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system')),
             ])
             ->userMenuItems([
                 Action::make('locale_ar')->label('العربية')->icon('heroicon-o-language')->url(fn () => route('admin.locale', 'ar')),
