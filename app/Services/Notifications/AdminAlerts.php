@@ -19,7 +19,7 @@ use Throwable;
  * shared Reverb server, polled every 30 s otherwise).
  *
  * Each alert goes only to active admins holding the permission that lets
- * them act on it. Text is rendered in the platform locale; links open the
+ * them act on it. Text is rendered in each admin's own language; links open the
  * record with the viewer's own permissions. Never fails the caller.
  */
 class AdminAlerts
@@ -46,7 +46,6 @@ class AdminAlerts
                     return;
                 }
 
-                $locale = (string) config('app.locale', 'ar');
                 $url = match (true) {
                     $type === 'plus.request_submitted' => PlusRequestResource::getUrl('index'),
                     $type === 'order.cancellation_requested' => OrderCancellationRequestResource::getUrl('index'),
@@ -54,15 +53,19 @@ class AdminAlerts
                     default => null,
                 };
 
-                $notification = Notification::make()
-                    ->title(__('admin.alerts.'.str_replace('.', '_', $type).'.title', [], $locale))
-                    ->body(__('admin.alerts.'.str_replace('.', '_', $type).'.body', ['reference' => $reference ?? '—'], $locale))
-                    ->icon($icon)->iconColor($color)
-                    ->viewData(['waffrli_alert' => $type]);
-                if ($url) {
-                    $notification->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)->markAsRead()]);
+                // Each admin reads the alert in THEIR language (admins.locale).
+                foreach ($recipients->groupBy(fn (Admin $admin) => $admin->preferredLocale()) as $locale => $group) {
+                    $key = 'admin.alerts.'.str_replace('.', '_', $type);
+                    $notification = Notification::make()
+                        ->title(__($key.'.title', [], $locale))
+                        ->body(__($key.'.body', ['reference' => $reference ?? '—'], $locale))
+                        ->icon($icon)->iconColor($color)
+                        ->viewData(['waffrli_alert' => $type]);
+                    if ($url) {
+                        $notification->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)->markAsRead()]);
+                    }
+                    $notification->sendToDatabase($group, isEventDispatched: true);
                 }
-                $notification->sendToDatabase($recipients, isEventDispatched: true);
             } catch (Throwable $e) {
                 Log::warning('admin_alert.failed', ['type' => $type, 'error' => $e->getMessage()]);
             }

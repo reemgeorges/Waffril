@@ -14,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
  * `admin_web`, same `admins` table and Spatie roles/permissions as the
  * `admin` Sanctum guard). Only active, non-deleted admins may enter.
  */
-class Admin extends BaseAuthModel implements FilamentUser
+class Admin extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference, FilamentUser
 {
     public const SUPER_ADMIN_ROLE = 'super-admin';
 
@@ -86,5 +86,11 @@ class Admin extends BaseAuthModel implements FilamentUser
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'admin.'.$this->getKey();
+    }
+
+    /** WAFFRLI (2026-11-04): notifications (incl. queued) are rendered in the recipient's panel language (admins.locale). */
+    public function preferredLocale(): string
+    {
+        return in_array($this->locale, ['ar', 'en'], true) ? $this->locale : config('app.locale');
     }
 }

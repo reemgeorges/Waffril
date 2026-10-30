@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * WAFFRLI (2026-10-31). Platform driver — separate auth domain (future
  * `driver` Sanctum guard); accounts are created by admins.
  */
-class Driver extends BaseAuthModel
+class Driver extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference
 {
     public const AVAILABILITY_OFFLINE = 'offline';
 
@@ -75,5 +75,11 @@ class Driver extends BaseAuthModel
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'driver.'.$this->getKey();
+    }
+
+    /** WAFFRLI (2026-11-04): notifications (incl. queued) are rendered in the recipient's app language. */
+    public function preferredLocale(): string
+    {
+        return in_array($this->language, ['ar', 'en'], true) ? $this->language : config('app.locale');
     }
 }

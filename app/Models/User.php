@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 
-class User extends BaseAuthModel
+class User extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -166,5 +166,11 @@ class User extends BaseAuthModel
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'user.'.$this->getKey();
+    }
+
+    /** WAFFRLI (2026-11-04): notifications (incl. queued) are rendered in the recipient's app language. */
+    public function preferredLocale(): string
+    {
+        return in_array($this->language, ['ar', 'en'], true) ? $this->language : config('app.locale');
     }
 }

@@ -69,6 +69,9 @@ class OrderStatusChanged implements ShouldBroadcast
             'order_number' => $this->orderNumber,
             'from' => $this->from,
             'status' => $this->to,
+            // Display text in both languages (one channel can have AR and EN listeners);
+            // `status` stays the stable machine value.
+            'status_labels' => ['ar' => __('admin.order_status.'.$this->to, [], 'ar'), 'en' => __('admin.order_status.'.$this->to, [], 'en')],
             'driver_changed' => $this->driverId !== $this->previousDriverId,
             'tracking' => in_array($this->to, ['assigned', 'picked_up'], true) && $this->driverId !== null,
             'at' => $this->at,

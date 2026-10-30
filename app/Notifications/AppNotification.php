@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Notifications\Channels\PushChannel;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
@@ -85,8 +86,11 @@ abstract class AppNotification extends Notification
         return ['ar' => __($key, $replace, 'ar'), 'en' => __($key, $replace, 'en')];
     }
 
+    /** The RECIPIENT's language — never the language of whoever triggered the event. */
     protected function readerLocale(object $notifiable): string
     {
-        return in_array($notifiable->language ?? null, ['ar', 'en'], true) ? $notifiable->language : 'ar';
+        $locale = $notifiable instanceof HasLocalePreference ? $notifiable->preferredLocale() : null;
+
+        return in_array($locale, ['ar', 'en'], true) ? $locale : config('app.locale', 'en');
     }
 }
