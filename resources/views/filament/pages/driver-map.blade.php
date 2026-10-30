@@ -42,8 +42,8 @@
                     </x-filament::input.wrapper>
                 </label>
                 <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:.75rem;padding-bottom:.5rem">
-                    <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="display:inline-block;width:12px;height:12px;border-radius:9999px;background:#d97706"></span>{{ __('admin.driver_map.legend_assigned') }}</span>
-                    <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="display:inline-block;width:12px;height:12px;border-radius:9999px;background:#2563eb"></span>{{ __('admin.driver_map.legend_picked_up') }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="display:inline-block;width:12px;height:12px;border-radius:9999px;background:#D9AD59"></span>{{ __('admin.driver_map.legend_assigned') }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="display:inline-block;width:12px;height:12px;border-radius:9999px;background:#20A053"></span>{{ __('admin.driver_map.legend_picked_up') }}</span>
                     <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="display:inline-block;width:12px;height:12px;border-radius:9999px;background:#9ca3af;outline:2px dashed #4b5563"></span>{{ __('admin.driver_map.legend_stale') }}</span>
                 </div>
             </div>
@@ -124,7 +124,7 @@
                     this.layer.clearLayers();
                     const located = markers.filter(d => d.lat !== null && d.lng !== null);
                     located.forEach(d => {
-                        const colour = d.stale ? '#9ca3af' : (d.status === 'picked_up' ? '#2563eb' : '#d97706');
+                        const colour = d.stale ? '#9ca3af' : (d.status === 'picked_up' ? '#20A053' : '#D9AD59');
                         L.circleMarker([d.lat, d.lng], {
                             radius: 11, weight: 3, color: d.stale ? '#4b5563' : '#ffffff', dashArray: d.stale ? '4 3' : null,
                             fillColor: colour, fillOpacity: 0.95,
@@ -149,7 +149,7 @@
             <div style="margin-bottom:.5rem;font-size:.875rem">
                 {{ __('admin.driver_map.visible') }}: <span x-ref="count" data-testid="driver-map-count">{{ collect($markers)->whereNotNull('lat')->count() }}</span>
             </div>
-            <div x-ref="map" style="height: 520px; border-radius: 0.75rem; z-index: 0;"></div>
+            <div x-ref="map" class="wf-map-frame" style="height: 520px; z-index: 0;"></div>
         </div>
 
         <x-filament::section :heading="__('admin.drivers.active_deliveries')">

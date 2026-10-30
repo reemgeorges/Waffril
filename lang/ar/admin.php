@@ -821,4 +821,13 @@ return [
         'rounds_to_zero' => 'سيؤدي التحويل إلى تقريب :column (#:id) إلى صفر. عدّل السعر أو ذلك المبلغ أولاً.',
         'error' => 'الخطأ',
     ],
+    // WAFFRLI (2026-11-04): brand and language switch.
+    'brand' => [
+        'name' => 'وفرلي',
+        'logo_alt' => 'شعار وفرلي',
+        'tagline' => 'التوصيل والتوفير وبلس — لوحة إدارة العمليات',
+    ],
+    'locale_switch' => [
+        'label' => 'لغة الواجهة',
+    ],
 ];

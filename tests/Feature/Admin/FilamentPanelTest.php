@@ -248,7 +248,7 @@ class FilamentPanelTest extends AdminPanelTestCase
     public function test_arabic_locale_renders_rtl(): void
     {
         $this->actingAsAdmin($this->superAdmin());
-        $this->get('/admin/locale/ar')->assertRedirect();
+        $this->post('/admin/locale/ar')->assertRedirect();
 
         $this->get('/admin')->assertOk()->assertSee('dir="rtl"', false)->assertSee('لوحة التحكم');
     }

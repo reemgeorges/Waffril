@@ -1,0 +1,488 @@
+/*
+ * WAFFRLI admin theme (Filament 5) — derived from the official WAFFRLI | وفرلي
+ * logo. Source of truth for colors: App\Filament\Support\Brand (panel
+ * palettes) and the --wf-* tokens below (same values).
+ *
+ * Build (writes the committed file the panel loads with ->theme(asset(...))):
+ *   npm run build:admin-theme
+ *
+ * Rules: green = primary actions; gold = brand highlights and focus only
+ * (never destructive or financial confirmation buttons); red = destructive.
+ * Logical properties (inline-start/end) keep Arabic RTL and English LTR
+ * correct without separate stylesheets.
+ */
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../app/Providers/Filament/**/*';
+
+/* ---------------------------------------------------------------- tokens */
+:root {
+    --wf-forest: #071b12;
+    --wf-forest-2: #0b2519;
+    --wf-surface: #0f261b;
+    --wf-emerald-surface: #103d28;
+    --wf-emerald: #20a053;
+    --wf-emerald-strong: #0e7a44;
+    --wf-gold: #d9ad59;
+    --wf-gold-soft: #e3be70;
+    --wf-gold-deep: #87602a;
+    --wf-ivory: #f6edd6;
+    --wf-paper: #f7f5ee;
+    --wf-radius: 0.875rem;
+    --wf-hairline-gold: linear-gradient(90deg, transparent, rgb(217 173 89 / 0.55), transparent);
+    --wf-shadow: 0 1px 2px rgb(7 27 18 / 0.06), 0 8px 24px -12px rgb(7 27 18 / 0.18);
+}
+
+.dark {
+    --wf-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -16px rgb(0 0 0 / 0.6);
+}
+
+/* ---------------------------------------------------------------- base */
+.fi-body {
+    font-feature-settings: 'kern', 'liga';
+    background-color: var(--wf-paper);
+}
+
+.dark .fi-body {
+    background:
+        radial-gradient(1100px 520px at 100% -8%, rgb(32 160 83 / 0.09), transparent 60%),
+        radial-gradient(900px 480px at -10% 110%, rgb(217 173 89 / 0.05), transparent 60%),
+        var(--wf-forest);
+    background-attachment: fixed;
+}
+
+[dir='rtl'] .fi-body {
+    letter-spacing: 0;
+    line-height: 1.65;
+}
+
+/* Numbers, phones, e-mails, codes and money inside Arabic text keep their
+   own direction (no bidi scrambling of "+963 9…" or "WF20261103-…"). */
+.fi-ta-text-item-label,
+.fi-in-text-item,
+.fi-wi-stats-overview-stat-value,
+.wf-ltr {
+    unicode-bidi: plaintext;
+}
+
+input[type='tel'],
+input[type='email'],
+input[type='number'],
+input[inputmode='decimal'] {
+    direction: ltr;
+}
+
+/* Technical identifiers are always left-to-right. */
+input[id$='.slug'],
+input[id$='.code'],
+input[id$='.email'],
+input[id$='.phone'] {
+    direction: ltr;
+}
+
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='number'] {
+    text-align: end;
+}
+
+/* Accessible focus: a visible gold ring on every interactive element. */
+:where(a, button, [role='button'], input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--wf-gold);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* ---------------------------------------------------------------- brand lockup */
+.wf-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    height: 100%;
+}
+
+.wf-brand__mark {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.7rem;
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.35), 0 6px 16px -8px rgb(0 0 0 / 0.55);
+}
+
+.wf-brand__text {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+.wf-brand__en {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: 1.05rem;
+    color: var(--wf-gold-deep);
+}
+
+.wf-brand__ar {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--wf-emerald-strong);
+}
+
+.dark .wf-brand__en {
+    color: var(--wf-gold);
+}
+
+.dark .wf-brand__ar {
+    color: var(--wf-ivory);
+}
+
+/* ---------------------------------------------------------------- topbar */
+.fi-topbar {
+    background-color: rgb(255 255 255 / 0.82);
+    backdrop-filter: saturate(1.2) blur(10px);
+    border-bottom: 1px solid rgb(7 27 18 / 0.06);
+}
+
+.dark .fi-topbar {
+    background-color: rgb(7 27 18 / 0.78);
+    border-bottom: 1px solid rgb(217 173 89 / 0.14);
+}
+
+/* ---------------------------------------------------------------- sidebar */
+.fi-sidebar {
+    background-color: #ffffff;
+    border-inline-end: 1px solid rgb(7 27 18 / 0.06);
+}
+
+.dark .fi-sidebar {
+    background: linear-gradient(180deg, #0a2117 0%, var(--wf-forest) 100%);
+    border-inline-end: 1px solid rgb(217 173 89 / 0.12);
+}
+
+.fi-sidebar-group-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wf-gold-deep);
+}
+
+[dir='rtl'] .fi-sidebar-group-label {
+    letter-spacing: 0;
+    font-size: 0.8rem;
+}
+
+.dark .fi-sidebar-group-label {
+    color: rgb(217 173 89 / 0.85);
+}
+
+.fi-sidebar-item-btn {
+    border-radius: 0.65rem;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: rgb(14 122 68 / 0.09);
+    box-shadow: inset 3px 0 0 var(--wf-gold);
+}
+
+[dir='rtl'] .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    box-shadow: inset -3px 0 0 var(--wf-gold);
+}
+
+.dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: rgb(32 160 83 / 0.16);
+}
+
+/* ---------------------------------------------------------------- page header */
+.fi-header-heading {
+    letter-spacing: -0.01em;
+}
+
+[dir='rtl'] .fi-header-heading {
+    letter-spacing: 0;
+}
+
+/* ---------------------------------------------------------------- cards & sections */
+.fi-section,
+.fi-ta-ctn,
+.fi-wi-chart,
+.fi-in-entry-wrp .fi-section {
+    border-radius: var(--wf-radius);
+    box-shadow: var(--wf-shadow);
+}
+
+.dark .fi-section,
+.dark .fi-ta-ctn {
+    background-color: var(--wf-surface);
+    --tw-ring-color: rgb(217 173 89 / 0.10);
+}
+
+.fi-section-header-heading {
+    font-weight: 650;
+}
+
+/* ---------------------------------------------------------------- KPI tiles */
+.fi-wi-stats-overview-stat {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--wf-radius);
+    box-shadow: var(--wf-shadow);
+}
+
+.fi-wi-stats-overview-stat::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: var(--wf-hairline-gold);
+}
+
+.dark .fi-wi-stats-overview-stat {
+    background: linear-gradient(160deg, var(--wf-emerald-surface) 0%, var(--wf-surface) 55%);
+    --tw-ring-color: rgb(217 173 89 / 0.14);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- tables */
+.fi-ta-header-cell {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+[dir='rtl'] .fi-ta-header-cell {
+    letter-spacing: 0;
+    font-size: 0.8rem;
+}
+
+.fi-ta-row:hover > .fi-ta-cell {
+    background-color: rgb(14 122 68 / 0.035);
+}
+
+.dark .fi-ta-row:hover > .fi-ta-cell {
+    background-color: rgb(32 160 83 / 0.06);
+}
+
+.fi-ta-empty-state-icon-bg {
+    background-color: rgb(217 173 89 / 0.14);
+}
+
+.fi-ta-empty-state-icon-bg .fi-icon {
+    color: var(--wf-gold-deep);
+}
+
+.dark .fi-ta-empty-state-icon-bg .fi-icon {
+    color: var(--wf-gold);
+}
+
+/* ---------------------------------------------------------------- forms */
+.fi-input-wrp {
+    border-radius: 0.65rem;
+}
+
+.fi-fo-field-label-content {
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- modals & notifications */
+.fi-modal-window {
+    border-radius: 1.1rem;
+}
+
+.dark .fi-modal-window {
+    background-color: var(--wf-surface);
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.16), 0 24px 64px -24px rgb(0 0 0 / 0.75);
+}
+
+.fi-no-notification {
+    border-radius: var(--wf-radius);
+}
+
+.dark .fi-no-notification {
+    background-color: var(--wf-forest-2);
+}
+
+/* ---------------------------------------------------------------- language switch */
+.wf-locale-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 9999px;
+    background-color: rgb(7 27 18 / 0.05);
+    box-shadow: inset 0 0 0 1px rgb(7 27 18 / 0.08);
+}
+
+.dark .wf-locale-switch {
+    background-color: rgb(255 255 255 / 0.04);
+    box-shadow: inset 0 0 0 1px rgb(217 173 89 / 0.22);
+}
+
+.wf-locale-switch form {
+    display: contents;
+}
+
+.wf-locale-switch__option {
+    min-width: 2.75rem;
+    min-height: 2rem;
+    padding: 0 0.7rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgb(7 27 18 / 0.7);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.dark .wf-locale-switch__option {
+    color: rgb(246 237 214 / 0.75);
+}
+
+.wf-locale-switch__option:hover {
+    color: var(--wf-emerald-strong);
+}
+
+.wf-locale-switch__option.is-active {
+    background-color: var(--wf-emerald-strong);
+    color: #ffffff;
+    cursor: default;
+}
+
+.dark .wf-locale-switch__option.is-active {
+    background-color: var(--wf-gold);
+    color: var(--wf-forest);
+}
+
+.wf-locale-switch--floating {
+    position: fixed;
+    top: 1rem;
+    inset-inline-end: 1rem;
+    z-index: 30;
+}
+
+/* ---------------------------------------------------------------- login */
+.fi-simple-layout {
+    background:
+        radial-gradient(900px 520px at 50% -10%, rgb(32 160 83 / 0.18), transparent 65%),
+        radial-gradient(700px 420px at 50% 115%, rgb(217 173 89 / 0.12), transparent 60%),
+        var(--wf-forest);
+}
+
+.fi-simple-main {
+    max-width: 30rem;
+    border-radius: 1.35rem;
+    background-color: rgb(255 255 255 / 0.97);
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.35), 0 30px 80px -30px rgb(0 0 0 / 0.75);
+}
+
+.dark .fi-simple-main {
+    background-color: rgb(11 37 25 / 0.92);
+    backdrop-filter: blur(6px);
+}
+
+/* The login page shows the full logo (wf-login-hero) instead of the lockup. */
+.fi-simple-page .fi-logo {
+    display: none;
+}
+
+.wf-login-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.wf-login-hero img {
+    width: 9.5rem;
+    height: 9.5rem;
+    border-radius: 1.6rem;
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.45), 0 18px 40px -18px rgb(0 0 0 / 0.8);
+}
+
+.wf-login-hero__tagline {
+    font-size: 0.85rem;
+    color: rgb(7 27 18 / 0.65);
+}
+
+.dark .wf-login-hero__tagline {
+    color: rgb(246 237 214 / 0.7);
+}
+
+.wf-login-hero__rule {
+    width: 7rem;
+    height: 1px;
+    background: var(--wf-hairline-gold);
+}
+
+/* ---------------------------------------------------------------- driver map */
+.wf-map-frame {
+    border-radius: var(--wf-radius);
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.28), var(--wf-shadow);
+}
+
+.dark .wf-map-frame .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(1.08) saturate(0.85);
+}
+
+.wf-map-frame .leaflet-popup-content-wrapper,
+.wf-map-frame .leaflet-popup-tip {
+    background: #ffffff;
+    color: var(--wf-forest);
+    box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.45);
+}
+
+.dark .wf-map-frame .leaflet-popup-content-wrapper,
+.dark .wf-map-frame .leaflet-popup-tip {
+    background: var(--wf-forest-2);
+    color: var(--wf-ivory);
+    box-shadow: 0 0 0 1px rgb(217 173 89 / 0.25), 0 10px 30px -12px rgb(0 0 0 / 0.7);
+}
+
+.wf-map-frame .leaflet-popup-content-wrapper {
+    border-radius: 0.8rem;
+    font-family: inherit;
+}
+
+.dark .wf-map-frame .leaflet-bar a {
+    background-color: var(--wf-forest-2);
+    color: var(--wf-ivory);
+    border-color: rgb(217 173 89 / 0.25);
+}
+
+.dark .wf-map-frame .leaflet-control-attribution {
+    background: rgb(7 27 18 / 0.75);
+    color: rgb(246 237 214 / 0.7);
+}
+
+.dark .wf-map-frame .leaflet-control-attribution a {
+    color: var(--wf-gold);
+}
+
+.wf-map-legend-dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+}

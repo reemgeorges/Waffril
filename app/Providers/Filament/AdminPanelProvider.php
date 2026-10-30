@@ -3,8 +3,11 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
+use App\Filament\Support\Brand;
+use App\Filament\Support\InitialsAvatarProvider;
 use App\Http\Middleware\SetAdminPanelLocale;
-use Filament\Actions\Action;
+use Filament\Enums\ThemeMode;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -12,7 +15,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -39,13 +42,29 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('admin_web')
-            ->brandName('WAFFRLI')
+            // WAFFRLI (2026-11-04): official brand — logo assets from the supplied
+            // artwork (public/images/brand), palette sampled from it
+            // (App\Filament\Support\Brand), compiled custom theme
+            // (resources/css/filament/admin/theme.css → public/css/filament/admin/theme.css),
+            // self-hosted IBM Plex Sans Arabic, dark mode by default.
+            ->brandName(fn () => __('admin.brand.name'))
+            ->brandLogo(fn () => view('filament.brand.logo'))
+            ->brandLogoHeight('2.75rem')
+            ->favicon(asset('images/brand/favicon-48.png'))
+            ->colors(Brand::colors())
+            ->font('IBM Plex Sans Arabic', url: asset('fonts/ibm-plex-sans-arabic/font.css'), provider: LocalFontProvider::class)
+            ->theme(asset('css/filament/admin/theme.css'))
+            ->defaultThemeMode(ThemeMode::Dark)
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand.head'))
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.brand.locale-switcher'))
+            ->renderHook(PanelsRenderHook::SIMPLE_LAYOUT_START, fn () => view('filament.brand.locale-switcher', ['floating' => true]))
+            ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn () => view('filament.brand.login-hero'))
             // WAFFRLI (2026-11-03): operational alerts in the bell. Live over the
             // shared Reverb server when configured (config/filament.php echo,
             // channel admin.{id}); the 30s poll is the fallback.
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
-            ->colors(['primary' => Color::Orange])
             // Keyed by the group id each resource/page declares, so Filament
             // matches items to these (translated, ordered) groups.
             ->navigationGroups([
@@ -57,10 +76,6 @@ class AdminPanelProvider extends PanelProvider
                 'plus' => NavigationGroup::make()->label(fn () => __('admin.nav.plus')),
                 'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform')),
                 'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system')),
-            ])
-            ->userMenuItems([
-                Action::make('locale_ar')->label('العربية')->icon('heroicon-o-language')->url(fn () => route('admin.locale', 'ar')),
-                Action::make('locale_en')->label('English')->icon('heroicon-o-language')->url(fn () => route('admin.locale', 'en')),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -78,7 +93,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->renderHook(\Filament\View\PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
             ->authMiddleware([
                 Authenticate::class,
             ]);

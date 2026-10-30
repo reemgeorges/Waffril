@@ -4,9 +4,12 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "build:admin-theme": "tailwindcss --input ./resources/css/filament/admin/theme.css --output ./public/css/filament/admin/theme.css --minify"
     },
     "devDependencies": {
+        "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+        "@tailwindcss/cli": "^4.3.3",
         "@tailwindcss/vite": "^4.0.0",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",

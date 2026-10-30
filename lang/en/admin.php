@@ -821,4 +821,13 @@ return [
         'rounds_to_zero' => 'The conversion would round :column (#:id) to zero. Adjust the rate or that amount first.',
         'error' => 'Error',
     ],
+    // WAFFRLI (2026-11-04): brand and language switch.
+    'brand' => [
+        'name' => 'WAFFRLI',
+        'logo_alt' => 'WAFFRLI logo',
+        'tagline' => 'Delivery, savings and PLUS — operations console',
+    ],
+    'locale_switch' => [
+        'label' => 'Interface language',
+    ],
 ];

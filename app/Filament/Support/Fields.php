@@ -18,6 +18,8 @@ final class Fields
     {
         $make = fn (string $locale) => ($multiline ? Textarea::make("{$name}.{$locale}")->rows(3) : TextInput::make("{$name}.{$locale}")->maxLength($max))
             ->label(__("admin.fields.{$name}").' ('.strtoupper($locale).')')
+            // Each language is typed in its own direction, whatever the panel language.
+            ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale])
             ->required($required);
 
         return Grid::make(2)->schema([$make('ar'), $make('en')]);
