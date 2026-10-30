@@ -720,6 +720,7 @@ return [
         ],
         'notifications' => [
             'view' => 'View notifications',
+            'marketing' => 'Send marketing messages',
         ],
         'admins' => [
             'manage' => 'Manage admins',

@@ -720,6 +720,7 @@ return [
         ],
         'notifications' => [
             'view' => 'عرض الإشعارات',
+            'marketing' => 'إرسال الرسائل التسويقية',
         ],
         'admins' => [
             'manage' => 'إدارة المشرفين',
