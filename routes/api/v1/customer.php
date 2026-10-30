@@ -3,6 +3,8 @@
 use App\Http\Controllers\City\CustomerCityController;
 use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerAuthController;
+use App\Http\Controllers\Customer\CustomerCatalogController;
+use App\Http\Controllers\Customer\CustomerEngagementController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,22 @@ Route::prefix('customer')->group(function () {
         Route::get('cities', [CustomerCityController::class, 'active']);
         Route::post('cities/detect', [CustomerCityController::class, 'detect'])->middleware('throttle:60,1');
 
-        // __CUSTOMER_ROUTES_BATCH_3__
+        // Catalog (delivery city of the selected address only).
+        Route::get('store-categories', [CustomerCatalogController::class, 'storeCategories']);
+        Route::get('product-categories', [CustomerCatalogController::class, 'productCategories']);
+        Route::get('branches', [CustomerCatalogController::class, 'branches']);
+        Route::get('branches/{branch}', [CustomerCatalogController::class, 'branch'])->whereNumber('branch');
+        Route::get('branches/{branch}/products', [CustomerCatalogController::class, 'branchProducts'])->whereNumber('branch');
+        Route::get('branches/{branch}/products/{product}', [CustomerCatalogController::class, 'product'])->whereNumber(['branch', 'product']);
+        Route::get('search', [CustomerCatalogController::class, 'search'])->middleware('throttle:60,1');
+        Route::get('offers', [CustomerCatalogController::class, 'offers']);
+
+        // Favorites and ratings (products only).
+        Route::get('favorites', [CustomerEngagementController::class, 'favorites']);
+        Route::post('products/{product}/favorite', [CustomerEngagementController::class, 'addFavorite'])->whereNumber('product');
+        Route::delete('products/{product}/favorite', [CustomerEngagementController::class, 'removeFavorite'])->whereNumber('product');
+        Route::post('products/{product}/rating', [CustomerEngagementController::class, 'rate'])->whereNumber('product');
+
+        // __CUSTOMER_ROUTES_BATCH_4__
     });
 });

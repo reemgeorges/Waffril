@@ -26,11 +26,15 @@ class BranchHoursService
             return false;
         }
 
-        $exceptions = BranchHourException::query()
-            ->where('branch_id', $branch->id)
-            ->where('starts_at', '<=', $at)
-            ->where('ends_at', '>', $at)
-            ->pluck('kind');
+        // Uses eager-loaded relations when present (customer listings load
+        // hourExceptions + openingHours once for many branches: no N+1).
+        $exceptions = $branch->relationLoaded('hourExceptions')
+            ? $branch->hourExceptions->filter(fn ($e) => $e->starts_at <= $at && $e->ends_at > $at)->pluck('kind')
+            : BranchHourException::query()
+                ->where('branch_id', $branch->id)
+                ->where('starts_at', '<=', $at)
+                ->where('ends_at', '>', $at)
+                ->pluck('kind');
 
         if ($exceptions->contains(BranchHourException::KIND_CLOSED)) {
             return false;
@@ -46,7 +50,7 @@ class BranchHoursService
         $today = $local->dayOfWeek;
         $yesterday = ($today + 6) % 7;
 
-        foreach ($branch->openingHours()->get() as $slot) {
+        foreach (($branch->relationLoaded('openingHours') ? $branch->openingHours : $branch->openingHours()->get()) as $slot) {
             $opens = Carbon::parse($slot->opens_at)->format('H:i:s');
             $closes = Carbon::parse($slot->closes_at)->format('H:i:s');
             $overnight = $closes < $opens;
