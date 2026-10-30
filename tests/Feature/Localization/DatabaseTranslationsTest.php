@@ -129,4 +129,22 @@ class DatabaseTranslationsTest extends CustomerTestCase
         $this->assertSame(['ar' => 'نص', 'en' => 'Text'], $row->getTranslations('body'));
         $migration->up(); // idempotent
     }
+
+    public function test_settings_page_saves_both_languages_of_a_translated_setting(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->admin(), 'admin_web');
+
+        Livewire::test(\App\Filament\Pages\PlatformSettingsPage::class)
+            ->fillForm(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance']])
+            ->call('save');
+        $this->assertSame(['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance'], PlatformSettings::get('maintenance.message'));
+
+        // Clearing one language keeps the other.
+        Livewire::test(\App\Filament\Pages\PlatformSettingsPage::class)
+            ->assertSchemaStateSet(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance']])
+            ->fillForm(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => '']])
+            ->call('save');
+        $this->assertSame(['ar' => 'صيانة قصيرة', 'en' => null], PlatformSettings::get('maintenance.message'));
+    }
 }

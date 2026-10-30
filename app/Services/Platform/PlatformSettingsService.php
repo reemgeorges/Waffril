@@ -68,7 +68,7 @@ class PlatformSettingsService
         }
         if ($type === 'translated') {
             $value = collect(PlatformSettings::translations(is_array($value) ? $value : (string) $value))
-                ->map(fn ($text) => $text === null ? null : mb_substr(trim((string) $text), 0, 500) ?: null);
+                ->map(fn ($text) => $text === null ? null : (mb_substr(trim((string) $text), 0, 500) ?: null));
 
             return $value->filter()->isEmpty() ? null : $value->all();
         }
