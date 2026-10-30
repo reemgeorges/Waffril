@@ -133,6 +133,8 @@ class StarterE2EScenariosTest extends TestCase
             File::deleteDirectory($this->scenarioDTarget);
         }
 
+        $this->purgeCommittedRowsOnMySql();
+
         parent::tearDown();
     }
 

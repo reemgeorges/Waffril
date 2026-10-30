@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Branch;
 use App\Models\BranchOpeningHour;
 use App\Models\BranchProduct;
+use App\Models\Category;
 use App\Models\City;
 use App\Models\Currency;
 use App\Models\Driver;
@@ -15,20 +16,34 @@ use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\PaymentMethod;
 use App\Models\PlusCycle;
+use App\Models\PlusMembership;
+use App\Models\PlusPlan;
+use App\Models\PlusRequest;
+use App\Models\PlusStoreDiscount;
 use App\Models\Product;
+use App\Models\ProductOption;
+use App\Models\ProductOptionGroup;
 use App\Models\Store;
+use App\Models\StoreCategory;
 use App\Models\User;
+use App\Models\UserAddress;
+use App\Services\Catalog\ProductRatingService;
+use App\Services\Driver\DriverCashSettlementService;
+use App\Services\Order\OrderAdminService;
 use App\Services\Order\RefundService;
+use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
 use Database\Seeders\PaymentMethodSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * WAFFRLI (2026-10-31) — realistic fixtures for service and panel tests.
  * Orders are built the way checkout will build them (snapshots, payments,
  * wallet debit through the ledger); wallets are funded only through the
- * legitimate refund path.
+ * legitimate refund path. seedFullDataset() puts one valid row in every
+ * constrained table (MySQL constraint and panel integrity tests).
  */
 trait WaffrliFixtures
 {
@@ -172,5 +187,72 @@ trait WaffrliFixtures
     {
         $order = $this->order($user, $branch, $amount, ['status' => OrderStatus::Delivered]);
         app(RefundService::class)->refund($order->payments()->first(), $amount, 'test_funding', null, $admin, 'fund:'.Str::uuid());
+    }
+
+    /** One valid row in every table that carries a CHECK constraint, built through the real services. */
+    protected function seedFullDataset(): array
+    {
+        $admin = $this->superAdmin();
+        $usd = $this->usd();
+        $syp = Currency::create(['code' => 'SYP', 'name' => ['en' => 'Pound'], 'symbol' => 'S', 'decimals' => 0, 'exchange_rate' => '13000']);
+        $city = $this->city();
+        $store = $this->store();
+        $branch = $this->branch($store, $city);
+        $product = $this->product($store);
+        $user = $this->customer();
+        $driver = $this->driver($city);
+
+        $group = ProductOptionGroup::create(['product_id' => $product->id, 'name' => ['en' => 'Extras'], 'kind' => 'choice', 'min_select' => 0, 'max_select' => 1]);
+        $option = ProductOption::create(['option_group_id' => $group->id, 'product_id' => $product->id, 'name' => ['en' => 'Cheese']]);
+
+        // Wallet, wallet transaction, delivered order, items, payment and refund.
+        $this->fundWallet($user, $branch, '10', $admin);
+        $branchProduct = BranchProduct::where('branch_id', $branch->id)->where('product_id', $product->id)->firstOrFail();
+        DB::table('branch_product_options')->insert(['branch_product_id' => $branchProduct->id, 'product_id' => $product->id, 'product_option_id' => $option->id, 'price_delta' => 1]);
+        DB::table('order_item_options')->insert([
+            'order_item_id' => DB::table('order_items')->min('id'), 'product_option_id' => $option->id,
+            'group_name' => '{"en":"Extras"}', 'option_name' => '{"en":"Cheese"}', 'unit_price_delta' => 1, 'quantity' => 2, 'total_price_delta' => 2,
+        ]);
+
+        // Admin cancellation of a pending order (customer-pending rules) and a pending request on another order.
+        $pending = $this->order($user, $branch, '5');
+        app(OrderAdminService::class)->cancelByAdmin($pending, $admin, ['reason_code' => 'other']);
+        DB::table('order_cancellation_requests')->insert(['order_id' => $this->order($user, $branch, '6')->id, 'status' => 'pending']);
+
+        // Delivered cash order for a settlement; rating on the delivered order.
+        $this->order($user, $branch, '7', ['status' => OrderStatus::Delivered, 'driver' => $driver]);
+        app(DriverCashSettlementService::class)->prepare($driver, $usd, now()->toDateString(), $admin);
+        app(ProductRatingService::class)->record($user, $product, Order::where('status', 'delivered')->firstOrFail(), 4, 'good');
+
+        // PLUS: plan discount, new request approved into membership/cycle/snapshot.
+        $plan = PlusPlan::create(['code' => 'gold', 'name' => ['en' => 'Gold'], 'free_deliveries_per_cycle' => 2, 'display_price' => 5]);
+        PlusStoreDiscount::create(['plus_plan_id' => $plan->id, 'store_id' => $store->id, 'discount_type' => 'percent', 'discount_value' => 10, 'max_discount_amount' => 5]);
+        app(PlusService::class)->approveNew(PlusRequest::create(['user_id' => $user->id, 'type' => 'new', 'requested_plan_id' => $plan->id]), $admin, PlusMembership::POLICY_MONTHLY);
+
+        // Catalog taxonomies and a stored (never sent) admin notification.
+        $storeCategory = StoreCategory::create(['name' => ['en' => 'Restaurants', 'ar' => 'مطاعم'], 'slug' => 'restaurants']);
+        $store->categories()->attach($storeCategory->id);
+        $category = Category::create(['name' => ['en' => 'Burgers', 'ar' => 'برغر'], 'slug' => 'burgers']);
+        $product->categories()->attach($category->id);
+        DB::table('notifications')->insert([
+            'id' => (string) Str::uuid(), 'type' => 'App\\Notifications\\OrderPlaced',
+            'notifiable_type' => Admin::class, 'notifiable_id' => $admin->id,
+            'data' => json_encode(['message' => 'New order']), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        // Remaining tables, inserted directly with valid values.
+        $cartId = DB::table('carts')->insertGetId(['user_id' => $user->id, 'branch_id' => $branch->id, 'created_at' => now(), 'updated_at' => now()]);
+        $cartItemId = DB::table('cart_items')->insertGetId(['cart_id' => $cartId, 'branch_product_id' => $branchProduct->id, 'configuration_hash' => 'h1', 'quantity' => 1]);
+        DB::table('cart_item_options')->insert(['cart_item_id' => $cartItemId, 'product_option_id' => $option->id, 'quantity' => 1]);
+        DB::table('branch_hour_exceptions')->insert(['branch_id' => $branch->id, 'kind' => 'closed', 'starts_at' => now(), 'ends_at' => now()->addHour(), 'created_by_admin_id' => $admin->id]);
+        DB::table('offers')->insert(['store_id' => $store->id, 'product_id' => $product->id, 'discount_type' => 'percent', 'discount_value' => 10, 'starts_at' => now(), 'ends_at' => now()->addDay(), 'created_by_admin_id' => $admin->id]);
+        UserAddress::create(['user_id' => $user->id, 'city_id' => $city->id, 'address_line' => 'Street 1', 'lat' => 33.5, 'lng' => 36.3, 'is_default' => true]);
+        $areaId = DB::table('delivery_areas')->insertGetId(['city_id' => $city->id, 'name' => '{"en":"Area"}', 'boundary' => '{}', 'min_lat' => 33, 'max_lat' => 34, 'min_lng' => 36, 'max_lng' => 37]);
+        DB::table('delivery_fee_rules')->insert(['city_id' => $city->id, 'delivery_area_id' => $areaId, 'distance_from_km' => 0, 'distance_to_km' => 5, 'base_fee' => 1, 'per_km_fee' => 0.5]);
+        DB::table('currency_redenominations')->insert(['from_currency_id' => $usd->id, 'to_currency_id' => $syp->id, 'conversion_rate' => 13000, 'idempotency_key' => 'r1', 'requested_by_admin_id' => $admin->id]);
+        DB::table('settings')->insert(['key' => 'general.platform_name', 'value' => '"Waffrli"']);
+        DB::table('otps')->insert(['verifiable_type' => User::class, 'verifiable_id' => $user->id, 'purpose' => 'login', 'channel' => 'sms', 'code_hash' => 'x', 'max_attempts' => 5, 'expires_at' => now()->addMinutes(5)]);
+
+        return compact('admin', 'usd', 'syp', 'city', 'store', 'branch', 'product', 'user', 'group', 'option', 'plan', 'areaId');
     }
 }

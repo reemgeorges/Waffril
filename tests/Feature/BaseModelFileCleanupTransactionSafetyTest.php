@@ -72,6 +72,8 @@ class BaseModelFileCleanupTransactionSafetyTest extends TestCase
             }
         }
 
+        $this->purgeCommittedRowsOnMySql();
+
         parent::tearDown();
     }
 

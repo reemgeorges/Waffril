@@ -8,6 +8,7 @@ use App\Models\BranchHourException;
 use App\Models\BranchOpeningHour;
 use App\Models\BranchProduct;
 use App\Models\BranchProductOption;
+use App\Models\Category;
 use App\Models\ProductOption;
 use App\Models\ProductOptionGroup;
 use App\Models\Setting;
@@ -127,5 +128,24 @@ class CatalogIntegrityTest extends AdminPanelTestCase
 
         $this->expectException(BusinessRuleException::class);
         $service->hide($bobRating, $this->employee(['catalog.view']), 'x');
+    }
+
+    public function test_category_tree_refuses_self_parent_and_cycles(): void
+    {
+        $root = Category::create(['name' => ['en' => 'Root'], 'slug' => 'root']);
+        $child = Category::create(['name' => ['en' => 'Child'], 'slug' => 'child', 'parent_id' => $root->id]);
+        $grandchild = Category::create(['name' => ['en' => 'Grandchild'], 'slug' => 'grandchild', 'parent_id' => $child->id]);
+
+        foreach ([[$root, $root], [$root, $grandchild]] as [$category, $parent]) {
+            try {
+                $category->fresh()->update(['parent_id' => $parent->id]);
+                $this->fail('A category must not become its own ancestor.');
+            } catch (BusinessRuleException) {
+                $this->assertNull($root->fresh()->parent_id);
+            }
+        }
+
+        $grandchild->update(['parent_id' => $root->id]);
+        $this->assertSame($root->id, $grandchild->fresh()->parent_id);
     }
 }

@@ -92,6 +92,8 @@ class MakeModulePermissionEnforcementTest extends TestCase
         $this->removeModule($this->name, $this->table, $this->routeFile);
         $this->removeModule($this->ownerName, $this->ownerTable, $this->ownerRouteFile);
 
+        $this->purgeCommittedRowsOnMySql();
+
         parent::tearDown();
     }
 

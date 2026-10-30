@@ -97,5 +97,34 @@ Tests are under `tests/Feature/Admin`. They run on SQLite and cover:
 - the schema inventory
 - console commands
 
-MySQL-only CHECK and generated-column behaviour needs a MySQL 8 server and
-was **not run** in this phase.
+## MySQL 8 verification (2026-10-31)
+
+The schema was verified on a disposable MySQL 8.0.46 server (never staging
+or production):
+
+- all 40 migrations run from an empty database
+- all 18 WAFFRLI migrations run on top of legacy `users`, `otps` and
+  `categories` rows with no data loss
+- rollback and re-migration give a schema byte-identical to a fresh one
+
+`WaffrliMySqlSchemaTest` (`--group mysql`) proves on MySQL that:
+
+- each of the 93 CHECK constraints rejects a violating update, by name
+- the 8 stored generated marker columns enforce conditional uniqueness
+- the 5 composite FKs keep store and product ownership
+- the RESTRICT FKs protect history
+
+`FilamentResourceIntegrityTest` renders every resource, record page and
+relation manager against real rows. To rerun:
+
+```bash
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=waffrli_test DB_USERNAME=... DB_PASSWORD=... vendor/bin/phpunit
+```
+
+Use a database created only for tests: `RefreshDatabase` drops and
+recreates every table in it.
+
+One MySQL incompatibility was found and fixed. MySQL refuses a CHECK that
+refers to an AUTO_INCREMENT column (error 3818), so `categories` has no
+`parent_id <> id` CHECK. `App\Models\Category` refuses self-parenting and
+cycles instead.
