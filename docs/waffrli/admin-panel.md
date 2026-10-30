@@ -23,11 +23,7 @@ php artisan migrate
 ```
 
 ```bash
-php artisan db:seed --class=AdminAccessSeeder
-```
-
-```bash
-php artisan db:seed --class=PaymentMethodSeeder
+php artisan db:seed --class=WaffrliEssentialSeeder
 ```
 
 ```bash
@@ -35,8 +31,11 @@ php artisan waffrli:create-super-admin --email=you@example.com
 ```
 
 The password is typed at a hidden prompt; nothing is hard-coded or printed.
-`AdminAccessSeeder` creates the permissions and the `super-admin` role but
-assigns nothing. Neither seeder is called from `DatabaseSeeder`.
+The essential seeder creates permissions, the `super-admin` role, starter
+employee roles, setting defaults, configured currencies and payment methods.
+It assigns nothing. For a fully populated local demo, use
+`WaffrliDemoSeeder` instead (see `demo-data.md`). Neither seeder is called
+from `DatabaseSeeder`.
 
 Scheduled commands (`routes/console.php`): `waffrli:flag-urgent-orders`
 (every minute; flags late scheduled orders, never cancels) and
