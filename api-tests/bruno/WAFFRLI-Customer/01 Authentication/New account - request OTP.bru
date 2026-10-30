@@ -1,0 +1,41 @@
+meta {
+  name: New account - request OTP
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/otp/request
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{new_phone}}"
+  }
+}
+
+script:pre-request {
+  const n = 3000 + Math.floor(Math.random() * 6999);
+  bru.setVar("new_phone", "+1202555" + String(n));
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}
+
+docs {
+  Uses a random +1 202 555 3000-9999 number, so every run registers a NEW development account.
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Update address
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/api/v1/customer/addresses/{{address_id}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "label": "Bruno office (edited)"
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("label saved", function () {
+    expect(res.getBody().data.address.label).to.equal("Bruno office (edited)");
+  });
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Remove again - not found
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/v1/customer/device-tokens/{{device_token_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Realtime;
 
 use App\Http\Controllers\Controller;
 use App\Http\Traits\GeneralTrait;
+use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -26,6 +27,13 @@ class BroadcastAuthController extends Controller
             'socket_id' => ['required', 'string', 'regex:/^\d+\.\d+$/'],
             'channel_name' => ['required', 'string', 'max:200', 'regex:/^private-[A-Za-z0-9_\-=@,.;]+$/'],
         ]);
+
+        // Only Pusher-protocol broadcasters (Reverb, and the test recorder)
+        // verify channel ownership; `log` / `null` would sign nothing and
+        // accept everything, so refuse instead of pretending.
+        if (! Broadcast::connection() instanceof PusherBroadcaster) {
+            return $this->apiResponse(null, false, __('messages.realtime.unavailable'), 503);
+        }
 
         try {
             return response()->json(Broadcast::auth($request));

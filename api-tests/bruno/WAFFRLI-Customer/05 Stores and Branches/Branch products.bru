@@ -1,0 +1,43 @@
+meta {
+  name: Branch products
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/branches/{{branch_id}}/products
+  body: none
+  auth: inherit
+}
+
+params:query {
+  per_page: 50
+}
+
+script:post-response {
+  const list = res.getBody().data.products || [];
+  const p = list.find(x => x.is_available && x.requires_options === false) || list.find(x => x.is_available) || list[0];
+  if (p) { bru.setVar("product_id", String(p.id)); bru.setVar("unit_price", String(p.price.amount)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("branch prices", function () {
+    res.getBody().data.products.forEach(p => expect(p.price).to.have.property("amount"));
+  });
+}
+
+docs {
+  Picks an available product that needs no option choice (requires_options = false) for the cart tests.
+}

@@ -1,0 +1,52 @@
+meta {
+  name: Checkout - client totals are ignored
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/carts/{{cart_id}}/checkout
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{checkout_key}}
+}
+
+body:json {
+  {
+    "total": "0.01",
+    "notes": "Bruno test order"
+  }
+}
+
+script:pre-request {
+  bru.setVar("checkout_key", require("crypto").randomUUID());
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("order_id", String(res.getBody().data.order.id)); bru.setVar("order_total", res.getBody().data.order.total); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("order placed (pending), server-side total", function () {
+    const o = res.getBody().data.order;
+    expect(o.status).to.equal("pending");
+    expect(Number(o.total)).to.be.greaterThan(0.01);
+    expect(res.getBody().data.replayed).to.equal(false);
+  });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: Search
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/search
+  body: none
+  auth: inherit
+}
+
+params:query {
+  q: {{search_term}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("branches and products of my city", function () {
+    expect(res.getBody().data).to.have.all.keys("branches", "products");
+  });
+}

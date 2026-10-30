@@ -183,6 +183,15 @@ class RealtimeChannelsTest extends CustomerTestCase
         $this->assertStringNotContainsString('changed my mind', json_encode(RecordingBroadcaster::$sent), 'Notes stay in the API.');
     }
 
+    public function test_without_a_pusher_protocol_broadcaster_nothing_is_signed(): void
+    {
+        $user = $this->demoCustomer(1);
+        $token = $this->loginCustomer($user);
+        config(['broadcasting.default' => 'log']);
+        $this->authorizeChannel('/api/v1/customer/broadcasting/auth', $token, 'private-user.999')->assertStatus(503);
+        $this->authorizeChannel('/api/v1/customer/broadcasting/auth', $token, "private-user.{$user->id}")->assertStatus(503);
+    }
+
     protected function superAdmin(): Admin
     {
         $admin = Admin::factory()->create(['is_active' => true]);

@@ -1,0 +1,16 @@
+
+vars {
+  base_url: https://dev-api.example.invalid
+  locale: en
+  customer_phone: {{process.env.WAFFRLI_CUSTOMER_PHONE}}
+  dev_otp_token: {{process.env.WAFFRLI_DEV_OTP_PEEK_TOKEN}}
+  latitude: 33.5100
+  longitude: 36.2900
+  search_term: pizza
+  preferred_store: Fresh Market
+}
+vars:secret [
+  customer_token,
+  otp_code,
+  registration_token
+]

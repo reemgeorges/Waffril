@@ -117,6 +117,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): realtime (Reverb).
     'realtime' => [
+        'unavailable' => 'Realtime updates are not configured on this server.',
         'channel_forbidden' => 'You are not allowed to listen on this channel.',
     ],
     // WAFFRLI (2026-11-03): push / device tokens.

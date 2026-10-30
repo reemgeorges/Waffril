@@ -146,7 +146,7 @@ class CustomerCatalogService
             ->when($filters['category_id'] ?? null, fn ($q, $id) => $q->whereHas('product.categories', fn ($c) => $c->whereKey($id)))
             ->when($filters['search'] ?? null, fn ($q, $term) => $q->whereHas('product', fn ($p) => JsonSearch::apply($p, 'name', $term)))
             ->when(! ($filters['include_unavailable'] ?? false), fn ($q) => $q->where('is_available', true))
-            ->with(['product.categories'])->orderBy('id')->paginate($perPage);
+            ->with(['product.categories', 'product.optionGroups'])->orderBy('id')->paginate($perPage);
 
         $offers = $this->offersFor($branch);
         $page->setCollection($page->getCollection()->map(fn ($bp) => $this->productSummary($bp, $offers->get($bp->product_id, collect()), $user)));
@@ -190,7 +190,7 @@ class CustomerCatalogService
         $products = BranchProduct::query()->where('is_available', true)
             ->whereIn('branch_id', $this->branchQuery($city)->select('id'))
             ->whereHas('product', fn ($p) => JsonSearch::apply($p->where('is_active', true), 'name', $term))
-            ->with(['product.categories', 'branch.store'])->limit($limit)->get();
+            ->with(['product.categories', 'product.optionGroups', 'branch.store'])->limit($limit)->get();
         $offers = Offer::query()->currentlyActive()->whereIn('store_id', $products->pluck('store_id')->unique())->whereNotNull('product_id')->get();
 
         return [
@@ -245,6 +245,10 @@ class CustomerCatalogService
             'price' => $this->price($bp->price, $user),
             'offer' => $best ? ['id' => $best->id, 'name' => $best->name, 'price_after_offer' => $this->price((string) $price->minus($bestDiscount), $user)] : null,
             'is_available' => (bool) $bp->is_available,
+            // true: open the product to pick the required options before adding it to a cart.
+            'requires_options' => $product->relationLoaded('optionGroups')
+                ? $product->optionGroups->contains(fn ($g) => $g->is_active && ! $g->trashed() && $g->min_select > 0)
+                : null,
             'rating' => $this->rating($product),
         ];
     }

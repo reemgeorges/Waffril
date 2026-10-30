@@ -117,6 +117,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): realtime (Reverb).
     'realtime' => [
+        'unavailable' => 'التحديثات الفورية غير مفعّلة على هذا الخادم.',
         'channel_forbidden' => 'غير مسموح لك بالاستماع إلى هذه القناة.',
     ],
     // WAFFRLI (2026-11-03): push / device tokens.

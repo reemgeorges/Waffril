@@ -1,0 +1,31 @@
+meta {
+  name: Verify OTP - wrong code
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/otp/verify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{customer_phone}}",
+    "code": "000000",
+    "device_id": "bruno-device"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 422]);
+    expect(res.getBody().status).to.equal(false);
+    expect(res.getBody().data).to.equal(null);
+  });
+}
+
+docs {
+  Counts toward the attempt ceiling of this code; the next request still succeeds with the right code.
+}

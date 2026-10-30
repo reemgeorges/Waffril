@@ -1,0 +1,25 @@
+meta {
+  name: Rate without purchase - refused
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/products/{{product_id}}/rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "order_id": 999999,
+    "rating": 5
+  }
+}
+
+tests {
+  test("refused (not your order / not purchased)", function () {
+    expect(res.getStatus()).to.be.oneOf([404, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

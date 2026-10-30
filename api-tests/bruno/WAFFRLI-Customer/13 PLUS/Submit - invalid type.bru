@@ -1,0 +1,23 @@
+meta {
+  name: Submit - invalid type
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/plus/requests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "type": "upgrade-for-free"
+  }
+}
+
+tests {
+  test("validation", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 422]);
+  });
+}

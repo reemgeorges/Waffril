@@ -1,0 +1,22 @@
+meta {
+  name: Checkout - idempotency key required
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/carts/{{cart_id}}/checkout
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("refused without an idempotency key", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

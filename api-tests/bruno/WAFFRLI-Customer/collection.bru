@@ -1,0 +1,26 @@
+
+meta {
+  name: WAFFRLI-Customer
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: {{locale}}
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{customer_token}}
+}
+
+docs {
+  WAFFRLI Customer API (/api/v1/customer). Every protected request inherits
+  the Bearer token captured by "Authentication / Verify OTP (login)".
+  The OTP is read through the DEVELOPMENT-ONLY route GET /api/v1/dev/otp,
+  which exists only when APP_ENV is local/testing, the SMS driver is `fake`
+  and WAFFRLI_DEV_OTP_PEEK_TOKEN is set. Nothing secret is stored in this
+  repository: see README.md.
+}

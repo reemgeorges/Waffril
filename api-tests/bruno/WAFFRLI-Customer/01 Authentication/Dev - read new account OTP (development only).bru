@@ -1,0 +1,38 @@
+meta {
+  name: Dev - read new account OTP (development only)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/v1/dev/otp?phone={{peek_phone}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-Dev-Token: {{dev_otp_token}}
+}
+
+script:pre-request {
+  bru.setVar("peek_phone", encodeURIComponent(bru.getVar("new_phone")));
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("otp_code", res.getBody().data.code); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

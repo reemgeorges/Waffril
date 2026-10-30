@@ -1,0 +1,40 @@
+meta {
+  name: Request OTP (login)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/otp/request
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{customer_phone}}"
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("SMS is the primary channel", function () {
+    expect(res.getBody().data.channel).to.be.oneOf(["sms", "whatsapp"]);
+    expect(res.getBody().data.expires_in).to.be.greaterThan(0);
+  });
+  test("the code itself is never returned", function () {
+    expect(JSON.stringify(res.getBody())).to.not.match(/\b\d{6}\b/);
+  });
+}

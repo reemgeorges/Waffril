@@ -1,0 +1,32 @@
+meta {
+  name: Cancellation request before acceptance - refused
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/orders/{{order_id}}/cancellation-request
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "note": "Bruno"
+  }
+}
+
+tests {
+  test("HTTP 409", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

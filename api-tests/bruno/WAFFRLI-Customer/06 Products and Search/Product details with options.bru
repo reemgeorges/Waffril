@@ -1,0 +1,34 @@
+meta {
+  name: Product details with options
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/branches/{{branch_id}}/products/{{product_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("product, branch price, options and aggregate rating", function () {
+    const p = res.getBody().data.product;
+    expect(String(p.id)).to.equal(bru.getVar("product_id"));
+    expect(p.option_groups).to.be.an("array");
+    expect(p.rating).to.have.property("average");
+    expect(JSON.stringify(p)).to.not.contain("comment");
+  });
+}

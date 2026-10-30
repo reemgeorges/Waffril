@@ -1,0 +1,31 @@
+meta {
+  name: Currencies
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/currencies
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("exactly one default with rate 1", function () {
+    const d = res.getBody().data.currencies.filter(c => c.is_default);
+    expect(d.length).to.equal(1);
+    expect(Number(d[0].exchange_rate)).to.equal(1);
+  });
+}

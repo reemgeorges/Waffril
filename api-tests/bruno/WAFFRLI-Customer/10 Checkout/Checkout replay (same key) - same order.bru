@@ -1,0 +1,38 @@
+meta {
+  name: Checkout replay (same key) - same order
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/carts/{{cart_id}}/checkout
+  body: json
+  auth: inherit
+}
+
+headers {
+  Idempotency-Key: {{checkout_key}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("replayed, not duplicated", function () {
+    expect(res.getBody().data.replayed).to.equal(true);
+    expect(String(res.getBody().data.order.id)).to.equal(bru.getVar("order_id"));
+  });
+}

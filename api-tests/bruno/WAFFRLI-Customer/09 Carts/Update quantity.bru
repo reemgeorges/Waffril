@@ -1,0 +1,35 @@
+meta {
+  name: Update quantity
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/api/v1/customer/cart/items/{{item_id}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "quantity": 3
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("quantity 3", function () {
+    expect(res.getBody().data.cart.items[0].quantity).to.equal(3);
+  });
+}
