@@ -110,6 +110,20 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->ip().'|'.$identifier);
         });
 
+        // WAFFRLI driver API (2026-11-02).
+        RateLimiter::for('driver-login', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip().'|driver|'.(string) $request->input('phone'));
+        });
+
+        RateLimiter::for('driver-api', function (Request $request) {
+            return Limit::perMinute(120)->by('driver:'.($request->user('driver')?->getKey() ?? $request->ip()));
+        });
+
+        // GPS pings: roughly one every 5 s is plenty for the map.
+        RateLimiter::for('driver-location', function (Request $request) {
+            return Limit::perMinute(12)->by('driver-location:'.($request->user('driver')?->getKey() ?? $request->ip()));
+        });
+
         RateLimiter::for('auth-otp-endpoint', function (Request $request) {
             $identifier = (string) ($request->input('email') ?: $request->input('phone_number') ?: $request->input('id'));
 

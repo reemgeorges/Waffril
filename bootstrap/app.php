@@ -33,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // Phase 2A (2026-10-25): see App\Http\Middleware\EnsureGuardIdentity.
             'guard.identity'     => \App\Http\Middleware\EnsureGuardIdentity::class,
 
+            // WAFFRLI driver API (2026-11-02).
+            'driver.active'      => \App\Http\Middleware\EnsureDriverIsActive::class,
+
         ]);
 
 

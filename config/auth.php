@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Admin;
+use App\Models\Driver;
 use App\Models\User;
 
 return [
@@ -61,6 +62,14 @@ return [
             'provider' => 'users',
         ],
 
+        // WAFFRLI driver API (2026-11-02): Sanctum tokens for App\Models\Driver.
+        // Always paired with `guard.identity:driver` and `driver.active`
+        // (routes/api/v1/driver.php) so customer/admin tokens never pass.
+        'driver' => [
+            'driver' => 'sanctum',
+            'provider' => 'drivers',
+        ],
+
         // WAFFRLI (2026-10-31): session guard for the Filament admin panel
         // (/admin). Same `admins` provider, roles and permissions as the
         // `admin` Sanctum guard; customers and drivers can never use it.
@@ -99,6 +108,11 @@ return [
         // ],
 
         // Phase 2A (2026-10-25): backs the new 'admin' guard above.
+        'drivers' => [
+            'driver' => 'eloquent',
+            'model' => Driver::class,
+        ],
+
         'admins' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_ADMIN_MODEL', Admin::class),
