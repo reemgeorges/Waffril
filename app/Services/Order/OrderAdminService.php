@@ -12,6 +12,7 @@ use App\Models\OrderCancellation;
 use App\Models\OrderCancellationRequest;
 use App\Models\OrderPayment;
 use App\Models\PlusCycle;
+use App\Notifications\DriverOrderUpdate;
 use App\Services\Audit\AdminAudit;
 use App\Services\Catalog\BranchHoursService;
 use App\Services\Driver\DriverRecommendationService;
@@ -131,6 +132,7 @@ class OrderAdminService
                 throw new BusinessRuleException(__('admin.errors.driver_not_eligible'));
             }
 
+            $previousDriverId = $order->driver_id;
             $order = $this->machine->transition($order, OrderStatus::Assigned, 'admin', $admin->id, [
                 'driver_id' => $driver->id,
                 'assigned_at' => now(),
@@ -138,6 +140,12 @@ class OrderAdminService
             ], null, $driver->id);
 
             AdminAudit::log('order.driver_assigned', $order, ['driver_id' => $driver->id], $admin);
+
+            // WAFFRLI driver API (2026-11-02): stored driver notifications.
+            $driver->notify(new DriverOrderUpdate('assigned', $order));
+            if ($previousDriverId && $previousDriverId !== $driver->id) {
+                Driver::find($previousDriverId)?->notify(new DriverOrderUpdate('unassigned', $order));
+            }
 
             return $order;
         });
@@ -158,6 +166,9 @@ class OrderAdminService
             ], 'driver unassigned', $previous);
 
             AdminAudit::log('order.driver_unassigned', $order, ['driver_id' => $previous], $admin);
+            if ($previous) {
+                Driver::find($previous)?->notify(new DriverOrderUpdate('unassigned', $order));
+            }
 
             return $order;
         });
@@ -310,6 +321,10 @@ class OrderAdminService
                     'resolved_by_admin_id' => $admin?->id,
                     'resolved_at' => now(),
                 ])->save();
+            }
+
+            if ($order->driver_id) {
+                Driver::find($order->driver_id)?->notify(new DriverOrderUpdate('cancelled', $order));
             }
 
             if ($admin) {
