@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CurrencyRedenominations;
 use App\Filament\Resources\CurrencyRedenominations\Pages\ListCurrencyRedenominations;
 use App\Filament\Support\AdminResource;
 use App\Models\CurrencyRedenomination;
+use App\Services\Currency\CurrencyRedenominationService;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -29,7 +30,9 @@ class CurrencyRedenominationResource extends AdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(__('admin.currencies.redenomination_unavailable'))
+            ->description(fn () => CurrencyRedenominationService::enabled()
+                ? __('admin.redenomination.notice')
+                : __('admin.currencies.redenomination_unavailable'))
             ->columns([
                 TextColumn::make('fromCurrency.code')->label(__('admin.fields.from_currency')),
                 TextColumn::make('toCurrency.code')->label(__('admin.fields.to_currency')),
@@ -37,6 +40,7 @@ class CurrencyRedenominationResource extends AdminResource
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge(),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime(),
                 TextColumn::make('completed_at')->label(__('admin.fields.completed_at'))->dateTime(),
+                TextColumn::make('error')->label(__('admin.redenomination.error'))->limit(60)->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('id', 'desc');
     }

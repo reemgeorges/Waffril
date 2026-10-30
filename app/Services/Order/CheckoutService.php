@@ -103,6 +103,11 @@ class CheckoutService
             throw new BusinessRuleException(__('messages.customer.ordering_paused'), 409);
         }
 
+        // Serialize with a default-currency switch (CurrencyRedenominationService
+        // locks the currencies FOR UPDATE): an order is priced either fully
+        // before or fully after the catalog conversion, never in between.
+        Currency::query()->default()->sharedLock()->first();
+
         $address = $this->address($user, $data['address_id'] ?? null);
         if ($address->city_id !== $branch->city_id || ! $branch->is_active || ! $branch->store?->is_active) {
             throw new BusinessRuleException(__('messages.customer.not_in_your_city'), 422);

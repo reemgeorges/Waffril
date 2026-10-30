@@ -100,6 +100,15 @@ return [
         'marketing_chunk' => 500,
     ],
 
+    /*
+    | Default-currency switch (CurrencyRedenominationService). OFF unless
+    | explicitly enabled after the MySQL concurrency/integrity tests pass on
+    | the target database (tests/Feature/Currency).
+    */
+    'currency' => [
+        'redenomination_enabled' => (bool) env('WAFFRLI_CURRENCY_SWITCH_ENABLED', false),
+    ],
+
     'dev' => [
         'otp_peek_token' => env('WAFFRLI_DEV_OTP_PEEK_TOKEN'),
     ],

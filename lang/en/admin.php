@@ -803,4 +803,19 @@ return [
         'sent' => 'Sent',
         'failed' => 'Failed',
     ],
+    // WAFFRLI (2026-11-03): default-currency switch.
+    'redenomination' => [
+        'notice' => 'Switching the default currency converts every CURRENT catalog amount (branch prices, option deltas, minimum orders, delivery fee rules, fixed offers, PLUS prices and discounts) with the exchange rate of the target currency, rounded to its decimals, and re-bases all exchange rates. Orders, payments, refunds, wallets, ledgers and settlements are never changed. The run is atomic: on any error nothing changes.',
+        'action' => 'Switch default currency',
+        'warning' => 'This changes catalog prices platform-wide in one atomic step. Check the target exchange rate first. Existing orders and wallet balances keep their own currency.',
+        'confirm_code' => 'Type the target currency code to confirm',
+        'confirm_mismatch' => 'The code does not match the selected currency.',
+        'queued' => 'Currency switch queued.',
+        'disabled' => 'Changing the default currency is disabled on this platform.',
+        'invalid_target' => 'Choose an active, non-default currency with a positive exchange rate.',
+        'already_running' => 'Another currency switch is already in progress.',
+        'stale' => 'The currencies changed since this switch was requested (default or rate). Request it again.',
+        'rounds_to_zero' => 'The conversion would round :column (#:id) to zero. Adjust the rate or that amount first.',
+        'error' => 'Error',
+    ],
 ];
