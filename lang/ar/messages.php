@@ -115,4 +115,8 @@ return [
         'notification_marked_read' => 'تم تعليم الإشعار كمقروء.',
         'notifications_marked_read' => 'تم تعليم :count إشعارات كمقروءة.',
     ],
+    // WAFFRLI (2026-11-03): realtime (Reverb).
+    'realtime' => [
+        'channel_forbidden' => 'غير مسموح لك بالاستماع إلى هذه القناة.',
+    ],
 ];

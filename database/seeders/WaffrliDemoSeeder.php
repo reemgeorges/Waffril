@@ -37,6 +37,12 @@ class WaffrliDemoSeeder extends Seeder
 
         $context = app()->instance(DemoContext::class, new DemoContext);
 
+        // Demo data never reaches real devices or a running WebSocket server:
+        // broadcasting and push are muted while seeding, restored afterwards.
+        $broadcaster = config('broadcasting.default');
+        $push = config('waffrli.push.enabled');
+        config(['broadcasting.default' => 'null', 'waffrli.push.enabled' => false]);
+
         try {
             $this->call([
                 DemoPlatformSeeder::class,
@@ -48,6 +54,7 @@ class WaffrliDemoSeeder extends Seeder
             ]);
         } finally {
             $context->retireOperator();
+            config(['broadcasting.default' => $broadcaster, 'waffrli.push.enabled' => $push]);
         }
     }
 }

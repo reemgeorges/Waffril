@@ -115,4 +115,8 @@ return [
         'notification_marked_read' => 'Notification marked as read.',
         'notifications_marked_read' => ':count notifications marked as read.',
     ],
+    // WAFFRLI (2026-11-03): realtime (Reverb).
+    'realtime' => [
+        'channel_forbidden' => 'You are not allowed to listen on this channel.',
+    ],
 ];

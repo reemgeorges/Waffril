@@ -34,6 +34,7 @@ Route::prefix('customer')->group(function () {
 
     Route::middleware(['auth:user', 'guard.identity:user', 'customer.active', 'throttle:customer-api'])->group(function () {
         Route::post('auth/logout', [CustomerAuthController::class, 'logout']);
+        Route::post('broadcasting/auth', \App\Http\Controllers\Realtime\BroadcastAuthController::class);
 
         Route::get('me', [CustomerProfileController::class, 'show']);
         Route::patch('me', [CustomerProfileController::class, 'update']);

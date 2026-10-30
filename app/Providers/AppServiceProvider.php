@@ -22,6 +22,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -90,6 +91,20 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerAuthRateLimiters();
+
+        // WAFFRLI (2026-11-03): domain events → realtime operations alerts.
+        \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\RealtimeDomainSubscriber::class);
+
+        // WAFFRLI (2026-11-03): in-memory broadcaster used by automated tests.
+        Broadcast::extend('recording', fn ($app, array $config) => new \App\Support\Broadcasting\RecordingBroadcaster(
+            Broadcast::pusher($config)
+        ));
+
+        // WAFFRLI (2026-11-03): private channels of the ONE Reverb server. The
+        // auth endpoints (one per identity) are plain routes using
+        // App\Http\Controllers\Realtime\BroadcastAuthController: see
+        // routes/web.php (admin_web session) and routes/api/v1/{customer,driver}.php.
+        require base_path('routes/channels.php');
 
         // WAFFRLI (2026-10-31): policies for vendor models used by the admin panel.
         Gate::policy(Role::class, RolePolicy::class);

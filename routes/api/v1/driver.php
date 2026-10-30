@@ -22,6 +22,7 @@ Route::prefix('driver')->group(function () {
 
     Route::middleware(['auth:driver', 'guard.identity:driver', 'driver.active', 'throttle:driver-api'])->group(function () {
         Route::post('logout', [DriverAuthController::class, 'logout']);
+        Route::post('broadcasting/auth', \App\Http\Controllers\Realtime\BroadcastAuthController::class);
         Route::get('me', [DriverAuthController::class, 'me']);
         Route::patch('profile', [DriverAuthController::class, 'updateProfile']);
         Route::post('password', [DriverAuthController::class, 'changePassword']);

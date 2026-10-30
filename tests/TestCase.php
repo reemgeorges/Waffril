@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // WAFFRLI (2026-11-03): messages "sent" by the recording broadcaster.
+        \App\Support\Broadcasting\RecordingBroadcaster::reset();
+    }
+
     /**
      * WAFFRLI MySQL verification (2026-10-31): generator and E2E tests run a
      * real `migrate` instead of RefreshDatabase. On MySQL that DDL commits

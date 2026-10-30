@@ -4,8 +4,10 @@ namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
+use App\Events\Realtime\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Services\Realtime\Realtime;
 
 /**
  * WAFFRLI (2026-10-31) — the single place where an order's status
@@ -41,6 +43,7 @@ class OrderStateMachine
         ?int $driverId = null,
     ): Order {
         $from = $order->status;
+        $previousDriverId = $order->driver_id !== null ? (int) $order->driver_id : null;
 
         if (! self::allowed($from, $to)) {
             throw new BusinessRuleException(__('admin.errors.illegal_transition', [
@@ -68,6 +71,11 @@ class OrderStateMachine
             'note' => $note,
         ]);
 
-        return $order->refresh();
+        $order->refresh();
+        // WAFFRLI (2026-11-03): every transition reaches the order's customer,
+        // drivers and operations over Reverb after the transaction commits.
+        Realtime::publish(OrderStatusChanged::fromTransition($order, $from->value, $previousDriverId));
+
+        return $order;
     }
 }

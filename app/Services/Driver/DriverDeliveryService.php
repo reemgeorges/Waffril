@@ -3,6 +3,8 @@
 namespace App\Services\Driver;
 
 use App\Enums\OrderStatus;
+use App\Events\Realtime\AdminOperationalEvent;
+use App\Events\Realtime\DriverLocationUpdated;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\Driver;
@@ -11,8 +13,10 @@ use App\Models\OrderPayment;
 use App\Notifications\DriverDeliveryProblemReported;
 use App\Services\Audit\AdminAudit;
 use App\Services\Order\OrderAdminService;
+use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Money\Money;
+use App\Support\Realtime\ChannelAccess;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +151,7 @@ class DriverDeliveryService
 
         // Always kept in the audit trail (no admin actor: reported by a driver).
         AdminAudit::log('driver.problem_reported', $order, ['driver_id' => $driver->id, 'type' => $type, 'note' => $note]);
+        Realtime::publish(new AdminOperationalEvent('order.problem_reported', (int) $order->id, $order->order_number));
 
         return ['order_id' => $order->id, 'order_number' => $order->order_number, 'type' => $type, 'notified_admins' => $recipients->count()];
     }
@@ -158,16 +163,24 @@ class DriverDeliveryService
      */
     public function updateLocation(Driver $driver, float $lat, float $lng): Driver
     {
-        if (! $driver->activeOrders()->exists()) {
+        $orders = $driver->activeOrders()->get(['id', 'driver_id', 'status']);
+        if ($orders->isEmpty()) {
             throw new BusinessRuleException(__('messages.driver.no_active_delivery'), 409);
         }
 
+        $at = now();
         Driver::query()->whereKey($driver->id)->update([
             'last_lat' => round($lat, 7),
             'last_lng' => round($lng, 7),
-            'last_location_at' => now(),
-            'updated_at' => now(),
+            'last_location_at' => $at,
+            'updated_at' => $at,
         ]);
+
+        // WAFFRLI (2026-11-03): live position to the customers of the orders
+        // this driver is delivering RIGHT NOW (re-checked at send time) and
+        // to the admin driver map. Not stored as history.
+        $trackable = $orders->filter(fn (Order $order) => ChannelAccess::orderIsTrackable($order, $driver))->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        Realtime::publish(new DriverLocationUpdated((int) $driver->id, $trackable, round($lat, 7), round($lng, 7), $at->toIso8601String()));
 
         return $driver->fresh();
     }
