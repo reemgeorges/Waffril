@@ -9,6 +9,7 @@ use App\Models\PlusMembership;
 use App\Models\PlusPlan;
 use App\Models\PlusRequest;
 use App\Services\Customer\CustomerCatalogService;
+use App\Support\Localization\Label;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,8 @@ class CustomerPlusController extends CustomerController
             }
             $cycles = PlusCycle::query()->where('plus_membership_id', $m->id)->with('discounts.store')->orderBy('cycle_number')->get();
             $cycle = fn ($c) => $c ? [
-                'id' => $c->id, 'number' => $c->cycle_number, 'status' => $c->status, 'plan_name' => $c->plan_name,
+                'id' => $c->id, 'number' => $c->cycle_number, 'status' => $c->status, 'status_label' => Label::of('plus_cycle', $c->status),
+                'plan_name' => $c->plan_name, 'plan_label' => is_array($c->plan_name) ? ($c->plan_name[app()->getLocale()] ?? collect($c->plan_name)->filter()->first()) : $c->plan_name,
                 'starts_at' => $c->starts_at->toIso8601String(), 'ends_at' => $c->ends_at->toIso8601String(),
                 'free_deliveries_total' => $c->free_deliveries_total, 'free_deliveries_used' => $c->free_deliveries_used,
                 'free_deliveries_remaining' => max(0, $c->free_deliveries_total - $c->free_deliveries_used),
@@ -57,13 +59,13 @@ class CustomerPlusController extends CustomerController
             ] : null;
 
             return ['membership' => [
-                'status' => $m->status, 'plan' => ['id' => $m->plan?->id, 'name' => $m->plan?->name],
+                'status' => $m->status, 'status_label' => Label::of('plus_membership', $m->status), 'plan' => ['id' => $m->plan?->id, 'name' => $m->plan?->name],
                 'next_plan' => $m->nextPlan ? ['id' => $m->nextPlan->id, 'name' => $m->nextPlan->name] : null,
-                'renewal_policy' => $m->renewal_policy, 'custom_duration_days' => $m->custom_duration_days,
+                'renewal_policy' => $m->renewal_policy, 'renewal_policy_label' => Label::of('plus_policy', $m->renewal_policy), 'custom_duration_days' => $m->custom_duration_days,
                 'cancelled_at' => $m->cancelled_at?->toIso8601String(),
                 'current_cycle' => $cycle($cycles->firstWhere('status', PlusCycle::STATUS_ACTIVE)),
                 'next_cycle' => $cycle($cycles->firstWhere('status', PlusCycle::STATUS_SCHEDULED)),
-                'past_cycles' => $cycles->whereIn('status', [PlusCycle::STATUS_EXPIRED, PlusCycle::STATUS_CANCELLED])->map(fn ($c) => ['number' => $c->cycle_number, 'status' => $c->status, 'starts_at' => $c->starts_at->toIso8601String(), 'ends_at' => $c->ends_at->toIso8601String()])->values(),
+                'past_cycles' => $cycles->whereIn('status', [PlusCycle::STATUS_EXPIRED, PlusCycle::STATUS_CANCELLED])->map(fn ($c) => ['number' => $c->cycle_number, 'status' => $c->status, 'status_label' => Label::of('plus_cycle', $c->status), 'starts_at' => $c->starts_at->toIso8601String(), 'ends_at' => $c->ends_at->toIso8601String()])->values(),
             ]];
         });
     }
@@ -81,7 +83,7 @@ class CustomerPlusController extends CustomerController
                 'has_active_cycle' => (bool) $cycle,
                 'free_deliveries_remaining' => $cycle ? max(0, $cycle->free_deliveries_total - $cycle->free_deliveries_used) : 0,
                 'discounts' => $discounts->map(fn ($d) => ['store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type, 'discount_value' => (string) $d->op_discount_value, 'max_discount' => $d->op_max_discount_amount !== null ? (string) $d->op_max_discount_amount : null, 'min_order' => $d->op_min_order_amount !== null ? (string) $d->op_min_order_amount : null])->values(),
-                'note' => 'PLUS store discounts replace public offers on the same order; free delivery can be combined.',
+                'note' => __('messages.customer.plus_priority_note'),
             ];
         });
     }
@@ -89,7 +91,9 @@ class CustomerPlusController extends CustomerController
     public function requests(Request $request)
     {
         return $this->respond(fn () => ['requests' => PlusRequest::query()->where('user_id', $this->customer($request)->id)->with('requestedPlan')->orderByDesc('id')->get()->map(fn ($r) => [
-            'id' => $r->id, 'type' => $r->type, 'status' => $r->status, 'source' => $r->source,
+            'id' => $r->id, 'type' => $r->type, 'type_label' => Label::of('plus_request_type', $r->type),
+            'status' => $r->status, 'status_label' => Label::of('request_status', $r->status),
+            'source' => $r->source, 'source_label' => Label::of('plus_request_source', $r->source),
             'plan' => $r->requestedPlan ? ['id' => $r->requestedPlan->id, 'name' => $r->requestedPlan->name] : null,
             'note' => $r->customer_note, 'admin_note' => $r->admin_note,
             'created_at' => $r->created_at?->toIso8601String(), 'reviewed_at' => $r->reviewed_at?->toIso8601String(),

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Model\Driver;
 
 use App\Http\Resources\Basic\BasicResource;
 use App\Services\Driver\DriverAccountService;
+use App\Support\Localization\Label;
 use Illuminate\Http\Request;
 
 /**
@@ -27,9 +28,10 @@ class DriverProfileResource extends BasicResource
             'account' => ['is_active' => (bool) $driver->is_active],
             'availability' => [
                 'status' => $driver->availability,
+                'status_label' => Label::of('driver_availability', $driver->availability),
                 'has_active_delivery' => $active->isNotEmpty(),
                 'can_go_offline' => $active->isEmpty(),
-                'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status' => $o->status->value])->values(),
+                'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status_label' => $o->status->label(), 'status' => $o->status->value])->values(),
             ],
             'last_location' => $driver->last_location_at ? [
                 'lat' => (float) $driver->last_lat, 'lng' => (float) $driver->last_lng,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Services\Customer\CustomerOrderService;
+use App\Support\Localization\Label;
 use Illuminate\Http\Request;
 
 /** WAFFRLI customer API (2026-11-03) — own orders, cancellation and cancellation requests. */
@@ -40,7 +41,7 @@ class CustomerOrderController extends CustomerController
             $note = $request->validate(['note' => ['nullable', 'string', 'max:500']])['note'] ?? null;
             $req = $this->orders->requestCancellation($this->customer($request), $order, $note);
 
-            return ['message' => __('messages.customer.cancel_request_sent'), 'request' => ['id' => $req->id, 'status' => $req->fresh()->status]];
+            return ['message' => __('messages.customer.cancel_request_sent'), 'request' => ['id' => $req->id, 'status_label' => Label::of('request_status', $req->fresh()->status), 'status' => $req->fresh()->status]];
         });
     }
 }

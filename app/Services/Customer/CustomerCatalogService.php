@@ -15,6 +15,7 @@ use App\Models\StoreCategory;
 use App\Models\User;
 use App\Services\Catalog\BranchHoursService;
 use App\Support\Database\JsonSearch;
+use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -132,7 +133,7 @@ class CustomerCatalogService
                 'day_of_week' => $h->day_of_week, 'opens_at' => substr((string) $h->opens_at, 0, 5), 'closes_at' => substr((string) $h->closes_at, 0, 5),
             ])->values(),
             'exceptions' => $branch->hourExceptions->map(fn ($e) => [
-                'kind' => $e->kind, 'starts_at' => $e->starts_at->toIso8601String(), 'ends_at' => $e->ends_at->toIso8601String(), 'reason' => $e->reason,
+                'kind' => $e->kind, 'kind_label' => Label::of('hours_kind', $e->kind), 'starts_at' => $e->starts_at->toIso8601String(), 'ends_at' => $e->ends_at->toIso8601String(), 'reason' => $e->reason,
             ])->values(),
             'product_categories' => Category::query()->whereIn('id', $categoryIds)->orderBy('sort_order')->get()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->values(),
         ];

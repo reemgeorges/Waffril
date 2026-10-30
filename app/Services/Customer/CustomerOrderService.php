@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderCancellationRequest;
 use App\Models\User;
 use App\Services\Order\OrderAdminService;
+use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use Illuminate\Support\Facades\DB;
 
@@ -92,6 +93,7 @@ class CustomerOrderService
             'status' => $order->status->value,
             'status_label' => $order->status->label(),
             'type' => $order->type,
+            'type_label' => Label::of('order_type', $order->type),
             'scheduled_for' => $order->scheduled_for?->toIso8601String(),
             'branch' => ['id' => $order->branch?->id, 'name' => $order->branch?->name, 'store' => ['id' => $order->branch?->store?->id, 'name' => $order->branch?->store?->name]],
             'currency' => ['code' => $c->code, 'symbol' => $c->symbol, 'decimals' => $c->decimals],
@@ -117,10 +119,10 @@ class CustomerOrderService
                 'free_delivery_applied' => (bool) $order->free_delivery_applied, 'total' => $fmt($order->total),
             ],
             'payments' => $order->payments->map(fn ($p) => [
-                'method' => $p->method?->code, 'amount' => $fmt($p->amount), 'status' => $p->status,
+                'method' => $p->method?->code, 'method_label' => $p->method?->name, 'amount' => $fmt($p->amount), 'status' => $p->status, 'status_label' => Label::of('payment_status', $p->status),
                 'collected' => $fmt($p->collected_amount), 'reversed' => $fmt($p->reversed_amount), 'refunded' => $fmt($p->refunded_amount),
             ])->values(),
-            'refunds' => $order->refunds->map(fn ($r) => ['amount' => $fmt($r->amount), 'reason' => $r->reason_code, 'created_at' => $r->created_at?->toIso8601String()])->values(),
+            'refunds' => $order->refunds->map(fn ($r) => ['amount' => $fmt($r->amount), 'reason' => $r->reason_code, 'reason_label' => Label::of('cancellation_reason', $r->reason_code), 'created_at' => $r->created_at?->toIso8601String()])->values(),
             'delivery' => [
                 'address' => $order->delivery_address, 'lat' => $order->delivery_lat !== null ? (float) $order->delivery_lat : null,
                 'lng' => $order->delivery_lng !== null ? (float) $order->delivery_lng : null, 'distance_km' => (float) $order->delivery_distance_km,
@@ -128,9 +130,9 @@ class CustomerOrderService
             ],
             'driver' => $active && $order->driver ? ['first_name' => strtok((string) $order->driver->name, ' '), 'vehicle_type' => $order->driver->vehicle_type] : null,
             'realtime_channel' => $active || $order->status === OrderStatus::Pending || $order->status === OrderStatus::Accepted ? 'order.'.$order->id : null,
-            'status_history' => $order->statusHistories->sortBy('id')->map(fn ($h) => ['from' => $h->from_status, 'to' => $h->to_status, 'at' => $h->created_at?->toIso8601String()])->values(),
-            'cancellation' => $order->cancellation ? ['by' => $order->cancellation->cancelled_by, 'reason' => $order->cancellation->reason_code, 'at' => $order->cancellation->created_at?->toIso8601String()] : null,
-            'cancellation_requests' => $order->cancellationRequests->map(fn ($r) => ['status' => $r->status, 'note' => $r->customer_note, 'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String()])->values(),
+            'status_history' => $order->statusHistories->sortBy('id')->map(fn ($h) => ['from' => $h->from_status, 'from_label' => $h->from_status ? OrderStatus::tryFrom($h->from_status)?->label() : null, 'to' => $h->to_status, 'to_label' => OrderStatus::tryFrom((string) $h->to_status)?->label(), 'at' => $h->created_at?->toIso8601String()])->values(),
+            'cancellation' => $order->cancellation ? ['by' => $order->cancellation->cancelled_by, 'by_label' => Label::of('order_actor', $order->cancellation->cancelled_by), 'reason' => $order->cancellation->reason_code, 'reason_label' => Label::of('cancellation_reason', $order->cancellation->reason_code), 'at' => $order->cancellation->created_at?->toIso8601String()] : null,
+            'cancellation_requests' => $order->cancellationRequests->map(fn ($r) => ['status' => $r->status, 'status_label' => Label::of('request_status', $r->status), 'note' => $r->customer_note, 'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String()])->values(),
         ];
     }
 }

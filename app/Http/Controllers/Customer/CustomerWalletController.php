@@ -7,6 +7,7 @@ use App\Models\OrderPayment;
 use App\Models\OrderRefund;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,8 @@ class CustomerWalletController extends CustomerController
                 ->with(['wallet.currency', 'order'])->orderByDesc('id')->paginate($this->perPage($request));
 
             return $this->paginated($page, 'transactions', fn ($t) => [
-                'id' => $t->id, 'type' => $t->type, 'direction' => $t->direction, 'currency' => $t->wallet->currency->code,
+                'id' => $t->id, 'type' => $t->type, 'type_label' => Label::of('wallet_type', $t->type),
+                'direction' => $t->direction, 'direction_label' => Label::of('wallet_direction', $t->direction), 'currency' => $t->wallet->currency->code,
                 'amount' => (string) $t->amount, 'balance_after' => (string) $t->balance_after,
                 'order_number' => $t->order?->order_number, 'created_at' => $t->created_at?->toIso8601String(),
             ]);
@@ -47,8 +49,8 @@ class CustomerWalletController extends CustomerController
                 ->with(['order', 'method', 'currency'])->orderByDesc('id')->paginate($this->perPage($request));
 
             return $this->paginated($page, 'payments', fn ($p) => [
-                'order_number' => $p->order->order_number, 'method' => $p->method->code, 'currency' => $p->currency->code,
-                'amount' => (string) $p->amount, 'status' => $p->status, 'collected' => (string) $p->collected_amount,
+                'order_number' => $p->order->order_number, 'method' => $p->method->code, 'method_label' => $p->method->name, 'currency' => $p->currency->code,
+                'amount' => (string) $p->amount, 'status' => $p->status, 'status_label' => Label::of('payment_status', $p->status), 'collected' => (string) $p->collected_amount,
                 'reversed' => (string) $p->reversed_amount, 'refunded' => (string) $p->refunded_amount, 'paid_at' => $p->paid_at?->toIso8601String(),
             ]);
         });
@@ -62,7 +64,7 @@ class CustomerWalletController extends CustomerController
 
             return $this->paginated($page, 'refunds', fn ($r) => [
                 'order_number' => $r->order->order_number, 'currency' => $r->currency->code, 'amount' => (string) $r->amount,
-                'reason' => $r->reason_code, 'credited_to' => 'wallet', 'created_at' => $r->created_at?->toIso8601String(),
+                'reason' => $r->reason_code, 'reason_label' => Label::of('cancellation_reason', $r->reason_code), 'credited_to' => 'wallet', 'created_at' => $r->created_at?->toIso8601String(),
             ]);
         });
     }

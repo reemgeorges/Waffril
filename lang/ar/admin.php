@@ -634,6 +634,8 @@ return [
         'status_disputed' => 'متنازع عليها',
     ],
     'wallets' => [
+        'direction_credit' => 'إيداع',
+        'direction_debit' => 'خصم',
         'history' => 'السجل',
         'nonzero' => 'رصيد غير صفري',
         'type_order_payment' => 'دفع طلب',

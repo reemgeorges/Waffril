@@ -634,6 +634,8 @@ return [
         'status_disputed' => 'Disputed',
     ],
     'wallets' => [
+        'direction_credit' => 'Credit',
+        'direction_debit' => 'Debit',
         'history' => 'Ledger',
         'nonzero' => 'Non-zero balance',
         'type_order_payment' => 'Order payment',

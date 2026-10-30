@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Resources\Basic\BasicResource;
 use App\Models\Order;
 use App\Services\Driver\DriverDeliveryService;
+use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
@@ -38,6 +39,7 @@ class DriverOrderResource extends BasicResource
             'status' => $order->status->value,
             'status_label' => $order->status->label(),
             'type' => $order->type,
+            'type_label' => Label::of('order_type', $order->type),
             'scheduled_for' => $order->scheduled_for?->toIso8601String(),
             'store' => [
                 'id' => $order->branch?->store?->id,

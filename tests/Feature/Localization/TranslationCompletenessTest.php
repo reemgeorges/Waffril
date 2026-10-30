@@ -104,6 +104,9 @@ class TranslationCompletenessTest extends TestCase
         foreach ($constants(WalletTransaction::class, 'TYPE_') as $v) {
             $keys[] = "admin.wallets.type_{$v}";
         }
+        foreach (['credit', 'debit'] as $v) {
+            $keys[] = "admin.wallets.direction_{$v}";
+        }
         foreach ($constants(Driver::class, 'AVAILABILITY_') as $v) {
             $keys[] = "admin.drivers.availability_{$v}";
         }

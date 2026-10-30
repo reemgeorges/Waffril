@@ -7,6 +7,7 @@ use App\Http\Requests\Model\Driver\DriverAvailabilityRequest;
 use App\Http\Traits\GeneralTrait;
 use App\Models\Driver;
 use App\Services\Driver\DriverAccountService;
+use App\Support\Localization\Label;
 use Illuminate\Http\Request;
 
 /** WAFFRLI driver API (2026-11-02) — available / offline, consistent with active deliveries. */
@@ -22,10 +23,11 @@ class DriverAvailabilityController extends Controller
 
         return [
             'availability' => $driver->availability,
+            'availability_label' => Label::of('driver_availability', $driver->availability),
             'is_active' => (bool) $driver->is_active,
             'has_active_delivery' => $active->isNotEmpty(),
             'can_go_offline' => $active->isEmpty(),
-            'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status' => $o->status->value])->values(),
+            'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status_label' => $o->status->label(), 'status' => $o->status->value])->values(),
         ];
     }
 

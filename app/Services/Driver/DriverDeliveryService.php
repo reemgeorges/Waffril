@@ -16,6 +16,7 @@ use App\Services\Notifications\AdminAlerts;
 use App\Services\Order\OrderAdminService;
 use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use App\Support\Realtime\ChannelAccess;
 use Brick\Math\BigDecimal;
@@ -155,7 +156,7 @@ class DriverDeliveryService
         Realtime::publish(new AdminOperationalEvent('order.problem_reported', (int) $order->id, $order->order_number));
         AdminAlerts::send('order.problem_reported', (int) $order->id, $order->order_number);
 
-        return ['order_id' => $order->id, 'order_number' => $order->order_number, 'type' => $type, 'notified_admins' => $recipients->count()];
+        return ['order_id' => $order->id, 'order_number' => $order->order_number, 'type' => $type, 'type_label' => Label::of('problem_type', $type), 'notified_admins' => $recipients->count()];
     }
 
     /**

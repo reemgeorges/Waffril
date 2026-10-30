@@ -121,6 +121,7 @@ return [
 
     // WAFFRLI customer API (2026-11-03).
     'customer' => [
+        'plus_priority_note' => 'PLUS store discounts replace public offers on the same order; free delivery can be combined with them.',
         'otp_text' => 'WAFFRLI code: :code. Valid for :minutes minutes. Never share it.',
         'otp_sent' => 'A verification code was sent.',
         'otp_cooldown' => 'Please wait :seconds seconds before requesting another code.',

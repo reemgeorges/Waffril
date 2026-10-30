@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Model\Customer;
 
 use App\Http\Resources\Basic\BasicResource;
+use App\Support\Localization\Label;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,6 +25,7 @@ class CustomerProfileResource extends BasicResource
             'avatar_url' => $u->avatar ? Storage::disk('public')->url($u->avatar) : null,
             'language' => $u->language,
             'account_status' => $u->account_status,
+            'account_status_label' => Label::of('account_status', $u->account_status),
             'profile_completed' => filled($u->first_name) && filled($u->last_name),
             'display_currency' => $u->displayCurrency ? ['id' => $u->displayCurrency->id, 'code' => $u->displayCurrency->code] : null,
             'selected_address' => $default ? CustomerAddressResource::make($default) : null,
