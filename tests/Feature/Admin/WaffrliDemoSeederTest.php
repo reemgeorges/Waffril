@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Console\Commands\Waffrli\DatabaseDocsCommand;
 use App\Enums\OrderStatus;
 use App\Filament\Widgets\FinanceOverview;
 use App\Filament\Widgets\OperationsOverview;
@@ -180,6 +181,29 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
             $this->assertSame((clone $visible)->count(), $product->rating_count);
             $this->assertSame((int) (clone $visible)->sum('rating'), $product->rating_sum);
         }
+    }
+
+    public function test_seeded_translatable_data_is_bilingual(): void
+    {
+        $this->seedDemo();
+        $checked = 0;
+        foreach (DatabaseDocsCommand::translatableColumns() as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+            foreach ($columns as $column) {
+                foreach (DB::table($table)->whereNotNull($column)->pluck($column, 'id') as $id => $raw) {
+                    $value = json_decode((string) $raw, true);
+                    $this->assertIsArray($value, "{$table}#{$id}.{$column} is not translatable JSON");
+                    foreach (['ar', 'en'] as $locale) {
+                        $this->assertNotSame('', trim((string) ($value[$locale] ?? '')), "{$table}#{$id}.{$column} has no {$locale} text");
+                    }
+                    $checked++;
+                }
+            }
+        }
+        $this->assertGreaterThan(50, $checked, 'Demo data must exercise the translatable columns.');
+        $this->assertMatchesRegularExpression('/\p{Arabic}/u', (string) DB::table('cities')->value('name'));
     }
 
     public function test_dashboard_shows_database_numbers(): void
