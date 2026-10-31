@@ -157,8 +157,8 @@ Every file exists in both `lang/ar` and `lang/en` with the same keys and placeho
 
 ## 8. Verification (2026-10-31)
 
-- **PHPUnit, SQLite:** full suite passing (see the final report for exact counts).
-- **PHPUnit, MySQL 8:** full suite run from an isolated worktree of the pushed commit (see the final report).
+- **PHPUnit, SQLite:** 499 tests, all passing; 13 skipped (9 pre-existing, 4 MySQL-only concurrency tests).
+- **PHPUnit, MySQL 8:** 499 tests, all passing, run from an isolated worktree of commit `3e1126a` (the final code; later commits add documentation only). One test was skipped: the marketing-migration round trip runs on SQLite only, and that migration was checked up and down on MySQL by hand.
 - **Bruno CLI 2.15.1 on a freshly seeded MySQL 8 demo database:**
   - Customer: 91 requests and 286 tests, all passing.
   - Driver: 37 requests and 126 tests, all passing.
