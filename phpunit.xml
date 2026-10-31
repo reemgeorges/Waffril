@@ -24,6 +24,16 @@
         <env name="BROADCAST_CONNECTION" value="recording"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="WAFFRLI_LEGACY_USER_AUTH" value="true"/>
+        <!-- WAFFRLI (2026-11-05): tests never depend on a developer's local .env -->
+        <env name="WAFFRLI_PUSH_ENABLED" value="false"/>
+        <env name="WAFFRLI_PUSH_DRIVER" value="fake"/>
+        <env name="WAFFRLI_SMS_DRIVER" value="fake"/>
+        <env name="WAFFRLI_DEV_OTP_PEEK_TOKEN" value=""/>
+        <env name="WAFFRLI_CURRENCY_SWITCH_ENABLED" value="false"/>
+        <env name="WAFFRLI_API_DOCS_ENABLED" value="false"/>
+        <env name="FIREBASE_CREDENTIALS" value=""/>
+        <env name="APP_LOCALE" value="en"/>
+        <env name="APP_FALLBACK_LOCALE" value="en"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
