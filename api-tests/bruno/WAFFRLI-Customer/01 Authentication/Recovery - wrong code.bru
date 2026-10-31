@@ -1,0 +1,26 @@
+meta {
+  name: Recovery - wrong code
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/recovery/verify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{new_phone}}",
+    "code": "000000",
+    "device_id": "bruno-new-device"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

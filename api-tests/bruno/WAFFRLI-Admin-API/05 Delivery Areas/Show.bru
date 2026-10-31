@@ -1,0 +1,35 @@
+meta {
+  name: Show
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-areas/show
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": {{delivery_area_id}}
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("same record", function () {
+    expect(String(res.getBody().data.delivery_area.id)).to.equal(bru.getVar("delivery_area_id"));
+  });
+}

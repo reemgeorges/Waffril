@@ -1,0 +1,33 @@
+meta {
+  name: Verify reset OTP - wrong code
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/password/verify-otp
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "actor": "admin",
+    "email": "nobody@example.test",
+    "otp": "000000"
+  }
+}
+
+tests {
+  test("refused (400, 401, 422, 429)", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 401, 422, 429]);
+    expect(res.getBody().status).to.equal(false);
+    expect(res.getBody().data).to.equal(null);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

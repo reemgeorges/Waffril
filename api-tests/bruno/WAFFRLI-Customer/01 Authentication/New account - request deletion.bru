@@ -1,0 +1,37 @@
+meta {
+  name: New account - request deletion
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{base_url}}/api/v1/customer/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{new_token}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("recovery window returned", function () {
+    expect(res.getBody().data.recovery_until).to.be.a("string");
+  });
+}
+
+docs {
+  Soft-deletes the account and revokes its tokens; it can be recovered by phone OTP until recovery_until.
+}

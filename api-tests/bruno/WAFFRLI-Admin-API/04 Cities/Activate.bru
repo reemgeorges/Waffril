@@ -1,0 +1,32 @@
+meta {
+  name: Activate
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/cities/activate
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": {{city_id}}
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

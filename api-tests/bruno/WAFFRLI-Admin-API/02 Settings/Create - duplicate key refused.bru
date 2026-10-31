@@ -1,0 +1,33 @@
+meta {
+  name: Create - duplicate key refused
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/settings/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "key": "{{setting_key}}",
+    "value": "again"
+  }
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

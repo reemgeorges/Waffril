@@ -20,6 +20,10 @@ body:json {
   }
 }
 
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("new_token", res.getBody().data.token); }
+}
+
 tests {
   test("HTTP 200", function () {
     expect(res.getStatus()).to.equal(200);

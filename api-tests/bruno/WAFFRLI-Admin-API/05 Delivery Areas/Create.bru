@@ -1,0 +1,51 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-areas/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "city_id": {{city_id}},
+    "name": {
+      "ar": "منطقة اختبار",
+      "en": "Bruno area"
+    },
+    "boundary": {
+      "type": "Polygon",
+      "coordinates": [[[36.30, 33.50], [36.31, 33.50], [36.31, 33.51], [36.30, 33.51], [36.30, 33.50]]]
+    }
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("delivery_area_id", String(res.getBody().data.delivery_area.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("created", function () {
+    expect(res.getBody().data.delivery_area.id).to.be.a("number");
+  });
+}
+
+docs {
+  Random unique values: safe to run repeatedly.
+}

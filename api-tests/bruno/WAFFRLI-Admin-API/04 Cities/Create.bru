@@ -1,0 +1,56 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/cities/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": {
+      "ar": "مدينة اختبار",
+      "en": "{{city_name}}"
+    },
+    "center_lat": {{latitude}},
+    "center_lng": {{longitude}},
+    "radius_km": 5,
+    "sort_order": 99
+  }
+}
+
+script:pre-request {
+  bru.setVar("city_name", "Bruno City " + Date.now());
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("city_id", String(res.getBody().data.city.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("translations stored", function () {
+    const c = res.getBody().data.city;
+    expect(c.name_translations.en).to.equal(bru.getVar("city_name"));
+    expect(c.name_translations.ar).to.be.a("string");
+  });
+}
+
+docs {
+  Random unique values: safe to run repeatedly.
+}

@@ -1,0 +1,44 @@
+meta {
+  name: Quote a delivery fee
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-fee-rules/quote
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "city_id": 1,
+    "origin_lat": 33.5100,
+    "origin_lng": 36.2700,
+    "destination_lat": 33.5200,
+    "destination_lng": 36.2900
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("quote shape", function () {
+    const q = res.getBody().data.quote;
+    expect(q).to.include.all.keys("covered", "distance_km", "fee");
+  });
+}
+
+docs {
+  Server-side pricing preview; the same engine prices checkout.
+}

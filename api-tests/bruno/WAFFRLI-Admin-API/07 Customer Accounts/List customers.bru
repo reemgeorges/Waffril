@@ -1,0 +1,38 @@
+meta {
+  name: List customers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/users/all
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const u = (res.getBody().data.users || []).slice(-1)[0]; if (u) { bru.setVar("target_user_id", String(u.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("users listed", function () {
+    expect(res.getBody().data.users).to.be.an("array");
+  });
+  test("never serializes credentials", function () {
+    const raw = JSON.stringify(res.getBody());
+    expect(raw).to.not.contain("password");
+    expect(raw).to.not.match(/\$2y\$/);
+  });
+}

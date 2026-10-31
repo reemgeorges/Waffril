@@ -1,13 +1,17 @@
 meta {
-  name: Token revoked after logout
+  name: Invalid token - 401
   type: http
-  seq: 8
+  seq: 2
 }
 
 get {
-  url: {{base_url}}/api/v1/driver/me
+  url: {{base_url}}/api/v1/admin/settings/all
   body: none
-  auth: inherit
+  auth: none
+}
+
+script:pre-request {
+  req.setHeader("Authorization", "Bearer 1|not-a-real-token");
 }
 
 tests {
@@ -20,7 +24,7 @@ tests {
 
   test("standard envelope", function () {
     const b = res.getBody();
-    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
     expect(b.statusCode).to.equal(res.getStatus());
   });
 }

@@ -1,0 +1,35 @@
+meta {
+  name: Initialize default - refused when a default exists
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/currencies/initialize-default
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": {{currency_id}}
+  }
+}
+
+tests {
+  test("refused (400, 409, 422)", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 409, 422]);
+    expect(res.getBody().status).to.equal(false);
+    expect(res.getBody().data).to.equal(null);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}
+
+docs {
+  Only valid on a fresh installation without a default currency.
+}

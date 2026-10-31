@@ -1,0 +1,28 @@
+
+meta {
+  name: WAFFRLI-Admin-API
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: {{locale}}
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+docs {
+  WAFFRLI platform administration API (/api/v1/admin, guard `admin`, Sanctum).
+  Every protected request inherits the Bearer token captured by
+  "Authentication / Login (success)". Each resource also requires the
+  matching admin permission (Super Admin has all of them).
+  Records created by this collection use random names/codes and are only
+  DEACTIVATED at the end: the API has no delete route by design.
+  The Filament panel (/admin) uses a separate session guard and is not
+  part of this collection. Secrets come from the git-ignored .env file.
+}

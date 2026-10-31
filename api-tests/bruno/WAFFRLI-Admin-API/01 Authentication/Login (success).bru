@@ -1,0 +1,49 @@
+meta {
+  name: Login (success)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{admin_email}}",
+    "password": "{{admin_password}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("admin_token", res.getBody().data.token); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("bearer token issued", function () {
+    expect(res.getBody().data.token).to.be.a("string").and.not.empty;
+  });
+  test("never serializes credentials", function () {
+    const raw = JSON.stringify(res.getBody());
+    expect(raw).to.not.contain("password");
+    expect(raw).to.not.match(/\$2y\$/);
+  });
+}
+
+docs {
+  Captures admin_token (runtime only). Throttled (auth-login limiter).
+}

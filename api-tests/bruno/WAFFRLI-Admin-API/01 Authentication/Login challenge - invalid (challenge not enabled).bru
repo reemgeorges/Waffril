@@ -1,0 +1,29 @@
+meta {
+  name: Login challenge - invalid (challenge not enabled)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/login-challenge/verify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "challenge_token": "invalid",
+    "otp": "000000"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 401, 403, 404, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}
+
+docs {
+  Login challenges are disabled unless config/otp.php enables the login_challenge action; this request documents that the route never authenticates by itself.
+}

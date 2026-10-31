@@ -1,0 +1,54 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/currencies/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "code": "{{currency_code}}",
+    "name": {
+      "ar": "عملة اختبار",
+      "en": "Bruno test currency"
+    },
+    "symbol": "B",
+    "decimals": 2,
+    "exchange_rate": "2.5"
+  }
+}
+
+script:pre-request {
+  const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; bru.setVar("currency_code", "Z" + L[Math.floor(Math.random()*26)] + L[Math.floor(Math.random()*26)]);
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("currency_id", String(res.getBody().data.currency.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("created", function () {
+    expect(res.getBody().data.currency.id).to.be.a("number");
+  });
+}
+
+docs {
+  Random unique values: safe to run repeatedly.
+}

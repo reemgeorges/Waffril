@@ -1,0 +1,49 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/settings/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "key": "{{setting_key}}",
+    "value": "bruno",
+    "is_monetary": false
+  }
+}
+
+script:pre-request {
+  bru.setVar("setting_key", "bruno.test_" + Date.now());
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("setting_id", String(res.getBody().data.setting.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("created", function () {
+    expect(res.getBody().data.setting.id).to.be.a("number");
+  });
+}
+
+docs {
+  Random unique values: safe to run repeatedly.
+}

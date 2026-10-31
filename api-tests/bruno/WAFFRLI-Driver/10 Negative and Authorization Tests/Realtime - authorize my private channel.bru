@@ -1,0 +1,25 @@
+meta {
+  name: Realtime - authorize my private channel
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/broadcasting/auth
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "socket_id": "1234.5678",
+    "channel_name": "private-driver.{{driver_id}}"
+  }
+}
+
+tests {
+  test("signed when Reverb is configured (503 otherwise)", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 503]);
+    if (res.getStatus() === 200) { expect(res.getBody().auth).to.match(/^[^:]+:[0-9a-f]{64}$/); }
+  });
+}

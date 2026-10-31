@@ -1,11 +1,11 @@
 meta {
-  name: Logout
+  name: List all
   type: http
-  seq: 7
+  seq: 1
 }
 
-post {
-  url: {{base_url}}/api/v1/driver/logout
+get {
+  url: {{base_url}}/api/v1/admin/cities/all
   body: none
   auth: inherit
 }
@@ -20,7 +20,10 @@ tests {
 
   test("standard envelope", function () {
     const b = res.getBody();
-    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
     expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("cities listed", function () {
+    expect(res.getBody().data.cities).to.be.an("array");
   });
 }

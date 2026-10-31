@@ -1,0 +1,37 @@
+meta {
+  name: Create - validation error
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-fee-rules/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "distance_from_km": 10,
+    "distance_to_km": 5,
+    "base_fee": "-1"
+  }
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("first validation message", function () {
+    expect(res.getBody().error).to.be.a("string").and.not.empty;
+  });
+}
