@@ -2,6 +2,8 @@
 
 namespace App\Filament\Support;
 
+use App\Models\Currency;
+use App\Support\Money\Money;
 use Closure;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -61,5 +63,23 @@ final class Fields
 
             return $data;
         };
+    }
+
+    /**
+     * Display a stored amount (4-decimal storage scale) in its currency:
+     * the currency's own decimals, thousands separator, ISO code
+     * ("USD 4.58", "SYP 66,127"). Display only: stored values are untouched.
+     */
+    public static function formatMoney(mixed $amount, ?Currency $currency): string
+    {
+        if ($amount === null || $amount === '') {
+            return '—';
+        }
+        $decimals = $currency?->decimals ?? 2;
+        $value = (string) Money::roundTo((string) $amount, $decimals);
+        [$int, $fraction] = array_pad(explode('.', ltrim($value, '-')), 2, '');
+        $text = number_format((float) $int, 0, '.', ',').($decimals > 0 ? '.'.str_pad($fraction, $decimals, '0') : '');
+
+        return trim(($currency?->code ?? '').' '.(str_starts_with($value, '-') ? '−' : '').$text);
     }
 }

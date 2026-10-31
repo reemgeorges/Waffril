@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers\RelationManagers;
 
 use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Support\Fields;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -32,7 +33,7 @@ class OrdersRelationManager extends RelationManager
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
                 TextColumn::make('total')->label(__('admin.fields.total'))
-                    ->formatStateUsing(fn ($state, $record) => $state.' '.$record->currency?->code),
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
             ])
             ->recordActions([

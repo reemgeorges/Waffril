@@ -6,6 +6,7 @@ use App\Filament\Resources\Wallets\Pages\ListWallets;
 use App\Filament\Resources\Wallets\Pages\ViewWallet;
 use App\Filament\Resources\Wallets\RelationManagers\TransactionsRelationManager;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\Wallet;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
@@ -41,7 +42,7 @@ class WalletResource extends AdminResource
                 TextEntry::make('user.phone')->label(__('admin.fields.customer'))
                     ->formatStateUsing(fn ($state, Wallet $record) => $record->user?->fullName().' '.$state),
                 TextEntry::make('currency.code')->label(__('admin.fields.currency')),
-                TextEntry::make('balance')->label(__('admin.fields.balance')),
+                TextEntry::make('balance')->label(__('admin.fields.balance'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextEntry::make('updated_at')->label(__('admin.fields.updated_at'))->dateTime(),
             ]),
         ]);
@@ -54,7 +55,7 @@ class WalletResource extends AdminResource
                 TextColumn::make('user.phone')->label(__('admin.fields.customer'))
                     ->formatStateUsing(fn ($state, Wallet $record) => $record->user?->fullName().' '.$state)->searchable(),
                 TextColumn::make('currency.code')->label(__('admin.fields.currency')),
-                TextColumn::make('balance')->label(__('admin.fields.balance'))->sortable(),
+                TextColumn::make('balance')->label(__('admin.fields.balance'))->sortable()->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->dateTime()->sortable(),
             ])
             ->filters([

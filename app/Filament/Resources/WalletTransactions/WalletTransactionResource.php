@@ -4,6 +4,7 @@ namespace App\Filament\Resources\WalletTransactions;
 
 use App\Filament\Resources\WalletTransactions\Pages\ListWalletTransactions;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\WalletTransaction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -34,7 +35,7 @@ class WalletTransactionResource extends AdminResource
                 TextColumn::make('wallet.currency.code')->label(__('admin.fields.currency')),
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()->formatStateUsing(fn ($state) => __("admin.wallets.type_{$state}")),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))
-                    ->formatStateUsing(fn ($state, WalletTransaction $record) => ($record->direction === 'debit' ? '−' : '+').$state)
+                    ->formatStateUsing(fn ($state, WalletTransaction $record) => ($record->direction === 'debit' ? '−' : '+').Fields::formatMoney($state, $record->wallet?->currency))
                     ->color(fn (WalletTransaction $record) => $record->direction === 'debit' ? 'danger' : 'success'),
                 TextColumn::make('balance_after')->label(__('admin.fields.balance_after')),
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->placeholder('—'),

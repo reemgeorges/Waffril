@@ -5,6 +5,7 @@ namespace App\Filament\Resources\DriverCashSettlements;
 use App\Filament\Resources\DriverCashSettlements\Pages\ListDriverCashSettlements;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Models\DriverCashSettlement;
 use App\Services\Driver\DriverCashSettlementService;
 use App\Support\Auth\AdminPermissions;
@@ -42,8 +43,8 @@ class DriverCashSettlementResource extends AdminResource
                 TextColumn::make('business_date')->label(__('admin.fields.business_date'))->date()->sortable(),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->searchable(),
                 TextColumn::make('currency.code')->label(__('admin.fields.currency')),
-                TextColumn::make('expected_amount')->label(__('admin.fields.expected_amount')),
-                TextColumn::make('received_amount')->label(__('admin.fields.received_amount'))->placeholder('—'),
+                TextColumn::make('expected_amount')->label(__('admin.fields.expected_amount'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                TextColumn::make('received_amount')->label(__('admin.fields.received_amount'))->placeholder('—')->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->color(fn ($state) => match ($state) {
                         'settled' => 'success', 'disputed' => 'danger', default => 'warning'

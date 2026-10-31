@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderPayments;
 
 use App\Filament\Resources\OrderPayments\Pages\ListOrderPayments;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\OrderPayment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,10 +38,10 @@ class OrderPaymentResource extends AdminResource
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->searchable(),
                 TextColumn::make('method.name')->label(__('admin.fields.payment_method')),
                 TextColumn::make('currency.code')->label(__('admin.fields.currency')),
-                TextColumn::make('amount')->label(__('admin.fields.amount')),
-                TextColumn::make('collected_amount')->label(__('admin.fields.collected_amount')),
-                TextColumn::make('reversed_amount')->label(__('admin.fields.reversed_amount')),
-                TextColumn::make('refunded_amount')->label(__('admin.fields.refunded_amount')),
+                TextColumn::make('amount')->label(__('admin.fields.amount'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                TextColumn::make('collected_amount')->label(__('admin.fields.collected_amount'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                TextColumn::make('reversed_amount')->label(__('admin.fields.reversed_amount'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                TextColumn::make('refunded_amount')->label(__('admin.fields.refunded_amount'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()->formatStateUsing(fn ($state) => __("admin.payments.status_{$state}")),
                 TextColumn::make('collectedBy.name')->label(__('admin.fields.collected_by'))->placeholder('—'),
                 TextColumn::make('paid_at')->label(__('admin.fields.paid_at'))->dateTime()->placeholder('—'),

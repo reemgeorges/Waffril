@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Drivers\RelationManagers;
 
+use App\Filament\Support\Fields;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -27,7 +28,7 @@ class CashCollectionsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number')),
                 TextColumn::make('collected_amount')->label(__('admin.fields.collected_amount'))
-                    ->formatStateUsing(fn ($state, $record) => $state.' '.$record->currency?->code),
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('paid_at')->label(__('admin.fields.paid_at'))->dateTime()->sortable(),
                 TextColumn::make('settlement.business_date')->label(__('admin.fields.business_date'))->date()->placeholder(__('admin.drivers.unsettled')),
             ])

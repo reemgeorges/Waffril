@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers\RelationManagers;
 
 use App\Filament\Resources\Wallets\WalletResource;
+use App\Filament\Support\Fields;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -28,7 +29,7 @@ class WalletsRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('currency.code')->label(__('admin.fields.currency')),
-                TextColumn::make('balance')->label(__('admin.fields.balance')),
+                TextColumn::make('balance')->label(__('admin.fields.balance'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->dateTime(),
             ])
             ->recordActions([

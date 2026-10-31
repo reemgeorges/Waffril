@@ -11,6 +11,7 @@ use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\Order;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -55,7 +56,7 @@ class OrderResource extends AdminResource
     public static function infolist(Schema $schema): Schema
     {
         $money = fn (string $field) => TextEntry::make($field)->label(__("admin.fields.{$field}"))
-            ->formatStateUsing(fn ($state, Order $record) => $state.' '.$record->currency?->code);
+            ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency));
 
         return $schema->components([
             Section::make(__('admin.orders.summary'))->columns(4)->schema([
@@ -105,7 +106,7 @@ class OrderResource extends AdminResource
                 TextColumn::make('city.name')->label(__('admin.fields.city'))->toggleable(),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
                 TextColumn::make('total')->label(__('admin.fields.total'))
-                    ->formatStateUsing(fn ($state, Order $record) => $state.' '.$record->currency?->code),
+                    ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
             ])
             ->filters([

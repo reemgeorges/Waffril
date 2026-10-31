@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderRefunds;
 
 use App\Filament\Resources\OrderRefunds\Pages\ListOrderRefunds;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\OrderRefund;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -32,7 +33,7 @@ class OrderRefundResource extends AdminResource
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->searchable(),
                 TextColumn::make('payment.method.name')->label(__('admin.fields.payment_method')),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))
-                    ->formatStateUsing(fn ($state, OrderRefund $record) => $state.' '.$record->currency?->code),
+                    ->formatStateUsing(fn ($state, OrderRefund $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('reason_code')->label(__('admin.fields.reason')),
                 TextColumn::make('createdBy.name')->label(__('admin.fields.created_by')),
             ])
