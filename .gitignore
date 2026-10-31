@@ -41,3 +41,5 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/public/vendor/scalar
+/backups

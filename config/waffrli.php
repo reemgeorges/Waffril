@@ -54,6 +54,15 @@ return [
     ],
 
     /*
+    | Interactive API docs (Scalar) at /docs, built from
+    | docs/waffrli/openapi/waffrli-api.yaml (php artisan waffrli:openapi).
+    | Opt-in for local/shared development; never registered in production.
+    */
+    'api_docs' => [
+        'enabled' => (bool) env('WAFFRLI_API_DOCS_ENABLED', false),
+    ],
+
+    /*
      * Text-message transport for OTPs. `fake` (default) never sends anything
      * and is refused in production; `twilio` needs real credentials in the
      * environment. Credentials are never committed.

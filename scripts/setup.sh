@@ -84,7 +84,7 @@ fi
 
 step "8/10 Storage link and assets"
 docker compose run --rm --no-deps app php artisan storage:link --relative || true
-docker compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme'
+docker compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme && npm run build:api-docs'
 
 step "9/10 Starting all services"
 docker compose up -d

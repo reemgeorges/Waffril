@@ -5,10 +5,12 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "build:admin-theme": "tailwindcss --input ./resources/css/filament/admin/theme.css --output ./public/css/filament/admin/theme.css --minify"
+        "build:admin-theme": "tailwindcss --input ./resources/css/filament/admin/theme.css --output ./public/css/filament/admin/theme.css --minify",
+        "build:api-docs": "node -e \"const fs=require('fs');fs.mkdirSync('public/vendor/scalar',{recursive:true});fs.copyFileSync('node_modules/@scalar/api-reference/dist/browser/standalone.js','public/vendor/scalar/standalone.js')\""
     },
     "devDependencies": {
         "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+        "@scalar/api-reference": "1.72.2",
         "@tailwindcss/cli": "^4.3.3",
         "@tailwindcss/vite": "^4.0.0",
         "axios": "^1.11.0",

@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\Waffrli\BuildOpenApiCommand;
 use App\Http\Controllers\Realtime\BroadcastAuthController;
 use App\Http\Middleware\SetAdminPanelLocale;
 use App\Models\Admin;
@@ -29,3 +30,17 @@ Route::post('/admin/locale/{locale}', function (string $locale) {
 Route::post('/broadcasting/auth', BroadcastAuthController::class)
     ->middleware(['auth:admin_web', 'throttle:60,1'])
     ->name('broadcasting.auth');
+
+// WAFFRLI (2026-11-05): interactive API reference (Scalar, vendored — no CDN)
+// over the generated OpenAPI document. Opt-in (WAFFRLI_API_DOCS_ENABLED=true)
+// and never registered in production. Read-only; "try it" calls hit this
+// same host with the caller's own token.
+if (config('waffrli.api_docs.enabled') && ! app()->environment('production')) {
+    Route::get('/docs', fn () => response()->view('api-docs', [
+        'scalarAvailable' => is_file(public_path('vendor/scalar/standalone.js')),
+    ]))->middleware('throttle:60,1')->name('api-docs');
+
+    Route::get('/docs/openapi.yaml', fn () => response()->file(base_path(BuildOpenApiCommand::PATH), [
+        'Content-Type' => 'application/yaml; charset=utf-8',
+    ]))->middleware('throttle:60,1')->name('api-docs.spec');
+}

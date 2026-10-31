@@ -102,7 +102,7 @@ if ($loadDemo) { Compose run --rm app php artisan db:seed --class=WaffrliDemoSee
 
 Step '8/10 Storage link and assets'
 Compose run --rm --no-deps app php artisan storage:link --relative
-Compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme'
+Compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme && npm run build:api-docs'
 
 Step '9/10 Starting all services'
 Compose up -d
