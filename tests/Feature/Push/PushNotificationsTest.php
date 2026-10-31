@@ -24,6 +24,7 @@ use Database\Seeders\Demo\DemoPeopleSeeder;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Notifications\Events\BroadcastNotificationCreated;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\Feature\Customer\CustomerTestCase;
 
 /**
@@ -160,6 +161,26 @@ class PushNotificationsTest extends CustomerTestCase
         $this->assertSame(PushTransport::RESULT_INVALID_TOKEN, $run(new SendPushMessage($token->id, $message, 'k3')));
         $this->assertFalse($token->fresh()->is_active);
         $this->assertSame('skipped_inactive', $run(new SendPushMessage($token->id, $message, 'k4')));
+    }
+
+    public function test_fake_transport_is_observable_across_processes_without_exposing_tokens(): void
+    {
+        $user = $this->demoCustomer(1);
+        $service = app(DeviceTokenService::class);
+        $message = ['title' => 'Order accepted', 'body' => 'B', 'data' => ['event' => 'x']];
+        $run = fn (SendPushMessage $job) => app()->call([$job, 'handle']);
+
+        $dead = $service->register($user, ['token' => FakePushTransport::UNREGISTERED_PREFIX.str_repeat('d', 24), 'platform' => 'android', 'device_id' => 'dead']);
+        $this->assertSame(PushTransport::RESULT_INVALID_TOKEN, $run(new SendPushMessage($dead->id, $message, 'u1')));
+        $this->assertFalse($dead->fresh()->is_active, 'An unregistered token is deactivated, like an FCM UNREGISTERED answer.');
+
+        Log::spy();
+        $live = $service->register($user, ['token' => $this->token('live'), 'platform' => 'android', 'device_id' => 'live']);
+        $this->assertSame(PushTransport::RESULT_SENT, $run(new SendPushMessage($live->id, $message, 'u2')));
+        Log::shouldHaveReceived('info')->withArgs(fn ($event, $context = []) => $event === 'push.fake_delivered'
+            && $context['title'] === 'Order accepted'
+            && $context['token_sha256'] === substr(hash('sha256', $this->token('live')), 0, 16)
+            && ! str_contains(json_encode($context), $this->token('live')));
     }
 
     public function test_push_disabled_by_default_and_logout_stops_pushes(): void

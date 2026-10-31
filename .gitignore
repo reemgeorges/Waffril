@@ -43,3 +43,5 @@ Homestead.yaml
 Thumbs.db
 /public/vendor/scalar
 /backups
+/e2e/.env
+/e2e/results
