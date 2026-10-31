@@ -6,7 +6,7 @@
 - Config: `config/reverb.php` and `config/broadcasting.php`. Every key comes from the environment; nothing is committed.
 - Hardening in `config/reverb.php`:
   - client events (whisper) are **disabled** (`REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM=none`), so clients only receive what the server publishes;
-  - allowed origins come from `REVERB_ALLOWED_ORIGINS` (comma-separated; `*` only for local).
+  - allowed origins come from `REVERB_ALLOWED_ORIGINS`: comma-separated **host names** (not URLs; wildcards allowed, e.g. `admin.example.com,*.example.com`). Reverb compares the *host* of the `Origin` header (error 4009 "Origin not allowed" otherwise). A client that sends **no** `Origin` header is refused unless the value is `*` — verified on the Docker stack (2026-11-05). Browsers always send it; native mobile WebSocket clients may not, so check what the customer/driver apps send before restricting origins in production. Private channels stay protected by the signed channel authorization (`/api/v1/{customer,driver}/broadcasting/auth`, `/broadcasting/auth`) whatever this value is.
 - Business code publishes through `App\Services\Realtime\Realtime::publish()` and notifications go through `Notify::send()`. Both run after the transaction commits, and both log failures instead of throwing, so a WebSocket outage never fails an order, a payment or a GPS update.
 - Events are queued (`ShouldBroadcast`), so production needs a queue worker.
 
@@ -18,7 +18,7 @@
 | `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET` | your own random values; the secret never leaves the server |
 | `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME` | where Laravel and the clients reach Reverb (public TLS host in production) |
 | `REVERB_SERVER_HOST`, `REVERB_SERVER_PORT` | where `php artisan reverb:start` listens |
-| `REVERB_ALLOWED_ORIGINS` | the admin panel origin(s) in production |
+| `REVERB_ALLOWED_ORIGINS` | host names allowed to open sockets from a web page (e.g. the admin panel host); see the Origin note above for native apps |
 | `REVERB_PUBLIC_HOST/PORT/SCHEME` (optional) | browser-facing values for Filament, if they differ from the above |
 
 ### Channel authorization endpoints (one identity each)
@@ -148,7 +148,7 @@ php artisan serve
 
 ## 6. Production checklist (not executed by this work)
 
-1. Set the Reverb variables with fresh random values. Put Reverb behind TLS (wss) with a reverse proxy, and restrict `REVERB_ALLOWED_ORIGINS` to the admin origin.
+1. Set the Reverb variables with fresh random values. Put Reverb behind TLS (wss) with a reverse proxy, and set `REVERB_ALLOWED_ORIGINS` to the admin panel **host name** — after confirming the mobile apps send an `Origin` header (otherwise their connections are refused; that trade-off is a product decision, not made here).
 2. Run `php artisan reverb:start` and `php artisan queue:work` under a supervisor. Use `reverb:restart` after deploys.
 3. If more than one Reverb node runs, enable `REVERB_SCALING_ENABLED` with Redis.
 4. Install the Firebase service-account JSON outside the web root, readable only by the app user. Set `WAFFRLI_PUSH_DRIVER=fcm`, then enable push **after** a device test on staging.

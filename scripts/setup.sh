@@ -83,7 +83,10 @@ if [[ "$DEMO" == yes ]] || { [[ "$DEMO" == ask ]] && ask "Load DEMO data (fictio
 fi
 
 step "8/10 Storage link and assets"
-docker compose run --rm --no-deps app php artisan storage:link --relative || true
+# Absolute link (/var/www/html/...): every container mounts the project there.
+# (--relative would need symfony/filesystem, which is not installed.)
+if [[ -L public/storage || -e public/storage ]]; then echo "public/storage exists (kept)."
+else docker compose run --rm --no-deps app php artisan storage:link; fi
 docker compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme && npm run build:api-docs'
 
 step "9/10 Starting all services"

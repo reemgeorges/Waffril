@@ -101,7 +101,10 @@ $loadDemo = $Demo -or ((-not $NoDemo) -and ((Read-Host 'Load DEMO data (fictiona
 if ($loadDemo) { Compose run --rm app php artisan db:seed --class=WaffrliDemoSeeder }
 
 Step '8/10 Storage link and assets'
-Compose run --rm --no-deps app php artisan storage:link --relative
+# Absolute link (/var/www/html/...): every container mounts the project there.
+# (--relative would need symfony/filesystem, which is not installed.)
+if (Test-Path public/storage) { Write-Host 'public/storage exists (kept).' }
+else { Compose run --rm --no-deps app php artisan storage:link }
 Compose run --rm --no-deps node sh -c 'npm run build && npm run build:admin-theme && npm run build:api-docs'
 
 Step '9/10 Starting all services'
