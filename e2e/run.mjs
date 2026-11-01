@@ -85,9 +85,11 @@ async function main() {
     assert((await fetch(BASE + '/admin/login')).status === 200, '/admin/login');
     const probe = new ReverbClient(WS, async () => ({ status: 0 }), 'probe');
     const sid = await probe.connect(); probe.close();
-    const bare = new ReverbClient(WS, async () => ({ status: 0 }), 'no-origin', null);
-    const refused = await bare.connect(4000).then(() => 'ACCEPTED', (e) => e.message); bare.close();
-    return `Reverb socket_id ${sid} (Origin http://localhost:8080); a client without Origin → ${refused.includes('4009') ? 'refused 4009 Origin not allowed' : refused}`;
+    const tryOrigin = async (origin) => { const c = new ReverbClient(WS, async () => ({ status: 0 }), 'origin-probe', origin); const r = await c.connect(4000).then(() => 'accepted', (e) => (e.message.includes('4009') ? 'refused' : e.message)); c.close(); return r; };
+    const none = await tryOrigin(null), evil = await tryOrigin('https://evil.example'), lookalike = await tryOrigin('http://localhost.evil.example');
+    assert(evil === 'refused' && lookalike === 'refused', `foreign browser origins must be refused (got ${evil}, ${lookalike})`);
+    if (none !== 'accepted') return { skip: `native clients (no Origin) are refused: set REVERB_ALLOW_ORIGINLESS_CLIENTS=true (got ${none})` };
+    return `Reverb socket_id ${sid}; Origin localhost accepted; no Origin (native app) accepted; https://evil.example and localhost.evil.example refused (4009)`;
   });
 
   // ------------------------------------------------- 1. customer authentication
@@ -213,7 +215,7 @@ async function main() {
 
   await report.step('WS.2', 'Channel authorization denies foreign channels (real auth endpoint + Reverb)', 'ws', async () => {
     S.other = await customerLogin(cfg.E2E_OTHER_CUSTOMER_PHONE, 'e2e-other-' + Date.now());
-    S.ows = customerWs(S.other.token, 'other-customer'); await S.ows.connect();
+    S.ows = customerWs(S.other.token, 'other-customer (native, no Origin)'); S.ows.origin = null; await S.ows.connect();
     const own = await S.ows.subscribe(`private-user.${S.other.id}`);
     const foreignOrder = await S.ows.subscribe(`private-order.${OID}`);
     const foreignUser = await S.ows.subscribe(`private-user.${S.c.id}`);
@@ -222,7 +224,7 @@ async function main() {
     assert(own.status === 200, `own channel → ${own.status}`);
     assert(foreignOrder.status === 403 && foreignUser.status === 403 && adminMap.status === 403, `foreign: order ${foreignOrder.status}, user ${foreignUser.status}, driver→admin map ${adminMap.status}`);
     assert(forged !== 'subscribed', 'Reverb accepted a forged signature');
-    return `own 200; other customer's order 403, user 403; driver → admin map 403; forged signature → ${forged} by Reverb`;
+    return `native client (no Origin): own channel 200; other customer's order 403, user 403; driver → admin map 403; forged signature → ${forged} by Reverb`;
   });
 
   // ------------------------------------------------- 9-11. Filament (real browser)
@@ -341,11 +343,19 @@ async function main() {
       return `token #${dead.id} registered (replaces the previous one on the same device); checked after the next notification`;
     });
 
+
+    await report.step('WS.4', 'Native client (no Origin header) of the customer receives the order events', 'ws', async () => {
+      S.nws = customerWs(S.c.token, 'customer-native'); S.nws.origin = null; await S.nws.connect();
+      const r = await S.nws.subscribe(`private-order.${OID}`);
+      assert(r.status === 200, `auth → ${r.status}`);
+      return `socket ${S.nws.socketId} without Origin subscribed to private-order.${OID} with the app's signed authorization`;
+    });
     // ------------------------------------------------- 16-17 pickup and delivery
     await report.step('16', 'Driver picks up → customer receives picked_up', 'http+ws', async () => {
       await S.d.api.ok('POST', `/api/v1/driver/orders/${OID}/pickup`);
       const ev = await S.cws.waitFor(statusEvent('picked_up', OID), 10000, 'picked_up');
-      return `after ${ev.latency} ms`;
+      if (S.nws) await S.nws.waitFor(statusEvent('picked_up', OID), 10000, 'picked_up on the native (no Origin) client');
+      return `after ${ev.latency} ms (browser-style and native clients)`;
     });
 
     await report.step('17', 'Driver delivers and collects the cash remainder', 'http+ws', async () => {
@@ -489,7 +499,7 @@ async function main() {
   } finally {
     await page.screenshot({ path: path.join(shots, 'last.png') }).catch(() => {});
     await browser.close();
-    [S.cws, S.dws, S.ows].forEach((w) => w?.close());
+    [S.cws, S.dws, S.ows, S.nws].forEach((w) => w?.close());
   }
 }
 

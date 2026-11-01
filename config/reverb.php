@@ -82,8 +82,18 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                // WAFFRLI: comma-separated origins (e.g. https://admin.example.com); '*' only for local.
-                'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '*'))))),
+                // WAFFRLI: comma-separated HOST NAMES whose web pages may connect
+                // (e.g. admin.example.com,*.example.com); '*' only for local.
+                // REVERB_ALLOW_ORIGINLESS_CLIENTS=true additionally admits clients
+                // that send NO Origin header (native customer/driver apps): Reverb
+                // matches the Origin's host, which is '' when the header is absent.
+                // Safe because every channel is private and needs a server-signed
+                // authorization (bearer token / admin session + CSRF). See
+                // docs/waffrli/realtime-and-push.md ("Mobile clients and Origin").
+                'allowed_origins' => array_values(array_unique(array_merge(
+                    array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '*')))),
+                    filter_var(env('REVERB_ALLOW_ORIGINLESS_CLIENTS', false), FILTER_VALIDATE_BOOL) ? [''] : [],
+                ))),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),
