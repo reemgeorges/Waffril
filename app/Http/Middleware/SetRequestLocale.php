@@ -20,19 +20,24 @@ class SetRequestLocale
 
     public function handle(Request $request, Closure $next)
     {
-        $header = (string) $request->header('Accept-Language', '');
-
-        foreach (explode(',', $header) as $part) {
-            $language = strtolower(substr(trim(explode(';', $part)[0]), 0, 2));
-            if (in_array($language, self::SUPPORTED, true)) {
-                app()->setLocale($language);
-                break;
-            }
-        }
+        self::applyFrom($request);
 
         $response = $next($request);
         $response->headers->set('Content-Language', app()->getLocale());
 
         return $response;
+    }
+
+    /** Apply the first supported Accept-Language (also used for errors raised before routing, e.g. 404). */
+    public static function applyFrom(Request $request): void
+    {
+        foreach (explode(',', (string) $request->header('Accept-Language', '')) as $part) {
+            $language = strtolower(substr(trim(explode(';', $part)[0]), 0, 2));
+            if (in_array($language, self::SUPPORTED, true)) {
+                app()->setLocale($language);
+
+                return;
+            }
+        }
     }
 }

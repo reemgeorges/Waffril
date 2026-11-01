@@ -62,15 +62,12 @@ class UploadRoutesDisabledTest extends TestCase
     {
         $response = $this->postJson($uri, []);
 
-        // The route has been removed entirely, so Laravel's router throws a
-        // routing NotFoundHttpException, which the app's pre-existing generic
-        // exception handler converts into a 500 JSON envelope (same
-        // 404-vs-500 pre-existing behavior documented in
-        // PublicCrudRoutesDisabledTest / AdminTestCrudRouteDisabledTest).
-        // What matters here is that the request never reaches the
-        // controller/service layer and never returns a 2xx, and that no file
-        // is written anywhere.
-        $response->assertStatus(500);
+        // The route was removed, so the router throws NotFoundHttpException.
+        // WAFFRLI (2026-11-05): that now answers 404 in the standard envelope
+        // (it used to fall through to the generic 500 branch — a defect, see
+        // tests/Feature/ApiErrorHandlingTest). The request never reaches the
+        // controller/service layer and never returns a 2xx.
+        $response->assertStatus(404);
         $response->assertJsonStructure(['data', 'status', 'error', 'statusCode']);
         $response->assertJsonPath('status', false);
         $response->assertJsonPath('data', null);

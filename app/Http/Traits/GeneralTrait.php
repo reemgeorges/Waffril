@@ -4,6 +4,7 @@ namespace App\Http\Traits;
 
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\Otp\OtpException;
+use App\Http\Middleware\SetRequestLocale;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -12,6 +13,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Exceptions\UnauthorizedException as SpatieUnauthorized;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 trait GeneralTrait
 {
@@ -98,18 +102,31 @@ trait GeneralTrait
             return $this->handleQueryException($e);
 
         } elseif ($e instanceof ThrottleRequestsException) {
-            // Phase 3C (2026-10-25) fix: Laravel's ThrottleRequestsException
-            // (429) from the new `throttle:` middleware on the auth routes
-            // was previously falling through to the generic else branch
-            // below and coming back as a misleading 500. Deliberately
-            // narrow to this one exception type rather than every
-            // HttpExceptionInterface — a broader catch also intercepts
-            // routing 404s (NotFoundHttpException), which ~30 pre-existing
-            // tests across Phase 0/0.1/0.2 explicitly assert come back as
-            // 500 via this same catch-all. Changing that is a real,
-            // wide-blast-radius behavior change unrelated to what this
-            // phase was asked to fix, so it is deliberately left alone.
+            // Phase 3C (2026-10-25): Laravel's ThrottleRequestsException (429)
+            // from the `throttle:` middleware on the auth routes.
             return $this->apiResponse(null, false, $e->getMessage() ?: 'Too many requests. Please try again later.', 429);
+
+        } elseif ($e instanceof HttpExceptionInterface) {
+            // WAFFRLI (2026-11-05): HTTP exceptions keep their own status in
+            // the standard envelope. Previously they fell through to the
+            // catch-all below, so an UNKNOWN API ROUTE (routing
+            // NotFoundHttpException) answered 500 instead of 404. Routing
+            // messages are replaced by a localized one (no path echo);
+            // messages given explicitly to abort() are kept.
+            $status = $e->getStatusCode();
+            if (request()) {
+                // Unmatched routes never run the locale middleware.
+                SetRequestLocale::applyFrom(request());
+            }
+            $routing = $e->getMessage() === '' || str_starts_with($e->getMessage(), 'The route ') || str_contains($e->getMessage(), 'method is not supported');
+            $message = match (true) {
+                $routing && $e instanceof NotFoundHttpException => __('messages.http.not_found'),
+                $routing && $e instanceof MethodNotAllowedHttpException => __('messages.http.method_not_allowed'),
+                $e->getMessage() !== '' => $e->getMessage(),
+                default => __('messages.http.error'),
+            };
+
+            return response()->json(['data' => null, 'status' => false, 'error' => $message, 'statusCode' => $status], $status, $e->getHeaders());
 
         } else {
             // SECURITY (Phase 0, 2026-10-25): never leak raw exception messages

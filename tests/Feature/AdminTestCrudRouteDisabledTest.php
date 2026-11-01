@@ -43,13 +43,12 @@ class AdminTestCrudRouteDisabledTest extends TestCase
             'image' => 'attacker.png',
         ]);
 
-        // The route has been removed entirely, so Laravel's router throws a
-        // routing NotFoundHttpException, which the app's pre-existing generic
-        // exception handler converts into a 500 JSON envelope (see
-        // PublicCrudRoutesDisabledTest for the same, pre-existing, out-of-scope
-        // 404-vs-500 behavior). What matters here is that the request never
-        // reaches the controller/service layer and never returns a 2xx.
-        $response->assertStatus(500);
+        // The route was removed, so the router throws NotFoundHttpException.
+        // WAFFRLI (2026-11-05): that now answers 404 in the standard envelope
+        // (it used to fall through to the generic 500 branch — a defect, see
+        // tests/Feature/ApiErrorHandlingTest). The request never reaches the
+        // controller/service layer and never returns a 2xx.
+        $response->assertStatus(404);
         $response->assertJsonStructure(['data', 'status', 'error', 'statusCode']);
         $response->assertJsonPath('status', false);
         $response->assertJsonPath('data', null);

@@ -10,6 +10,11 @@ return [
     'unauthenticated' => 'Please sign in to continue.',
     'need_login' => 'Please sign in to continue.',
     'forbidden' => 'You are not allowed to perform this action.',
+    'http' => [
+        'not_found' => 'The requested resource was not found.',
+        'method_not_allowed' => 'This method is not allowed for this resource.',
+        'error' => 'The request could not be processed.',
+    ],
     'forbidden_role_or_permission' => 'Your role does not allow this action.',
     'db_duplicate_entry' => 'This record already exists.',
     'db_fk_restricted' => 'This record is used elsewhere and cannot be removed.',
