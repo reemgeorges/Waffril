@@ -10,6 +10,7 @@ file="${1:-}"
 gzip -t "$file" || { echo "Not a valid gzip backup." >&2; exit 1; }
 db="$( { gzip -dc "$file" 2>/dev/null || true; } | grep -m1 -oE '^CREATE DATABASE .*`[A-Za-z0-9_]+`' | grep -oE '`[A-Za-z0-9_]+`' | tr -d '`')"
 [[ -n "$db" ]] || { echo "Could not find the database name in the backup." >&2; exit 1; }
+restorable_db "$db" || { echo "Refused: '$db' is not a restorable local database (allowed: '$DB_NAME' from .env, *_test, *_testing, waffrli_demo_build)." >&2; exit 3; }
 echo "This REPLACES the local Docker database '$db' with $file."
 read -r -p "Type the database name to confirm: " answer
 [[ "$answer" == "$db" ]] || { echo "Cancelled."; exit 1; }

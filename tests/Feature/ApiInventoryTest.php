@@ -27,4 +27,16 @@ class ApiInventoryTest extends TestCase
 
         $this->assertSame([], $unknown, "Bruno requests calling routes that do not exist:\n".implode("\n", $unknown));
     }
+
+    public function test_shared_portal_export_contains_every_bruno_request(): void
+    {
+        $bruno = collect(ApiInventoryCommand::brunoRequests())->count();
+        $count = function (array $collections) use (&$count): int {
+            return array_sum(array_map(fn ($c) => count($c['requests'] ?? []) + $count($c['folders'] ?? []), $collections));
+        };
+        $portal = json_decode((string) file_get_contents(base_path('api-tests/hoppscotch/waffrli-collections.json')), true);
+
+        $this->assertSame($bruno, $count($portal), 'Regenerate the portal export: python3 api-tests/bruno/generators/hoppscotch.py');
+        $this->assertStringNotContainsString('"password":', (string) file_get_contents(base_path('api-tests/hoppscotch/waffrli-environments.json')));
+    }
 }

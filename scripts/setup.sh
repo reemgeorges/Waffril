@@ -6,13 +6,14 @@
 #   ./scripts/setup.sh                 # interactive
 #   ./scripts/setup.sh --demo --yes    # load demo data, fill empty secrets
 #   ./scripts/setup.sh --no-demo --no-admin
+#   ./scripts/setup.sh --portal        # also start the shared API portal (Hoppscotch)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DEMO=ask; YES=0; ADMIN=ask
+DEMO=ask; YES=0; ADMIN=ask; PORTAL=0
 for arg in "$@"; do
   case "$arg" in
-    --demo) DEMO=yes ;; --no-demo) DEMO=no ;; --yes) YES=1 ;; --no-admin) ADMIN=no ;;
+    --demo) DEMO=yes ;; --no-demo) DEMO=no ;; --yes) YES=1 ;; --no-admin) ADMIN=no ;; --portal) PORTAL=1 ;;
     *) echo "Unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -35,9 +36,11 @@ declare -A secrets=(
   [DB_PASSWORD]="$(secret 16)" [DB_ROOT_PASSWORD]="$(secret 16)"
   [REVERB_APP_ID]="$((RANDOM % 900000 + 100000))" [REVERB_APP_KEY]="$(secret 10)"
   [REVERB_APP_SECRET]="$(secret 20)" [WAFFRLI_DEV_OTP_PEEK_TOKEN]="$(secret 16)"
+  [HOPPSCOTCH_DB_PASSWORD]="$(secret 16)" [HOPPSCOTCH_JWT_SECRET]="$(secret 24)"
+  [HOPPSCOTCH_SESSION_SECRET]="$(secret 24)" [HOPPSCOTCH_DATA_ENCRYPTION_KEY]="$(secret 16)"
 )
 empty=()
-for key in DB_PASSWORD DB_ROOT_PASSWORD REVERB_APP_ID REVERB_APP_KEY REVERB_APP_SECRET WAFFRLI_DEV_OTP_PEEK_TOKEN; do
+for key in DB_PASSWORD DB_ROOT_PASSWORD REVERB_APP_ID REVERB_APP_KEY REVERB_APP_SECRET WAFFRLI_DEV_OTP_PEEK_TOKEN HOPPSCOTCH_DB_PASSWORD HOPPSCOTCH_JWT_SECRET HOPPSCOTCH_SESSION_SECRET HOPPSCOTCH_DATA_ENCRYPTION_KEY; do
   [[ -z "$(env_value "$key")" ]] && empty+=("$key")
 done
 if (( ${#empty[@]} )); then
@@ -93,6 +96,13 @@ step "9/10 Starting all services"
 docker compose up -d
 docker compose ps
 
+if (( PORTAL )); then
+  step "9b Shared API portal (Hoppscotch, profile 'portal')"
+  docker compose --profile portal up -d
+  # One-time onboarding from inside the Compose network (no Node needed on the host).
+  docker compose run --rm --no-deps -e HOPPSCOTCH_URL=http://hoppscotch node node scripts/portal/onboard.mjs
+fi
+
 step "10/10 Super Admin"
 if [[ "$ADMIN" == ask ]] && ask "Create a Super Admin now (you will type the password)? [Y/n]" y; then
   docker compose exec app php artisan waffrli:create-super-admin
@@ -107,5 +117,6 @@ WAFFRLI is running:
   API docs         http://localhost:${port}/docs
   Reverb (ws)      ws://localhost:$(env_value REVERB_PUBLIC_PORT || echo 8085)
   Mailpit          http://localhost:8025
+  API portal       http://localhost:$(env_value HOPPSCOTCH_PORT || echo 3000) (with --portal; sign-in links arrive in Mailpit)
   MySQL            127.0.0.1:$(env_value FORWARD_DB_PORT || echo 33060) (credentials in .env)
 EOF

@@ -20,11 +20,13 @@
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
   powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Demo -Yes
+  powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Demo -Yes -Portal
 #>
 param(
     [switch]$Demo,      # load demo data without asking
     [switch]$NoDemo,    # never load demo data
-    [switch]$Yes        # answer "yes" to "fill empty .env values?"
+    [switch]$Yes,       # answer "yes" to "fill empty .env values?"
+    [switch]$Portal     # also start the shared API portal (Hoppscotch, profile "portal")
 )
 
 $ErrorActionPreference = 'Stop'
@@ -52,6 +54,8 @@ $secrets = [ordered]@{
     'DB_PASSWORD' = (NewSecret 16); 'DB_ROOT_PASSWORD' = (NewSecret 16)
     'REVERB_APP_ID' = ('' + (Get-Random -Minimum 100000 -Maximum 999999)); 'REVERB_APP_KEY' = (NewSecret 10)
     'REVERB_APP_SECRET' = (NewSecret 20); 'WAFFRLI_DEV_OTP_PEEK_TOKEN' = (NewSecret 16)
+    'HOPPSCOTCH_DB_PASSWORD' = (NewSecret 16); 'HOPPSCOTCH_JWT_SECRET' = (NewSecret 24)
+    'HOPPSCOTCH_SESSION_SECRET' = (NewSecret 24); 'HOPPSCOTCH_DATA_ENCRYPTION_KEY' = (NewSecret 16)
 }
 function EnvValue($lines, $key) {
     $line = $lines | Where-Object { $_ -match "^$key=" } | Select-Object -First 1
@@ -111,6 +115,13 @@ Step '9/10 Starting all services'
 Compose up -d
 Compose ps
 
+if ($Portal) {
+    Step "9b Shared API portal (Hoppscotch, profile 'portal')"
+    Compose --profile portal up -d
+    # One-time onboarding from inside the Compose network (no Node needed on Windows).
+    Compose run --rm --no-deps -e HOPPSCOTCH_URL=http://hoppscotch node node scripts/portal/onboard.mjs
+}
+
 Step '10/10 Super Admin'
 if ((Read-Host 'Create a Super Admin now (you will type the password)? [Y/n]') -notmatch '^[nN]') {
     docker compose exec app php artisan waffrli:create-super-admin
@@ -124,4 +135,5 @@ Write-Host "  Admin (Filament) http://localhost:$port/admin"
 Write-Host "  API docs       http://localhost:$port/docs"
 Write-Host "  Reverb (ws)    ws://localhost:8085"
 Write-Host "  Mailpit        http://localhost:8025"
+if ($Portal) { Write-Host "  API portal     http://localhost:3000 (sign-in links arrive in Mailpit)" }
 Write-Host "  MySQL          127.0.0.1:33060 (user/password in .env)"
