@@ -26,7 +26,8 @@ param(
     [switch]$Demo,      # load demo data without asking
     [switch]$NoDemo,    # never load demo data
     [switch]$Yes,       # answer "yes" to "fill empty .env values?"
-    [switch]$Portal     # also start the shared API portal (Hoppscotch, profile "portal")
+    [switch]$Portal,    # also start the shared API portal (Hoppscotch, profile "portal")
+    [switch]$NoAdmin    # skip the Super Admin prompt
 )
 
 $ErrorActionPreference = 'Stop'
@@ -123,7 +124,7 @@ if ($Portal) {
 }
 
 Step '10/10 Super Admin'
-if ((Read-Host 'Create a Super Admin now (you will type the password)? [Y/n]') -notmatch '^[nN]') {
+if ((-not $NoAdmin) -and ((Read-Host 'Create a Super Admin now (you will type the password)? [Y/n]') -notmatch '^[nN]')) {
     docker compose exec app php artisan waffrli:create-super-admin
 }
 

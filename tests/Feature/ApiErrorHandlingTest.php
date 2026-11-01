@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -41,7 +42,7 @@ class ApiErrorHandlingTest extends TestCase
         ];
     }
 
-    /** @dataProvider unknownRoutes */
+    #[DataProvider('unknownRoutes')]
     public function test_unknown_api_routes_answer_404_in_the_envelope(string $method, string $uri): void
     {
         $this->assertEnvelope($this->json($method, $uri), 404);

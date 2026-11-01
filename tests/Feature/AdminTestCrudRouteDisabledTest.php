@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -32,9 +33,7 @@ class AdminTestCrudRouteDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider disabledAdminTestRoutesProvider
-     */
+    #[DataProvider('disabledAdminTestRoutesProvider')]
     public function test_previously_unauthenticated_admin_test_route_is_no_longer_reachable(string $method, string $uri): void
     {
         $response = $this->json($method, $uri, [

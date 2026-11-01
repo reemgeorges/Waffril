@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -55,9 +56,7 @@ class UploadRoutesDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider disabledUploadRoutesProvider
-     */
+    #[DataProvider('disabledUploadRoutesProvider')]
     public function test_anonymous_upload_is_no_longer_reachable(string $uri): void
     {
         $response = $this->postJson($uri, []);
@@ -84,9 +83,7 @@ class UploadRoutesDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider pathTraversalFolderProvider
-     */
+    #[DataProvider('pathTraversalFolderProvider')]
     public function test_path_traversal_folder_value_cannot_reach_the_disabled_route(string $uri): void
     {
         $file = UploadedFile::fake()->image('evil.jpg');
