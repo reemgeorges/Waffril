@@ -1,0 +1,42 @@
+meta {
+  name: List paginated
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/currencies/all/paginated?per_page=5&page=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  per_page: 5
+  page: 1
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("paginated currencies", function () {
+    const d = res.getBody().data;
+    expect(d.currencies).to.be.an("array");
+    expect(d.currencies.length).to.be.at.most(5);
+    expect(d).to.include.all.keys("current_page", "next_page", "previous_page", "total_pages");
+  });
+}
+
+docs {
+  Legacy starter contract: the paginated list key is `currencies` (lower-cased model name, plural).
+}

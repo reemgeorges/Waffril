@@ -1,0 +1,34 @@
+meta {
+  name: Unread notifications
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/notifications?unread=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  unread: 1
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("only unread", function () {
+    res.getBody().data.notifications.forEach(n => expect(n.read_at).to.equal(null));
+  });
+}

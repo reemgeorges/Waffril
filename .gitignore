@@ -11,6 +11,8 @@
 # and must stay tracked as the template new clones copy from.
 .env*
 !.env.example
+# WAFFRLI (2026-11-05): Docker template, no secrets (secrets are generated locally by scripts/setup.*)
+!.env.docker.example
 # Phase 11G (2026-10-26): a distribution/review archive of this project
 # (e.g. a zip handed to an external reviewer) is exactly the kind of
 # thing that silently carries a real .env with it if built carelessly —
@@ -39,3 +41,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/public/vendor/scalar
+/backups
+/e2e/.env
+/e2e/results

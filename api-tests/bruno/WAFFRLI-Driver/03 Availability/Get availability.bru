@@ -1,0 +1,36 @@
+meta {
+  name: Get availability
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/availability
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar("has_active_delivery", String(res.getBody().data.has_active_delivery));
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("consistent with active orders", function () {
+    const d = res.getBody().data;
+    expect(d.has_active_delivery).to.equal(d.active_orders.length > 0);
+    expect(d.can_go_offline).to.equal(!d.has_active_delivery);
+  });
+}

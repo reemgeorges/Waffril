@@ -1,0 +1,26 @@
+meta {
+  name: Verify OTP - code is single use
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/otp/verify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "phone": "{{customer_phone}}",
+    "code": "{{otp_code}}",
+    "device_id": "bruno-device"
+  }
+}
+
+tests {
+  test("replaying a consumed code fails", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

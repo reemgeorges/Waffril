@@ -1,0 +1,24 @@
+meta {
+  name: Realtime - admin map channel refused
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/broadcasting/auth
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "socket_id": "1234.5678",
+    "channel_name": "private-admin.drivers-map"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([403, 503]);
+  });
+}

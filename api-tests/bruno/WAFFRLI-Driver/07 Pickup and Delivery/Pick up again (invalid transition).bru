@@ -1,0 +1,26 @@
+meta {
+  name: Pick up again (invalid transition)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/orders/{{order_id}}/pickup
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 422", function () {
+    expect(res.getStatus()).to.equal(422);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -55,22 +56,17 @@ class UploadRoutesDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider disabledUploadRoutesProvider
-     */
+    #[DataProvider('disabledUploadRoutesProvider')]
     public function test_anonymous_upload_is_no_longer_reachable(string $uri): void
     {
         $response = $this->postJson($uri, []);
 
-        // The route has been removed entirely, so Laravel's router throws a
-        // routing NotFoundHttpException, which the app's pre-existing generic
-        // exception handler converts into a 500 JSON envelope (same
-        // 404-vs-500 pre-existing behavior documented in
-        // PublicCrudRoutesDisabledTest / AdminTestCrudRouteDisabledTest).
-        // What matters here is that the request never reaches the
-        // controller/service layer and never returns a 2xx, and that no file
-        // is written anywhere.
-        $response->assertStatus(500);
+        // The route was removed, so the router throws NotFoundHttpException.
+        // WAFFRLI (2026-11-05): that now answers 404 in the standard envelope
+        // (it used to fall through to the generic 500 branch — a defect, see
+        // tests/Feature/ApiErrorHandlingTest). The request never reaches the
+        // controller/service layer and never returns a 2xx.
+        $response->assertStatus(404);
         $response->assertJsonStructure(['data', 'status', 'error', 'statusCode']);
         $response->assertJsonPath('status', false);
         $response->assertJsonPath('data', null);
@@ -87,9 +83,7 @@ class UploadRoutesDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider pathTraversalFolderProvider
-     */
+    #[DataProvider('pathTraversalFolderProvider')]
     public function test_path_traversal_folder_value_cannot_reach_the_disabled_route(string $uri): void
     {
         $file = UploadedFile::fake()->image('evil.jpg');

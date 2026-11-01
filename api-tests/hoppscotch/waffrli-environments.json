@@ -1,0 +1,256 @@
+[
+ {
+  "v": 2,
+  "id": "waffrli-local",
+  "name": "WAFFRLI Local",
+  "variables": [
+   {
+    "key": "base_url",
+    "initialValue": "http://localhost:8080",
+    "currentValue": "http://localhost:8080",
+    "secret": false
+   },
+   {
+    "key": "customer_phone",
+    "initialValue": "+12025550101",
+    "currentValue": "+12025550101",
+    "secret": false
+   },
+   {
+    "key": "driver_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": false
+   },
+   {
+    "key": "driver_phone",
+    "initialValue": "+12025550201",
+    "currentValue": "+12025550201",
+    "secret": false
+   },
+   {
+    "key": "latitude",
+    "initialValue": "33.5100",
+    "currentValue": "33.5100",
+    "secret": false
+   },
+   {
+    "key": "locale",
+    "initialValue": "en",
+    "currentValue": "en",
+    "secret": false
+   },
+   {
+    "key": "longitude",
+    "initialValue": "36.2900",
+    "currentValue": "36.2900",
+    "secret": false
+   },
+   {
+    "key": "order_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": false
+   },
+   {
+    "key": "preferred_store",
+    "initialValue": "Fresh Market",
+    "currentValue": "Fresh Market",
+    "secret": false
+   },
+   {
+    "key": "search_term",
+    "initialValue": "pizza",
+    "currentValue": "pizza",
+    "secret": false
+   },
+   {
+    "key": "admin_email",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "admin_password",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "admin_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "customer_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "dev_otp_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "driver_password",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "driver_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "foreign_order_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "otp_code",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "registration_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   }
+  ]
+ },
+ {
+  "v": 2,
+  "id": "waffrli-shared-dev",
+  "name": "WAFFRLI Shared-Dev",
+  "variables": [
+   {
+    "key": "base_url",
+    "initialValue": "https://dev-api.example.invalid",
+    "currentValue": "https://dev-api.example.invalid",
+    "secret": false
+   },
+   {
+    "key": "customer_phone",
+    "initialValue": "+12025550101",
+    "currentValue": "+12025550101",
+    "secret": false
+   },
+   {
+    "key": "driver_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": false
+   },
+   {
+    "key": "driver_phone",
+    "initialValue": "+12025550201",
+    "currentValue": "+12025550201",
+    "secret": false
+   },
+   {
+    "key": "latitude",
+    "initialValue": "33.5100",
+    "currentValue": "33.5100",
+    "secret": false
+   },
+   {
+    "key": "locale",
+    "initialValue": "en",
+    "currentValue": "en",
+    "secret": false
+   },
+   {
+    "key": "longitude",
+    "initialValue": "36.2900",
+    "currentValue": "36.2900",
+    "secret": false
+   },
+   {
+    "key": "order_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": false
+   },
+   {
+    "key": "preferred_store",
+    "initialValue": "Fresh Market",
+    "currentValue": "Fresh Market",
+    "secret": false
+   },
+   {
+    "key": "search_term",
+    "initialValue": "pizza",
+    "currentValue": "pizza",
+    "secret": false
+   },
+   {
+    "key": "admin_email",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "admin_password",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "admin_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "customer_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "dev_otp_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "driver_password",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "driver_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "foreign_order_id",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "otp_code",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   },
+   {
+    "key": "registration_token",
+    "initialValue": "",
+    "currentValue": "",
+    "secret": true
+   }
+  ]
+ }
+]

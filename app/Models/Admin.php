@@ -3,14 +3,30 @@
 namespace App\Models;
 
 use Database\Factories\AdminFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class Admin extends BaseAuthModel
+/**
+ * WAFFRLI (2026-10-31): also the Filament admin-panel user (session guard
+ * `admin_web`, same `admins` table and Spatie roles/permissions as the
+ * `admin` Sanctum guard). Only active, non-deleted admins may enter.
+ */
+class Admin extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference, FilamentUser
 {
+    public const SUPER_ADMIN_ROLE = 'super-admin';
+
     /** @use HasFactory<AdminFactory> */
     use HasFactory, HasRoles, Notifiable;
+
+    /**
+     * WAFFRLI (2026-10-31): roles/permissions always live on the 'admin'
+     * guard. Without this, Spatie infers the guard from the active default,
+     * which becomes 'admin_web' after a Filament session login.
+     */
+    protected string $guard_name = 'admin';
 
     /**
      * The attributes that are mass assignable.
@@ -54,5 +70,27 @@ class Admin extends BaseAuthModel
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return (bool) $this->is_active && ! $this->trashed();
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(self::SUPER_ADMIN_ROLE, 'admin');
+    }
+
+    /** WAFFRLI (2026-11-03): live notifications on the private Reverb channel admin.{id}. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'admin.'.$this->getKey();
+    }
+
+    /** WAFFRLI (2026-11-04): notifications (incl. queued) are rendered in the recipient's panel language (admins.locale). */
+    public function preferredLocale(): string
+    {
+        return in_array($this->locale, ['ar', 'en'], true) ? $this->locale : config('app.locale');
     }
 }

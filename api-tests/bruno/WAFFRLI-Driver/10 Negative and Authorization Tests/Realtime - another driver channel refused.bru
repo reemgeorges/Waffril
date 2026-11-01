@@ -1,0 +1,24 @@
+meta {
+  name: Realtime - another driver channel refused
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/broadcasting/auth
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "socket_id": "1234.5678",
+    "channel_name": "private-driver.999999"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([403, 503]);
+  });
+}

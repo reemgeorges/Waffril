@@ -1,0 +1,17 @@
+meta {
+  name: Customer token on a driver endpoint - refused
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/me
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("customer tokens never pass driver routes", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 403]);
+  });
+}

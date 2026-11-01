@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Admin;
+use App\Support\Auth\AdminPermissions;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**
@@ -22,32 +23,32 @@ class AdminPolicy
 {
     public function viewAny(Authenticatable $actor): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin');
+        return $this->manages($actor);
     }
 
     public function view(Authenticatable $actor, Admin $target): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin');
+        return $this->manages($actor);
     }
 
     public function create(Authenticatable $actor): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin');
+        return $this->manages($actor);
     }
 
     public function update(Authenticatable $actor, Admin $target): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin');
+        return $this->manages($actor);
     }
 
     public function delete(Authenticatable $actor, Admin $target): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin') && $actor->id !== $target->id;
+        return $this->manages($actor) && $actor->id !== $target->id;
     }
 
     public function restore(Authenticatable $actor, Admin $target): bool
     {
-        return $actor instanceof Admin && $actor->hasRole('manage-admin');
+        return $this->manages($actor);
     }
 
     public function forceDelete(Authenticatable $actor, Admin $target): bool
@@ -55,5 +56,25 @@ class AdminPolicy
         // Permanent delete is never granted by the generic manage-* role;
         // it needs its own explicit, separately-granted permission.
         return false;
+    }
+
+    public function deleteAny(Authenticatable $actor): bool
+    {
+        return $this->manages($actor);
+    }
+
+    public function forceDeleteAny(Authenticatable $actor): bool
+    {
+        return false;
+    }
+
+    /**
+     * Phase 2B role `manage-admin`, or (WAFFRLI 2026-10-31) the
+     * `admins.manage` permission / Super Admin used by the admin panel.
+     */
+    protected function manages(Authenticatable $actor): bool
+    {
+        return ($actor instanceof Admin && $actor->hasRole('manage-admin'))
+            || AdminPermissions::allows($actor, 'admins.manage');
     }
 }

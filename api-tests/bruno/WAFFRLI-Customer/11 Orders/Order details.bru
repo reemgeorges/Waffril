@@ -1,0 +1,34 @@
+meta {
+  name: Order details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/orders/{{order_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("snapshot, payments and private realtime channel", function () {
+    const o = res.getBody().data.order;
+    expect(o.items.length).to.be.greaterThan(0);
+    expect(o.amounts.total).to.equal(o.total);
+    expect(o.realtime_channel).to.equal("order." + o.id);
+    expect(o.can_cancel).to.equal(true);
+  });
+}

@@ -101,6 +101,8 @@ class MakeAuthModuleCommandTest extends TestCase
             }
         }
 
+        $this->purgeCommittedRowsOnMySql();
+
         parent::tearDown();
     }
 

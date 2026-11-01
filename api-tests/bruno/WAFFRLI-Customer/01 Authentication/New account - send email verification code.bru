@@ -1,0 +1,38 @@
+meta {
+  name: New account - send email verification code
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/me/email/verification
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{new_token}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}
+
+docs {
+  The code goes to the configured mailer (Mailpit in Docker, http://localhost:8025). It is never returned by the API.
+}

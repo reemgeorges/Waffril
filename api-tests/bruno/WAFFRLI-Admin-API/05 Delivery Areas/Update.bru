@@ -1,0 +1,36 @@
+meta {
+  name: Update
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-areas/update
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": {{delivery_area_id}},
+    "name": {
+      "ar": "منطقة اختبار",
+      "en": "Bruno area (edited)"
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

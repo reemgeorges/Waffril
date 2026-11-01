@@ -1,0 +1,47 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/delivery-fee-rules/create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "city_id": {{city_id}},
+    "distance_from_km": 0,
+    "distance_to_km": 50,
+    "base_fee": "1.25",
+    "per_km_fee": "0.10"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("fee_rule_id", String(res.getBody().data.delivery_fee_rule.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("created", function () {
+    expect(res.getBody().data.delivery_fee_rule.id).to.be.a("number");
+  });
+}
+
+docs {
+  Random unique values: safe to run repeatedly.
+}

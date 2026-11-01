@@ -1,0 +1,30 @@
+meta {
+  name: Send reset OTP (generic answer)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/password/send-otp
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "actor": "admin",
+    "email": "nobody@example.test",
+    "channel": "email"
+  }
+}
+
+tests {
+  test("never reveals whether the account exists", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 400, 422, 429]);
+    expect(JSON.stringify(res.getBody())).to.not.match(/\b\d{6}\b/);
+  });
+}
+
+docs {
+  The code is e-mailed (Mailpit in Docker) and never returned. Throttled.
+}

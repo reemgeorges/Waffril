@@ -1,0 +1,35 @@
+meta {
+  name: Update language and display currency
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{base_url}}/api/v1/customer/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "language": "{{locale}}"
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("language saved", function () {
+    expect(res.getBody().data.user.language).to.equal(bru.interpolate("{{locale}}"));
+  });
+}

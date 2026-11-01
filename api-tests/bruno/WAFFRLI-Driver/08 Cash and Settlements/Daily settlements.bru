@@ -1,0 +1,30 @@
+meta {
+  name: Daily settlements
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/cash/settlements
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("read-only settlement rows", function () {
+    res.getBody().data.settlements.forEach(s => expect(s.status).to.be.oneOf(["open", "settled", "disputed"]));
+  });
+}

@@ -1,0 +1,36 @@
+meta {
+  name: Validation envelope
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/addresses
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "lat": "north"
+  }
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("first validation message in error", function () {
+    expect(res.getBody().error).to.be.a("string").and.not.empty;
+    expect(res.getBody().data).to.equal(null);
+  });
+}

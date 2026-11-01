@@ -33,10 +33,20 @@ return Application::configure(basePath: dirname(__DIR__))
             // Phase 2A (2026-10-25): see App\Http\Middleware\EnsureGuardIdentity.
             'guard.identity'     => \App\Http\Middleware\EnsureGuardIdentity::class,
 
+            // WAFFRLI driver API (2026-11-02).
+            'driver.active'      => \App\Http\Middleware\EnsureDriverIsActive::class,
+
+            // WAFFRLI customer API (2026-11-03).
+            'customer.active'    => \App\Http\Middleware\EnsureCustomerIsActive::class,
+
         ]);
 
 
         $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
+
+        // WAFFRLI P0 (2026-10-30): ar/en locale from Accept-Language for API
+        // routes; without the header the configured locale is unchanged.
+        $middleware->appendToGroup('api', \App\Http\Middleware\SetRequestLocale::class);
 
     })
     ->withExceptions(function (Exceptions $exceptions) {

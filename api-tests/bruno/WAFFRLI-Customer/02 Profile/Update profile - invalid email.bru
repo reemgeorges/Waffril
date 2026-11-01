@@ -1,0 +1,32 @@
+meta {
+  name: Update profile - invalid email
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/api/v1/customer/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "not-an-email"
+  }
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("status flag is false", function () {
+    expect(res.getBody().status).to.equal(false);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

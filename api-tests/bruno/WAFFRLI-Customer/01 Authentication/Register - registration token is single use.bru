@@ -1,0 +1,26 @@
+meta {
+  name: Register - registration token is single use
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "registration_token": "{{registration_token}}",
+    "first_name": "Bruno",
+    "last_name": "Again"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 409, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

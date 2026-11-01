@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\Yaml\Yaml;
+use Tests\Concerns\PreservesGeneratedDocs;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,14 @@ use Tests\TestCase;
  */
 class OpenApiAndPostmanGenerationTest extends TestCase
 {
+    use PreservesGeneratedDocs;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->snapshotGeneratedDocs();
+    }
+
     protected array $names = ['DocsGizmo', 'DocsWidget'];
 
     protected array $tables = ['docs_gizmos', 'docs_widgets'];
@@ -75,12 +84,7 @@ class OpenApiAndPostmanGenerationTest extends TestCase
             }
         }
 
-        if (File::isDirectory(base_path('docs/openapi'))) {
-            File::deleteDirectory(base_path('docs/openapi'));
-        }
-        if (File::isDirectory(base_path('docs/postman'))) {
-            File::deleteDirectory(base_path('docs/postman'));
-        }
+        $this->restoreGeneratedDocs();
 
         parent::tearDown();
     }

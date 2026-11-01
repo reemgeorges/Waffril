@@ -1,0 +1,30 @@
+meta {
+  name: Legacy alias - active cities (user prefix)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/user/cities
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}
+
+docs {
+  Kept for existing app builds; same handler as /customer/cities.
+}

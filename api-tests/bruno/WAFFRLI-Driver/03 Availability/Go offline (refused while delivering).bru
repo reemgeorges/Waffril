@@ -1,0 +1,24 @@
+meta {
+  name: Go offline (refused while delivering)
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{base_url}}/api/v1/driver/availability
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "availability": "offline"
+  }
+}
+
+tests {
+  test("refused (409) with an active delivery, accepted otherwise", function () {
+    const active = bru.getVar("has_active_delivery") === "true";
+    expect(res.getStatus()).to.equal(active ? 409 : 200);
+  });
+}

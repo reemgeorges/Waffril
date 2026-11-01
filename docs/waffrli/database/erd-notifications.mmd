@@ -1,0 +1,26 @@
+erDiagram
+    device_tokens {
+        bigint id PK
+        varchar_255 tokenable_type
+        bigint tokenable_id
+        varchar_255 token
+        varchar_255 platform
+        varchar_255 device_name
+        varchar_255 device_id
+        tinyint_1 is_active
+        timestamp last_seen_at
+        timestamp revoked_at
+        json meta
+        timestamp created_at
+        timestamp updated_at
+    }
+    notifications {
+        char_36 id PK
+        varchar_255 type
+        varchar_255 notifiable_type
+        bigint notifiable_id
+        text data
+        timestamp read_at
+        timestamp created_at
+        timestamp updated_at
+    }

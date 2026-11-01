@@ -159,6 +159,8 @@ class MakeModuleCommandTest extends TestCase
             Category::withTrashed()->where('slug', 'gadgets')->forceDelete();
         }
 
+        $this->purgeCommittedRowsOnMySql();
+
         parent::tearDown();
     }
 

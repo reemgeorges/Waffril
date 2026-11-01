@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -44,9 +45,7 @@ class PublicCrudRoutesDisabledTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider disabledRoutesProvider
-     */
+    #[DataProvider('disabledRoutesProvider')]
     public function test_previously_public_crud_route_is_no_longer_reachable(string $method, string $uri): void
     {
         $response = $this->json($method, $uri, [
@@ -56,18 +55,12 @@ class PublicCrudRoutesDisabledTest extends TestCase
             'password' => 'password',
         ]);
 
-        // The routes have been removed from routes/api.php entirely, so
-        // Laravel's router throws a routing NotFoundHttpException. The
-        // app's pre-existing generic exception handler
-        // (GeneralTrait::handleException()'s catch-all branch, which this
-        // Phase 0 change does not alter in structure, only in production
-        // message content) converts ANY uncaught exception — including
-        // routing 404s — into a 500 JSON envelope rather than preserving a
-        // 404 status. That behavior predates this fix and is out of scope
-        // to change here. What matters for this regression test is that the
-        // request never reaches the controller/service layer and never
-        // returns a 2xx success.
-        $response->assertStatus(500);
+        // The route was removed, so the router throws NotFoundHttpException.
+        // WAFFRLI (2026-11-05): that now answers 404 in the standard envelope
+        // (it used to fall through to the generic 500 branch — a defect, see
+        // tests/Feature/ApiErrorHandlingTest). The request never reaches the
+        // controller/service layer and never returns a 2xx.
+        $response->assertStatus(404);
         $response->assertJsonStructure(['data', 'status', 'error', 'statusCode']);
         $response->assertJsonPath('status', false);
         $response->assertJsonPath('data', null);

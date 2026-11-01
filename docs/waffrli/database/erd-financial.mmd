@@ -1,0 +1,273 @@
+erDiagram
+    currencies }o--o| admins : "rate_updated_by_admin_id"
+    currency_redenominations }o--|| currencies : "from_currency_id"
+    currency_redenominations }o--|| admins : "requested_by_admin_id"
+    currency_redenominations }o--|| currencies : "to_currency_id"
+    driver_cash_settlements }o--|| currencies : "currency_id"
+    driver_cash_settlements }o--|| drivers : "driver_id"
+    driver_cash_settlements }o--o| admins : "settled_by_admin_id"
+    order_cancellations }o--o| admins : "admin_id"
+    order_cancellations }o--o| drivers : "driver_id"
+    order_cancellations |o--|| orders : "order_id"
+    order_payments }o--o| drivers : "collected_by_driver_id"
+    order_payments }o--|| currencies : "currency_id"
+    order_payments }o--o| driver_cash_settlements : "driver_cash_settlement_id"
+    order_payments }o--|| orders : "order_id"
+    order_payments }o--|| payment_methods : "payment_method_id"
+    order_refunds }o--|| admins : "created_by_admin_id"
+    order_refunds }o--|| currencies : "currency_id"
+    order_refunds }o--o| order_cancellations : "order_cancellation_id"
+    order_refunds }o--|| orders : "order_id"
+    order_refunds }o--|| order_payments : "order_payment_id"
+    orders }o--o| admins : "accepted_by_admin_id"
+    orders }o--o| admins : "assigned_by_admin_id"
+    orders }o--|| currencies : "base_currency_id"
+    orders }o--|| currencies : "currency_id"
+    orders }o--o| drivers : "driver_id"
+    orders }o--|| users : "user_id"
+    users }o--o| currencies : "display_currency_id"
+    users }o--o| admins : "suspended_by_admin_id"
+    wallet_transactions }o--o| orders : "order_id"
+    wallet_transactions }o--o| order_payments : "order_payment_id"
+    wallet_transactions |o--o| order_refunds : "order_refund_id"
+    wallet_transactions }o--|| wallets : "wallet_id"
+    wallets }o--|| currencies : "currency_id"
+    wallets }o--|| users : "user_id"
+    admins {
+        bigint id PK
+        varchar_255 name
+        varchar_255 email
+        timestamp email_verified_at
+        varchar_255 password
+        tinyint_1 is_active
+        varchar_5 locale
+        varchar_100 remember_token
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    currencies {
+        bigint id PK
+        char_3 code
+        json name
+        varchar_10 symbol
+        tinyint decimals
+        decimal_24_12 exchange_rate
+        tinyint_1 is_default
+        tinyint default_marker
+        tinyint_1 is_active
+        timestamp rate_updated_at
+        bigint rate_updated_by_admin_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    currency_redenominations {
+        bigint id PK
+        bigint from_currency_id FK
+        bigint to_currency_id FK
+        decimal_24_12 conversion_rate
+        varchar_16 status
+        tinyint inflight_marker
+        varchar_64 idempotency_key
+        bigint requested_by_admin_id FK
+        timestamp started_at
+        timestamp completed_at
+        timestamp failed_at
+        text error
+        json summary
+        timestamp created_at
+        timestamp updated_at
+    }
+    driver_cash_settlements {
+        bigint id PK
+        bigint driver_id FK
+        bigint currency_id FK
+        date business_date
+        decimal_18_4 expected_amount
+        decimal_18_4 received_amount
+        varchar_16 status
+        bigint settled_by_admin_id FK
+        timestamp settled_at
+        varchar_500 note
+        timestamp created_at
+        timestamp updated_at
+    }
+    drivers {
+        bigint id PK
+        varchar_150 name
+        varchar_16 phone
+        varchar_255 password
+        bigint city_id FK
+        varchar_30 vehicle_type
+        varchar_30 vehicle_plate
+        tinyint_1 is_active
+        varchar_16 availability
+        decimal_10_7 last_lat
+        decimal_10_7 last_lng
+        timestamp last_location_at
+        varchar_2 language
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    order_cancellations {
+        bigint id PK
+        bigint order_id FK
+        varchar_20 from_status
+        varchar_16 cancelled_by
+        bigint admin_id FK
+        bigint cancellation_request_id FK
+        varchar_32 reason_code
+        varchar_500 note
+        bigint driver_id FK
+        varchar_24 driver_handling
+        decimal_18_4 cash_collected_amount
+        decimal_18_4 wallet_reversed_amount
+        tinyint_1 free_delivery_restored
+        varchar_64 idempotency_key
+        timestamp created_at
+    }
+    order_payments {
+        bigint id PK
+        bigint order_id FK
+        bigint payment_method_id FK
+        bigint currency_id FK
+        decimal_18_4 amount
+        decimal_18_4 collected_amount
+        decimal_18_4 reversed_amount
+        decimal_18_4 refunded_amount
+        varchar_16 status
+        timestamp paid_at
+        bigint collected_by_driver_id FK
+        bigint driver_cash_settlement_id FK
+        varchar_50 provider
+        varchar_191 provider_reference
+        json meta
+        timestamp created_at
+        timestamp updated_at
+    }
+    order_refunds {
+        bigint id PK
+        bigint order_id FK
+        bigint order_payment_id FK
+        bigint order_cancellation_id FK
+        bigint currency_id FK
+        decimal_18_4 amount
+        varchar_32 reason_code
+        varchar_500 note
+        varchar_64 idempotency_key
+        bigint created_by_admin_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    orders {
+        bigint id PK
+        varchar_20 order_number
+        bigint user_id FK
+        char_36 client_request_id
+        bigint branch_id FK
+        bigint city_id FK
+        bigint delivery_area_id FK
+        bigint delivery_fee_rule_id FK
+        bigint user_address_id FK
+        json delivery_address
+        decimal_10_7 delivery_lat
+        decimal_10_7 delivery_lng
+        decimal_8_3 delivery_distance_km
+        varchar_32 distance_method
+        varchar_16 type
+        timestamp scheduled_for
+        varchar_20 status
+        timestamp urgent_at
+        bigint base_currency_id FK
+        bigint currency_id FK
+        decimal_24_12 exchange_rate
+        decimal_18_4 subtotal
+        decimal_18_4 offer_discount_total
+        decimal_18_4 plus_discount_amount
+        decimal_18_4 delivery_fee_original
+        decimal_18_4 delivery_fee
+        decimal_18_4 total
+        bigint plus_cycle_id FK
+        bigint plus_cycle_discount_id FK
+        tinyint_1 free_delivery_applied
+        varchar_500 customer_notes
+        bigint driver_id FK
+        bigint accepted_by_admin_id FK
+        bigint assigned_by_admin_id FK
+        timestamp accepted_at
+        timestamp assigned_at
+        timestamp picked_up_at
+        timestamp delivered_at
+        varchar_255 delivery_photo_path
+        timestamp created_at
+        timestamp updated_at
+    }
+    payment_methods {
+        bigint id PK
+        varchar_30 code
+        varchar_16 kind
+        json name
+        tinyint_1 is_active
+        int sort_order
+        timestamp created_at
+        timestamp updated_at
+    }
+    users {
+        bigint id PK
+        varchar_255 name
+        varchar_100 first_name
+        varchar_100 last_name
+        varchar_255 avatar
+        varchar_255 email
+        timestamp email_verified_at
+        varchar_255 password
+        varchar_100 remember_token
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+        tinyint_1 is_active
+        tinyint_1 status
+        varchar_255 social_id
+        varchar_10 prefix_phone
+        varchar_30 phone_number
+        varchar_16 phone
+        varchar_255 otp_delivery_method
+        timestamp activated_at
+        tinyint_1 email_status
+        tinyint_1 phone_status
+        timestamp phone_verified_at
+        varchar_10 language
+        varchar_255 verified_email
+        varchar_16 account_status
+        timestamp suspended_at
+        bigint suspended_by_admin_id FK
+        varchar_255 suspension_reason
+        varchar_16 otp_channel
+        bigint display_currency_id FK
+        timestamp profile_completed_at
+        timestamp recovery_until
+        timestamp anonymized_at
+    }
+    wallet_transactions {
+        bigint id PK
+        bigint wallet_id FK
+        varchar_32 type
+        varchar_6 direction
+        decimal_18_4 amount
+        decimal_18_4 balance_after
+        bigint order_id FK
+        bigint order_payment_id FK
+        bigint order_refund_id FK
+        varchar_64 idempotency_key
+        varchar_255 note
+        timestamp created_at
+    }
+    wallets {
+        bigint id PK
+        bigint user_id FK
+        bigint currency_id FK
+        decimal_18_4 balance
+        timestamp created_at
+        timestamp updated_at
+    }

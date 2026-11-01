@@ -53,7 +53,11 @@ class BasicResource extends JsonResource
 
         // أعمدة الجدول (باستثناء المخفية)
         foreach ($cols as $col) {
-            if (!in_array($col, $hiddens, true)) {
+            // getHiddens() is keyed by attribute name (['password' => true]).
+            // WAFFRLI (2026-11-05): the previous in_array() check compared the
+            // column with the VALUES (true) and never matched, so $hidden
+            // attributes (password hashes, remember tokens) were serialized.
+            if (! array_key_exists($col, $hiddens)) {
                 // استخدم getAttribute حتى مع الـ accessors
                 $this->result[$col] = $this->resource->getAttribute($col);
             }

@@ -1,0 +1,28 @@
+meta {
+  name: Rate a purchased product (verified purchaser)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/products/{{rated_product_id}}/rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "order_id": {{delivered_order_id}},
+    "rating": 5,
+    "comment": "Bruno: great"
+  }
+}
+
+tests {
+  test("accepted for a verified purchase", function () {
+    if (bru.getVar("rated_product_id")) {
+      expect(res.getStatus()).to.equal(200);
+      expect(res.getBody().data.product_rating.count).to.be.greaterThan(0);
+    }
+  });
+}

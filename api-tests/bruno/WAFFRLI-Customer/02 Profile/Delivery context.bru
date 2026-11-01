@@ -1,0 +1,34 @@
+meta {
+  name: Delivery context
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/context
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("default_address_id", String(res.getBody().data.selected_address.id)); bru.setVar("default_currency_code", res.getBody().data.default_currency.code); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("default address is the delivery city", function () {
+    const d = res.getBody().data;
+    expect(d.delivery_city.id).to.equal(d.selected_address.city.id);
+  });
+}

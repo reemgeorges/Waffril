@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Filament\Support;
+
+use App\Models\Currency;
+use App\Support\Money\Money;
+use Closure;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * WAFFRLI (2026-10-31) — shared admin form fields.
+ */
+final class Fields
+{
+    /** Arabic + English inputs for a Spatie-translatable attribute ({ar, en}). */
+    public static function translatable(string $name, bool $required = true, bool $multiline = false, int $max = 150): Grid
+    {
+        $make = fn (string $locale) => ($multiline ? Textarea::make("{$name}.{$locale}")->rows(3) : TextInput::make("{$name}.{$locale}")->maxLength($max))
+            ->label(__("admin.fields.{$name}").' ('.strtoupper($locale).')')
+            // Each language is typed in its own direction, whatever the panel language.
+            ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale])
+            ->required($required);
+
+        return Grid::make(2)->schema([$make('ar'), $make('en')]);
+    }
+
+    public static function phone(string $name): TextInput
+    {
+        return TextInput::make($name)
+            ->label(__("admin.fields.{$name}"))
+            ->tel()
+            ->regex('/^\+[1-9]\d{6,14}$/')
+            ->helperText(__('admin.help.e164'))
+            ->maxLength(16);
+    }
+
+    public static function money(string $name, bool $required = true): TextInput
+    {
+        return TextInput::make($name)
+            ->label(__("admin.fields.{$name}"))
+            ->numeric()
+            ->minValue(0)
+            ->rule('decimal:0,4')
+            ->required($required);
+    }
+
+    /**
+     * For modal Edit/View actions: replaces each Spatie-translatable
+     * attribute's current-locale string with all its translations so the
+     * {ar, en} inputs are filled.
+     */
+    public static function withTranslations(): Closure
+    {
+        return function (array $data, Model $record): array {
+            if (method_exists($record, 'getTranslatableAttributes')) {
+                foreach ($record->getTranslatableAttributes() as $attribute) {
+                    $data[$attribute] = $record->getTranslations($attribute);
+                }
+            }
+
+            return $data;
+        };
+    }
+
+    /**
+     * Display a stored amount (4-decimal storage scale) in its currency:
+     * the currency's own decimals, thousands separator, ISO code
+     * ("USD 4.58", "SYP 66,127"). Display only: stored values are untouched.
+     */
+    public static function formatMoney(mixed $amount, ?Currency $currency): string
+    {
+        if ($amount === null || $amount === '') {
+            return '—';
+        }
+        $decimals = $currency?->decimals ?? 2;
+        $value = (string) Money::roundTo((string) $amount, $decimals);
+        [$int, $fraction] = array_pad(explode('.', ltrim($value, '-')), 2, '');
+        $text = number_format((float) $int, 0, '.', ',').($decimals > 0 ? '.'.str_pad($fraction, $decimals, '0') : '');
+
+        return trim(($currency?->code ?? '').' '.(str_starts_with($value, '-') ? '−' : '').$text);
+    }
+}

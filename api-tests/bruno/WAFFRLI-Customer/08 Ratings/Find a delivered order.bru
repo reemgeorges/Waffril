@@ -1,0 +1,36 @@
+meta {
+  name: Find a delivered order
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/orders?scope=previous&per_page=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  scope: previous
+  per_page: 50
+}
+
+script:post-response {
+  const delivered = (res.getBody().data.orders || []).find(o => o.status === "delivered");
+  bru.setVar("delivered_order_id", delivered ? String(delivered.id) : "");
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

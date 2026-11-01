@@ -1,0 +1,42 @@
+meta {
+  name: Branches in my delivery city
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/branches?per_page=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  per_page: 50
+}
+
+script:post-response {
+  const list = res.getBody().data.branches || [];
+  const wanted = bru.interpolate("{{preferred_store}}").toLowerCase();
+  const preferred = list.find(b => b.store && String(b.store.name).toLowerCase().includes(wanted)) || list[0];
+  if (preferred) { bru.setVar("branch_id", String(preferred.id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("branches listed independently (each with its store)", function () {
+    const list = res.getBody().data.branches;
+    expect(list.length).to.be.greaterThan(0);
+    list.forEach(b => expect(b.store).to.be.an("object"));
+  });
+}

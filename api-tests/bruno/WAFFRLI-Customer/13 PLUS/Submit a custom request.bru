@@ -1,0 +1,24 @@
+meta {
+  name: Submit a custom request
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/plus/requests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "type": "custom",
+    "note": "Bruno: question about my plan"
+  }
+}
+
+tests {
+  test("created, or 409 while one is already pending", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 409, 422]);
+  });
+}

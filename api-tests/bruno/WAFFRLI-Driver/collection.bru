@@ -1,0 +1,25 @@
+
+meta {
+  name: WAFFRLI-Driver
+}
+
+headers {
+  Accept: application/json
+  Accept-Language: {{locale}}
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{driver_token}}
+}
+
+docs {
+  WAFFRLI Driver API (/api/v1/driver). Every protected request inherits the
+  Bearer token captured by "Authentication / Login (success)".
+  Secrets (password, token) are never stored in this repository: the
+  password comes from the local, git-ignored .env file and the token is a
+  runtime variable. See README.md.
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Add item - invalid quantity
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/cart/items
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "branch_id": {{branch_id}},
+    "product_id": {{product_id}},
+    "quantity": 0
+  }
+}
+
+tests {
+  test("validation", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 422]);
+  });
+}

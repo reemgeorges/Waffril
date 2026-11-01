@@ -1,0 +1,35 @@
+meta {
+  name: Reset - invalid reset token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/password/reset
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "actor": "admin",
+    "email": "nobody@example.test",
+    "reset_token": "invalid",
+    "password": "new-password-123",
+    "password_confirmation": "new-password-123"
+  }
+}
+
+tests {
+  test("refused (400, 401, 422, 429)", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 401, 422, 429]);
+    expect(res.getBody().status).to.equal(false);
+    expect(res.getBody().data).to.equal(null);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

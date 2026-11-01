@@ -1,0 +1,33 @@
+meta {
+  name: Current orders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/orders?scope=current
+  body: none
+  auth: inherit
+}
+
+params:query {
+  scope: current
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("contains the new order", function () {
+    expect(res.getBody().data.orders.map(o => String(o.id))).to.include(bru.getVar("order_id"));
+  });
+}

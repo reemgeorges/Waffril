@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Yaml\Yaml;
+use Tests\Concerns\PreservesGeneratedDocs;
 use Tests\TestCase;
 
 /**
@@ -20,6 +21,8 @@ use Tests\TestCase;
  */
 class MakeAuthModuleOpenApiTest extends TestCase
 {
+    use PreservesGeneratedDocs;
+
     protected string $name = 'DocsAuthGizmo';
 
     protected string $guard = 'docs_auth_gizmo';
@@ -35,6 +38,7 @@ class MakeAuthModuleOpenApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->snapshotGeneratedDocs();
 
         $this->authModulesConfigPath = config_path('auth_modules.php');
         $this->authModulesConfigOriginal = File::get($this->authModulesConfigPath);
@@ -72,9 +76,7 @@ class MakeAuthModuleOpenApiTest extends TestCase
             }
         }
 
-        if (File::isDirectory(base_path('docs/openapi'))) {
-            File::deleteDirectory(base_path('docs/openapi'));
-        }
+        $this->restoreGeneratedDocs();
 
         parent::tearDown();
     }

@@ -1,0 +1,103 @@
+# WAFFRLI CI: the full PHPUnit suite on SQLite and on MySQL 8.4, plus the API
+# inventory (every route has a Bruno request) and OpenAPI drift checks.
+# Actions are pinned to full commit SHAs.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: PHPUnit (${{ matrix.db }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [sqlite, mysql]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: waffrli_testing
+          MYSQL_USER: waffrli
+          MYSQL_PASSWORD: ci-password
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-root-password --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, gd, zip, mbstring, pdo_mysql, pdo_sqlite, redis
+          coverage: none
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --no-audit --no-fund
+
+      - name: Build assets (Filament views need the Vite manifest)
+        run: npm run build && npm run build:admin-theme
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: PHPUnit (SQLite, default phpunit.xml)
+        if: matrix.db == 'sqlite'
+        run: vendor/bin/phpunit
+
+      - name: PHPUnit (MySQL 8.4)
+        if: matrix.db == 'mysql'
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+          DB_DATABASE: waffrli_testing
+          DB_USERNAME: root
+          DB_PASSWORD: ci-root-password
+        run: vendor/bin/phpunit
+
+      - name: Committed documentation untouched by the tests
+        run: git diff --exit-code -- docs api-tests
+
+  contracts:
+    name: API inventory + OpenAPI drift
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, gd, zip, mbstring, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: php artisan waffrli:api-inventory --check
+      - run: php artisan waffrli:openapi --check
+      - run: php artisan waffrli:api-contract --check
+      - name: Shared portal export matches the Bruno collections
+        run: |
+          python3 api-tests/bruno/generators/hoppscotch.py
+          git diff --exit-code -- api-tests/hoppscotch

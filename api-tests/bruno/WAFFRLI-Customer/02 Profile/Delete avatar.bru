@@ -1,0 +1,29 @@
+meta {
+  name: Delete avatar
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/v1/customer/me/avatar
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("avatar removed", function () {
+    expect(res.getBody().data.user.avatar_url).to.equal(null);
+  });
+}

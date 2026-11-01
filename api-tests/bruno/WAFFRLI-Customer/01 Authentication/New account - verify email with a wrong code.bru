@@ -1,0 +1,28 @@
+meta {
+  name: New account - verify email with a wrong code
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/me/email/verify
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{new_token}}
+}
+
+body:json {
+  {
+    "code": "000000"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([400, 422]);
+    expect(res.getBody().status).to.equal(false);
+  });
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Realtime - another user channel refused
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/broadcasting/auth
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "socket_id": "1234.5678",
+    "channel_name": "private-user.999999"
+  }
+}
+
+tests {
+  test("refused", function () {
+    expect(res.getStatus()).to.be.oneOf([403, 503]);
+  });
+}

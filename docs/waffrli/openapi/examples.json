@@ -1,0 +1,5969 @@
+{
+ "DELETE /api/v1/customer/addresses/{address}": {
+  "responses": {
+   "200": {
+    "summary": "Delete address",
+    "value": {
+     "data": {
+      "message": "Address deleted."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Delete address again - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/cart/items/{item}": {
+  "responses": {
+   "200": {
+    "summary": "Remove item",
+    "value": {
+     "data": {
+      "message": "Cart updated.",
+      "cart": {
+       "id": 6,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "items": [],
+       "preview": null,
+       "issue": null,
+       "updated_at": "2026-10-31T18:52:17+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Remove item again - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/carts/{cart}": {
+  "responses": {
+   "200": {
+    "summary": "Clear a cart",
+    "value": {
+     "data": {
+      "message": "Cart cleared."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/device-tokens/{deviceToken}": {
+  "responses": {
+   "200": {
+    "summary": "Remove device token",
+    "value": {
+     "data": {
+      "message": "Device removed; it will no longer receive notifications."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Remove again - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Device not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/me": {
+  "responses": {
+   "200": {
+    "summary": "New account - request deletion",
+    "value": {
+     "data": {
+      "message": "Your account will be deleted after 30 days. You can recover it until then.",
+      "recovery_until": "2026-11-30T18:52:14+00:00"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/me/avatar": {
+  "responses": {
+   "200": {
+    "summary": "Delete avatar",
+    "value": {
+     "data": {
+      "user": {
+       "id": 2,
+       "first_name": "Karim",
+       "last_name": "Nasser",
+       "phone": "+12025550101",
+       "email": "customer-02@demo.waffrli.test",
+       "email_verified": true,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": {
+        "id": 3,
+        "label": "Home / البيت",
+        "address_line": "Kafr Sousa / كفرسوسة",
+        "details": "Demo address",
+        "lat": 33.499,
+        "lng": 36.27,
+        "city": {
+         "id": 1,
+         "name": "Damascus"
+        },
+        "is_default": true
+       },
+       "delivery_city": {
+        "id": 1,
+        "name": "Damascus"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/customer/products/{product}/favorite": {
+  "responses": {
+   "200": {
+    "summary": "Remove favorite",
+    "value": {
+     "data": {
+      "message": "Removed from favorites.",
+      "product_id": 10,
+      "is_favorite": false
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "DELETE /api/v1/driver/device-tokens/{deviceToken}": {
+  "responses": {
+   "200": {
+    "summary": "Remove device token",
+    "value": {
+     "data": {
+      "message": "Device removed; it will no longer receive notifications."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Remove again - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Device not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/cities/all": {
+  "responses": {
+   "200": {
+    "summary": "List all",
+    "value": {
+     "data": {
+      "cities": [
+       {
+        "name": "Bruno City 1793471503150",
+        "center_lat": "33.5100000",
+        "center_lng": "36.2900000",
+        "radius_km": "6.00",
+        "is_active": false,
+        "sort_order": 99,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:43.000000Z",
+        "name_translations": {
+         "ar": "مدينة اختبار",
+         "en": "Bruno City 1793471503150"
+        }
+       },
+       {
+        "name": "Bruno City 1793471451389",
+        "center_lat": "33.5100000",
+        "center_lng": "36.2900000",
+        "radius_km": "6.00",
+        "is_active": false,
+        "sort_order": 99,
+        "id": 4,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:51.000000Z",
+        "name_translations": {
+         "ar": "مدينة اختبار",
+         "en": "Bruno City 1793471451389"
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "401": {
+    "summary": "No token - 401",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Please sign in to continue.",
+     "statusCode": 401
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/cities/all/paginated": {
+  "responses": {
+   "200": {
+    "summary": "List paginated",
+    "value": {
+     "data": {
+      "cities": [
+       {
+        "name": "Bruno City 1793471503150",
+        "center_lat": "33.5100000",
+        "center_lng": "36.2900000",
+        "radius_km": "6.00",
+        "is_active": false,
+        "sort_order": 99,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:43.000000Z",
+        "name_translations": {
+         "ar": "مدينة اختبار",
+         "en": "Bruno City 1793471503150"
+        }
+       },
+       {
+        "name": "Bruno City 1793471451389",
+        "center_lat": "33.5100000",
+        "center_lng": "36.2900000",
+        "radius_km": "6.00",
+        "is_active": false,
+        "sort_order": 99,
+        "id": 4,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:51.000000Z",
+        "name_translations": {
+         "ar": "مدينة اختبار",
+         "en": "Bruno City 1793471451389"
+        }
+       }
+      ],
+      "current_page": 1,
+      "next_page": null,
+      "previous_page": null,
+      "total_pages": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "5",
+   "page": "1"
+  }
+ },
+ "GET /api/v1/admin/currencies/all": {
+  "responses": {
+   "200": {
+    "summary": "List all",
+    "value": {
+     "data": {
+      "currencies": [
+       {
+        "code": "ZDE",
+        "name": "Bruno test currency",
+        "symbol": "BT",
+        "decimals": 2,
+        "exchange_rate": "2.500000000000",
+        "is_active": false,
+        "rate_updated_at": "2026-10-31T18:31:42.000000Z",
+        "rate_updated_by_admin_id": 2,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:42.000000Z",
+        "name_translations": {
+         "ar": "عملة اختبار",
+         "en": "Bruno test currency"
+        },
+        "is_default": false
+       },
+       {
+        "code": "ZJA",
+        "name": "Bruno test currency",
+        "symbol": "BT",
+        "decimals": 2,
+        "exchange_rate": "2.500000000000",
+        "is_active": false,
+        "rate_updated_at": "2026-10-31T18:30:50.000000Z",
+        "rate_updated_by_admin_id": 2,
+        "id": 4,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:50.000000Z",
+        "name_translations": {
+         "ar": "عملة اختبار",
+         "en": "Bruno test currency"
+        },
+        "is_default": false
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/currencies/all/paginated": {
+  "responses": {
+   "200": {
+    "summary": "List paginated",
+    "value": {
+     "data": {
+      "currencies": [
+       {
+        "code": "ZDE",
+        "name": "Bruno test currency",
+        "symbol": "BT",
+        "decimals": 2,
+        "exchange_rate": "2.500000000000",
+        "is_active": false,
+        "rate_updated_at": "2026-10-31T18:31:42.000000Z",
+        "rate_updated_by_admin_id": 2,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:42.000000Z",
+        "name_translations": {
+         "ar": "عملة اختبار",
+         "en": "Bruno test currency"
+        },
+        "is_default": false
+       },
+       {
+        "code": "ZJA",
+        "name": "Bruno test currency",
+        "symbol": "BT",
+        "decimals": 2,
+        "exchange_rate": "2.500000000000",
+        "is_active": false,
+        "rate_updated_at": "2026-10-31T18:30:50.000000Z",
+        "rate_updated_by_admin_id": 2,
+        "id": 4,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:50.000000Z",
+        "name_translations": {
+         "ar": "عملة اختبار",
+         "en": "Bruno test currency"
+        },
+        "is_default": false
+       }
+      ],
+      "current_page": 1,
+      "next_page": null,
+      "previous_page": null,
+      "total_pages": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "5",
+   "page": "1"
+  }
+ },
+ "GET /api/v1/admin/delivery-areas/all": {
+  "responses": {
+   "200": {
+    "summary": "List all",
+    "value": {
+     "data": {
+      "delivery_areas": [
+       {
+        "city_id": 5,
+        "name": "Bruno area (edited)",
+        "boundary": {
+         "type": "Polygon",
+         "coordinates": [
+          [
+           [
+            36.3,
+            33.5
+           ],
+           [
+            36.31,
+            33.5
+           ]
+          ]
+         ]
+        },
+        "min_lat": "33.5000000",
+        "max_lat": "33.5100000",
+        "min_lng": "36.3000000",
+        "max_lng": "36.3100000",
+        "is_active": false,
+        "sort_order": 0,
+        "id": 6,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:43.000000Z",
+        "name_translations": {
+         "ar": "منطقة اختبار",
+         "en": "Bruno area (edited)"
+        }
+       },
+       {
+        "city_id": 4,
+        "name": "Bruno area (edited)",
+        "boundary": {
+         "type": "Polygon",
+         "coordinates": [
+          [
+           [
+            36.3,
+            33.5
+           ],
+           [
+            36.31,
+            33.5
+           ]
+          ]
+         ]
+        },
+        "min_lat": "33.5000000",
+        "max_lat": "33.5100000",
+        "min_lng": "36.3000000",
+        "max_lng": "36.3100000",
+        "is_active": false,
+        "sort_order": 0,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:51.000000Z",
+        "name_translations": {
+         "ar": "منطقة اختبار",
+         "en": "Bruno area (edited)"
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/delivery-areas/all/paginated": {
+  "responses": {
+   "200": {
+    "summary": "List paginated",
+    "value": {
+     "data": {
+      "deliveryareas": [
+       {
+        "city_id": 5,
+        "name": "Bruno area (edited)",
+        "boundary": {
+         "type": "Polygon",
+         "coordinates": [
+          [
+           [
+            36.3,
+            33.5
+           ],
+           [
+            36.31,
+            33.5
+           ]
+          ]
+         ]
+        },
+        "min_lat": "33.5000000",
+        "max_lat": "33.5100000",
+        "min_lng": "36.3000000",
+        "max_lng": "36.3100000",
+        "is_active": false,
+        "sort_order": 0,
+        "id": 6,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:43.000000Z",
+        "name_translations": {
+         "ar": "منطقة اختبار",
+         "en": "Bruno area (edited)"
+        }
+       },
+       {
+        "city_id": 4,
+        "name": "Bruno area (edited)",
+        "boundary": {
+         "type": "Polygon",
+         "coordinates": [
+          [
+           [
+            36.3,
+            33.5
+           ],
+           [
+            36.31,
+            33.5
+           ]
+          ]
+         ]
+        },
+        "min_lat": "33.5000000",
+        "max_lat": "33.5100000",
+        "min_lng": "36.3000000",
+        "max_lng": "36.3100000",
+        "is_active": false,
+        "sort_order": 0,
+        "id": 5,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:51.000000Z",
+        "name_translations": {
+         "ar": "منطقة اختبار",
+         "en": "Bruno area (edited)"
+        }
+       }
+      ],
+      "current_page": 1,
+      "next_page": "http://localhost:8080/api/v1/admin/delivery-areas/all/paginated?page=2",
+      "previous_page": null,
+      "total_pages": 2
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "5",
+   "page": "1"
+  }
+ },
+ "GET /api/v1/admin/delivery-fee-rules/all": {
+  "responses": {
+   "200": {
+    "summary": "List all",
+    "value": {
+     "data": {
+      "delivery_fee_rules": [
+       {
+        "city_id": 5,
+        "delivery_area_id": null,
+        "distance_from_km": "0.00",
+        "distance_to_km": "50.00",
+        "base_fee": "1.5000",
+        "per_km_fee": "0.1000",
+        "is_active": false,
+        "updated_by_admin_id": 2,
+        "id": 10,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:44.000000Z",
+        "scope": "city",
+        "scope_key": "c:5"
+       },
+       {
+        "city_id": 4,
+        "delivery_area_id": null,
+        "distance_from_km": "0.00",
+        "distance_to_km": "50.00",
+        "base_fee": "1.5000",
+        "per_km_fee": "0.1000",
+        "is_active": false,
+        "updated_by_admin_id": 2,
+        "id": 9,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:52.000000Z",
+        "scope": "city",
+        "scope_key": "c:4"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/delivery-fee-rules/all/paginated": {
+  "responses": {
+   "200": {
+    "summary": "List paginated",
+    "value": {
+     "data": {
+      "deliveryfeerules": [
+       {
+        "city_id": 5,
+        "delivery_area_id": null,
+        "distance_from_km": "0.00",
+        "distance_to_km": "50.00",
+        "base_fee": "1.5000",
+        "per_km_fee": "0.1000",
+        "is_active": false,
+        "updated_by_admin_id": 2,
+        "id": 10,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:44.000000Z",
+        "scope": "city",
+        "scope_key": "c:5"
+       },
+       {
+        "city_id": 4,
+        "delivery_area_id": null,
+        "distance_from_km": "0.00",
+        "distance_to_km": "50.00",
+        "base_fee": "1.5000",
+        "per_km_fee": "0.1000",
+        "is_active": false,
+        "updated_by_admin_id": 2,
+        "id": 9,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:52.000000Z",
+        "scope": "city",
+        "scope_key": "c:4"
+       }
+      ],
+      "current_page": 1,
+      "next_page": "http://localhost:8080/api/v1/admin/delivery-fee-rules/all/paginated?page=2",
+      "previous_page": null,
+      "total_pages": 2
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "5",
+   "page": "1"
+  }
+ },
+ "GET /api/v1/admin/ping": {
+  "responses": {
+   "200": {
+    "summary": "Ping (public health check)",
+    "value": {
+     "status": "ok"
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/settings/all": {
+  "responses": {
+   "200": {
+    "summary": "List all",
+    "value": {
+     "data": {
+      "settings": [
+       {
+        "key": "bruno.test_1793471502212",
+        "value": "bruno-updated",
+        "is_monetary": false,
+        "updated_by_admin_id": 2,
+        "id": 12,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:42.000000Z"
+       },
+       {
+        "key": "bruno.test_1793471450316",
+        "value": "bruno-updated",
+        "is_monetary": false,
+        "updated_by_admin_id": 2,
+        "id": 11,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:50.000000Z"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "401": {
+    "summary": "Invalid token - 401",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Please sign in to continue.",
+     "statusCode": 401
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/admin/settings/all/paginated": {
+  "responses": {
+   "200": {
+    "summary": "List paginated",
+    "value": {
+     "data": {
+      "settings": [
+       {
+        "key": "bruno.test_1793471502212",
+        "value": "bruno-updated",
+        "is_monetary": false,
+        "updated_by_admin_id": 2,
+        "id": 12,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:31:42.000000Z"
+       },
+       {
+        "key": "bruno.test_1793471450316",
+        "value": "bruno-updated",
+        "is_monetary": false,
+        "updated_by_admin_id": 2,
+        "id": 11,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:30:50.000000Z"
+       }
+      ],
+      "current_page": 1,
+      "next_page": "http://localhost:8080/api/v1/admin/settings/all/paginated?page=2",
+      "previous_page": null,
+      "total_pages": 3
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "5",
+   "page": "1"
+  }
+ },
+ "GET /api/v1/admin/users/all": {
+  "responses": {
+   "200": {
+    "summary": "List customers",
+    "value": {
+     "data": {
+      "users": [
+       {
+        "name": "Bruno Tester",
+        "email": "bruno+1793471622860@example.test",
+        "email_verified_at": null,
+        "is_active": true,
+        "status": false,
+        "social_id": null,
+        "prefix_phone": null,
+        "phone_number": null,
+        "otp_delivery_method": null,
+        "email_status": false,
+        "phone_status": false,
+        "language": "en",
+        "first_name": "Bruno",
+        "avatar": null,
+        "last_name": "Tester",
+        "phone": "+12025553365",
+        "otp_channel": "sms",
+        "display_currency_id": null,
+        "id": 12,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:33:42.000000Z"
+       },
+       {
+        "name": "Bruno Tester",
+        "email": "bruno+1793471520779@example.test",
+        "email_verified_at": null,
+        "is_active": true,
+        "status": false,
+        "social_id": null,
+        "prefix_phone": null,
+        "phone_number": null,
+        "otp_delivery_method": null,
+        "email_status": false,
+        "phone_status": false,
+        "language": "en",
+        "first_name": "Bruno",
+        "avatar": null,
+        "last_name": "Tester",
+        "phone": "+12025558101",
+        "otp_channel": "sms",
+        "display_currency_id": null,
+        "id": 11,
+        "is_deleted": false,
+        "created_at": "2026-10-31T18:32:00.000000Z"
+       }
+      ],
+      "current_page": 1,
+      "next_page": "http://localhost:8080/api/v1/admin/users/all?page=2",
+      "previous_page": null,
+      "total_pages": 2
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/addresses": {
+  "responses": {
+   "200": {
+    "summary": "List addresses",
+    "value": {
+     "data": {
+      "addresses": [
+       {
+        "id": 3,
+        "label": "Home / البيت",
+        "address_line": "Kafr Sousa / كفرسوسة",
+        "details": "Demo address",
+        "lat": 33.499,
+        "lng": 36.27,
+        "city": {
+         "id": 1,
+         "name": "Damascus"
+        },
+        "is_default": true
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/branches": {
+  "responses": {
+   "200": {
+    "summary": "Branches in my delivery city",
+    "value": {
+     "data": {
+      "branches": [
+       {
+        "id": 1,
+        "name": "Mazzeh branch",
+        "address": "Mazzeh branch, Damascus",
+        "lat": 33.505,
+        "lng": 36.245,
+        "store": {
+         "id": 1,
+         "name": "Shami Grill",
+         "logo_url": null,
+         "categories": [
+          {
+           "id": 1,
+           "name": "Restaurants"
+          }
+         ]
+        },
+        "is_open_now": true,
+        "is_accepting_orders": true,
+        "min_order": null
+       },
+       {
+        "id": 2,
+        "name": "Old City branch",
+        "address": "Old City branch, Damascus",
+        "lat": 33.511,
+        "lng": 36.305,
+        "store": {
+         "id": 1,
+         "name": "Shami Grill",
+         "logo_url": null,
+         "categories": [
+          {
+           "id": 1,
+           "name": "Restaurants"
+          }
+         ]
+        },
+        "is_open_now": true,
+        "is_accepting_orders": true,
+        "min_order": null
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 50,
+       "total": 8,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "50"
+  }
+ },
+ "GET /api/v1/customer/branches/{branch}": {
+  "responses": {
+   "200": {
+    "summary": "Branch details, hours and exceptions",
+    "value": {
+     "data": {
+      "branch": {
+       "id": 6,
+       "name": "Shaalan branch",
+       "address": "Shaalan branch, Damascus",
+       "lat": 33.515,
+       "lng": 36.295,
+       "store": {
+        "id": 3,
+        "name": "Fresh Market",
+        "logo_url": null,
+        "categories": [
+         {
+          "id": 2,
+          "name": "Supermarkets"
+         }
+        ]
+       },
+       "is_open_now": true,
+       "is_accepting_orders": true,
+       "min_order": {
+        "amount": "3.00",
+        "currency": "USD",
+        "display": null
+       },
+       "phone": "+12025550113",
+       "opening_hours": [
+        {
+         "day_of_week": 0,
+         "opens_at": "00:00",
+         "closes_at": "23:59"
+        },
+        {
+         "day_of_week": 1,
+         "opens_at": "00:00",
+         "closes_at": "23:59"
+        }
+       ],
+       "exceptions": [],
+       "product_categories": [
+        {
+         "id": 6,
+         "name": "Groceries"
+        },
+        {
+         "id": 7,
+         "name": "Dairy"
+        }
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/branches/{branch}/products": {
+  "responses": {
+   "200": {
+    "summary": "Branch products",
+    "value": {
+     "data": {
+      "products": [
+       {
+        "id": 10,
+        "branch_product_id": 24,
+        "name": "Milk 1 L",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+        "categories": [
+         {
+          "id": 7,
+          "name": "Dairy"
+         },
+         {
+          "id": 8,
+          "name": "Beverages"
+         }
+        ],
+        "price": {
+         "amount": "1.10",
+         "currency": "USD",
+         "display": null
+        },
+        "offer": null,
+        "is_available": true,
+        "requires_options": false,
+        "rating": {
+         "average": 5,
+         "count": 1,
+         "placeholder": null
+        }
+       },
+       {
+        "id": 11,
+        "branch_product_id": 26,
+        "name": "Labneh 500 g",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-labneh.svg",
+        "categories": [
+         {
+          "id": 6,
+          "name": "Groceries"
+         },
+         {
+          "id": 7,
+          "name": "Dairy"
+         }
+        ],
+        "price": {
+         "amount": "2.20",
+         "currency": "USD",
+         "display": null
+        },
+        "offer": null,
+        "is_available": true,
+        "requires_options": false,
+        "rating": {
+         "average": null,
+         "count": 0,
+         "placeholder": null
+        }
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 50,
+       "total": 5,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "50"
+  }
+ },
+ "GET /api/v1/customer/branches/{branch}/products/{product}": {
+  "responses": {
+   "200": {
+    "summary": "Product details with options",
+    "value": {
+     "data": {
+      "product": {
+       "id": 10,
+       "branch_product_id": 24,
+       "name": "Milk 1 L",
+       "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+       "categories": [
+        {
+         "id": 7,
+         "name": "Dairy"
+        },
+        {
+         "id": 8,
+         "name": "Beverages"
+        }
+       ],
+       "price": {
+        "amount": "1.10",
+        "currency": "USD",
+        "display": null
+       },
+       "offer": null,
+       "is_available": true,
+       "requires_options": false,
+       "rating": {
+        "average": 5,
+        "count": 1,
+        "placeholder": null
+       },
+       "description": "Milk 1 L — demo product.",
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "option_groups": []
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Product of another branch - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/carts": {
+  "responses": {
+   "200": {
+    "summary": "List my carts",
+    "value": {
+     "data": {
+      "carts": [
+       {
+        "id": 6,
+        "branch": {
+         "id": 6,
+         "name": "Shaalan branch",
+         "store": {
+          "id": 3,
+          "name": "Fresh Market"
+         }
+        },
+        "items": [
+         {
+          "id": 9,
+          "product_id": 10,
+          "name": "Milk 1 L",
+          "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+          "quantity": 3,
+          "notes": null,
+          "is_available": true,
+          "options": []
+         }
+        ],
+        "preview": {
+         "currency": "USD",
+         "subtotal": "3.30",
+         "offer_discount": "0.00",
+         "plus_discount": "0.00",
+         "delivery_fee": "1.19",
+         "delivery_fee_original": "1.19",
+         "free_delivery_available": true,
+         "delivery_covered": true,
+         "meets_min_order": true,
+         "total": "4.49"
+        },
+        "issue": null,
+        "updated_at": "2026-10-31T18:52:17+00:00"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/carts/{cart}": {
+  "responses": {
+   "200": {
+    "summary": "Get cart with server-priced preview",
+    "value": {
+     "data": {
+      "cart": {
+       "id": 6,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "items": [
+        {
+         "id": 9,
+         "product_id": 10,
+         "name": "Milk 1 L",
+         "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+         "quantity": 3,
+         "notes": null,
+         "is_available": true,
+         "options": []
+        }
+       ],
+       "preview": {
+        "currency": "USD",
+        "subtotal": "3.30",
+        "offer_discount": "0.00",
+        "plus_discount": "0.00",
+        "delivery_fee": "1.19",
+        "delivery_fee_original": "1.19",
+        "free_delivery_available": true,
+        "delivery_covered": true,
+        "meets_min_order": true,
+        "total": "4.49"
+       },
+       "issue": null,
+       "updated_at": "2026-10-31T18:52:17+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Cleared cart - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/cities": {
+  "responses": {
+   "200": {
+    "summary": "Active cities",
+    "value": {
+     "data": {
+      "cities": [
+       {
+        "name": "Damascus",
+        "center_lat": "33.5138000",
+        "center_lng": "36.2765000",
+        "radius_km": "18.00",
+        "is_active": true,
+        "sort_order": 0,
+        "id": 1,
+        "is_deleted": false,
+        "created_at": "2026-10-01T18:06:00.000000Z",
+        "name_translations": {
+         "ar": "دمشق",
+         "en": "Damascus"
+        }
+       },
+       {
+        "name": "Aleppo",
+        "center_lat": "36.2021000",
+        "center_lng": "37.1343000",
+        "radius_km": "15.00",
+        "is_active": true,
+        "sort_order": 0,
+        "id": 2,
+        "is_deleted": false,
+        "created_at": "2026-10-01T18:06:00.000000Z",
+        "name_translations": {
+         "ar": "حلب",
+         "en": "Aleppo"
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/context": {
+  "responses": {
+   "200": {
+    "summary": "Delivery context",
+    "value": {
+     "data": {
+      "selected_address": {
+       "id": 3,
+       "label": "Home / البيت",
+       "address_line": "Kafr Sousa / كفرسوسة",
+       "details": "Demo address",
+       "lat": 33.499,
+       "lng": 36.27,
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "is_default": true
+      },
+      "delivery_city": {
+       "id": 1,
+       "name": "Damascus"
+      },
+      "default_currency": {
+       "id": 1,
+       "code": "USD",
+       "symbol": "$",
+       "decimals": 2
+      },
+      "display_currency": null
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/currencies": {
+  "responses": {
+   "200": {
+    "summary": "Currencies",
+    "value": {
+     "data": {
+      "currencies": [
+       {
+        "id": 1,
+        "code": "USD",
+        "name": "US Dollar",
+        "symbol": "$",
+        "decimals": 2,
+        "exchange_rate": "1.000000000000",
+        "is_default": true
+       },
+       {
+        "id": 3,
+        "code": "EUR",
+        "name": "Euro",
+        "symbol": "€",
+        "decimals": 2,
+        "exchange_rate": "0.920000000000",
+        "is_default": false
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/device-tokens": {
+  "responses": {
+   "200": {
+    "summary": "List device tokens (one active device)",
+    "value": {
+     "data": {
+      "device_tokens": [
+       {
+        "id": 5,
+        "platform": "android",
+        "device_id": "bruno-device",
+        "device_name": "Bruno",
+        "token_hint": "…0ab14f",
+        "is_active": true,
+        "last_seen_at": "2026-10-31T18:52:19+00:00",
+        "created_at": "2026-10-31T18:52:19+00:00"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/favorites": {
+  "responses": {
+   "200": {
+    "summary": "List favorites",
+    "value": {
+     "data": {
+      "favorites": [
+       {
+        "id": 10,
+        "name": "Milk 1 L",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        },
+        "rating": {
+         "average": 5,
+         "count": 1,
+         "placeholder": null
+        }
+       },
+       {
+        "id": 6,
+        "name": "Margherita pizza",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-pizza-roma-margherita.svg",
+        "store": {
+         "id": 2,
+         "name": "Pizza Roma"
+        },
+        "rating": {
+         "average": 4,
+         "count": 1,
+         "placeholder": null
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/me": {
+  "responses": {
+   "401": {
+    "summary": "Deleted account - token revoked",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Please sign in to continue.",
+     "statusCode": 401
+    }
+   },
+   "200": {
+    "summary": "Get my profile",
+    "value": {
+     "data": {
+      "user": {
+       "id": 2,
+       "first_name": "Karim",
+       "last_name": "Nasser",
+       "phone": "+12025550101",
+       "email": "customer-02@demo.waffrli.test",
+       "email_verified": true,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": {
+        "id": 3,
+        "label": "Home / البيت",
+        "address_line": "Kafr Sousa / كفرسوسة",
+        "details": "Demo address",
+        "lat": 33.499,
+        "lng": 36.27,
+        "city": {
+         "id": 1,
+         "name": "Damascus"
+        },
+        "is_default": true
+       },
+       "delivery_city": {
+        "id": 1,
+        "name": "Damascus"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/notifications": {
+  "responses": {
+   "200": {
+    "summary": "List notifications",
+    "value": {
+     "data": {
+      "notifications": [
+       {
+        "id": "1c42bf5a-2e47-492a-b255-191867d50349",
+        "type": "order.cancelled",
+        "event": "order.cancelled",
+        "title": "Order WF261031-EE0XNT",
+        "message": "Your order WF261031-EE0XNT was cancelled.",
+        "references": {
+         "order_id": 38,
+         "order_number": "WF261031-EE0XNT"
+        },
+        "read_at": null,
+        "created_at": "2026-10-31T18:52:18+00:00"
+       },
+       {
+        "id": "e58c4db5-7f6e-4f1a-a070-7f2fbfdd0063",
+        "type": "order.cancelled",
+        "event": "order.cancelled",
+        "title": "Order WF261031-VMW4GH",
+        "message": "Your order WF261031-VMW4GH was cancelled.",
+        "references": {
+         "order_id": 37,
+         "order_number": "WF261031-VMW4GH"
+        },
+        "read_at": "2026-10-31T18:43:58+00:00",
+        "created_at": "2026-10-31T18:43:58+00:00"
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 4,
+       "last_page": 1
+      },
+      "unread_count": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/notifications/unread-count": {
+  "responses": {
+   "200": {
+    "summary": "Unread count",
+    "value": {
+     "data": {
+      "unread_count": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/offers": {
+  "responses": {
+   "200": {
+    "summary": "Current offers",
+    "value": {
+     "data": {
+      "offers": [
+       {
+        "id": 1,
+        "name": "Grill week",
+        "discount_type": "percent",
+        "discount_value": "15.0000",
+        "starts_at": "2026-10-11T18:06:00+00:00",
+        "ends_at": "2026-11-10T18:06:00+00:00",
+        "store": {
+         "id": 1,
+         "name": "Shami Grill"
+        },
+        "branch": null,
+        "product": {
+         "id": 2,
+         "name": "Mixed grill platter",
+         "image_url": "http://localhost:8080/storage/demo/products/demo-shami-grill-mixed-grill.svg"
+        }
+       },
+       {
+        "id": 2,
+        "name": "Seasonal olive oil",
+        "discount_type": "percent",
+        "discount_value": "10.0000",
+        "starts_at": "2026-10-16T18:06:00+00:00",
+        "ends_at": "2026-11-15T18:06:00+00:00",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        },
+        "branch": {
+         "id": 6,
+         "name": "Shaalan branch"
+        },
+        "product": {
+         "id": 13,
+         "name": "Olive oil 1 L",
+         "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-olive-oil.svg"
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/orders": {
+  "responses": {
+   "200": {
+    "summary": "Find a delivered order",
+    "value": {
+     "data": {
+      "orders": [
+       {
+        "id": 37,
+        "order_number": "WF261031-VMW4GH",
+        "status": "cancelled",
+        "status_label": "Cancelled",
+        "type": "immediate",
+        "type_label": "Immediate",
+        "scheduled_for": null,
+        "branch": {
+         "id": 6,
+         "name": "Shaalan branch",
+         "store": {
+          "id": 3,
+          "name": "Fresh Market"
+         }
+        },
+        "currency": {
+         "code": "USD",
+         "symbol": "$",
+         "decimals": 2
+        },
+        "total": "4.49",
+        "created_at": "2026-10-31T18:43:57+00:00",
+        "can_cancel": false,
+        "can_request_cancellation": false
+       },
+       {
+        "id": 22,
+        "order_number": "DEMO-0022",
+        "status": "delivered",
+        "status_label": "Delivered",
+        "type": "immediate",
+        "type_label": "Immediate",
+        "scheduled_for": null,
+        "branch": {
+         "id": 4,
+         "name": "West Mazzeh branch",
+         "store": {
+          "id": 2,
+          "name": "Pizza Roma"
+         }
+        },
+        "currency": {
+         "code": "USD",
+         "symbol": "$",
+         "decimals": 2
+        },
+        "total": "2.76",
+        "created_at": "2026-10-31T15:36:00+00:00",
+        "can_cancel": false,
+        "can_request_cancellation": false
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 50,
+       "total": 5,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "scope": "previous",
+   "per_page": "50"
+  }
+ },
+ "GET /api/v1/customer/orders/{order}": {
+  "responses": {
+   "200": {
+    "summary": "Read delivered order items",
+    "value": {
+     "data": {
+      "order": {
+       "id": 22,
+       "order_number": "DEMO-0022",
+       "status": "delivered",
+       "status_label": "Delivered",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "branch": {
+        "id": 4,
+        "name": "West Mazzeh branch",
+        "store": {
+         "id": 2,
+         "name": "Pizza Roma"
+        }
+       },
+       "currency": {
+        "code": "USD",
+        "symbol": "$",
+        "decimals": 2
+       },
+       "total": "2.76",
+       "created_at": "2026-10-31T15:36:00+00:00",
+       "can_cancel": false,
+       "can_request_cancellation": false,
+       "items": [
+        {
+         "product_id": 8,
+         "name": {
+          "ar": "خبز بالثوم",
+          "en": "Garlic bread"
+         },
+         "quantity": 1,
+         "unit_price": "1.80",
+         "line_total": "1.80",
+         "notes": null,
+         "options": []
+        }
+       ],
+       "amounts": {
+        "subtotal": "1.80",
+        "offer_discount": "0.00",
+        "plus_discount": "0.09",
+        "delivery_fee_original": "1.05",
+        "delivery_fee": "1.05",
+        "free_delivery_applied": false,
+        "total": "2.76"
+       },
+       "payments": [
+        {
+         "method": "cash",
+         "method_label": "Cash on delivery",
+         "amount": "2.76",
+         "status": "paid",
+         "status_label": "Paid",
+         "collected": "2.76",
+         "reversed": "0.00",
+         "refunded": "0.00"
+        }
+       ],
+       "refunds": [],
+       "delivery": {
+        "address": {
+         "line": "Kafr Sousa / كفرسوسة",
+         "label": "Home / البيت",
+         "details": "Demo address"
+        },
+        "lat": 33.499,
+        "lng": 36.27,
+        "distance_km": 3.247,
+        "notes": null
+       },
+       "driver": null,
+       "realtime_channel": null,
+       "status_history": [
+        {
+         "from": null,
+         "from_label": null,
+         "to": "pending",
+         "to_label": "Pending",
+         "at": "2026-10-31T15:36:00+00:00"
+        },
+        {
+         "from": "pending",
+         "from_label": "Pending",
+         "to": "accepted",
+         "to_label": "Accepted",
+         "at": "2026-10-31T15:39:00+00:00"
+        }
+       ],
+       "cancellation": null,
+       "cancellation_requests": []
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Order that is not mine - 404",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/payments": {
+  "responses": {
+   "200": {
+    "summary": "Payments",
+    "value": {
+     "data": {
+      "payments": [
+       {
+        "order_number": "WF261031-EE0XNT",
+        "method": "cash",
+        "method_label": "Cash on delivery",
+        "currency": "USD",
+        "amount": "4.4900",
+        "status": "cancelled",
+        "status_label": "Cancelled",
+        "collected": "0.0000",
+        "reversed": "0.0000",
+        "refunded": "0.0000",
+        "paid_at": null
+       },
+       {
+        "order_number": "WF261031-VMW4GH",
+        "method": "cash",
+        "method_label": "Cash on delivery",
+        "currency": "USD",
+        "amount": "4.4900",
+        "status": "cancelled",
+        "status_label": "Cancelled",
+        "collected": "0.0000",
+        "reversed": "0.0000",
+        "refunded": "0.0000",
+        "paid_at": null
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 7,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/plus/eligible-discounts": {
+  "responses": {
+   "200": {
+    "summary": "Eligible discounts (PLUS before public offers)",
+    "value": {
+     "data": {
+      "has_active_cycle": true,
+      "free_deliveries_remaining": 1,
+      "discounts": [
+       {
+        "store": {
+         "id": 2,
+         "name": "Pizza Roma"
+        },
+        "discount_type": "percent",
+        "discount_value": "5.0000",
+        "max_discount": "2.0000",
+        "min_order": null
+       }
+      ],
+      "note": "PLUS store discounts replace public offers on the same order; free delivery can be combined with them."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/plus/membership": {
+  "responses": {
+   "200": {
+    "summary": "My membership and remaining free deliveries",
+    "value": {
+     "data": {
+      "membership": {
+       "status": "active",
+       "status_label": "Active",
+       "plan": {
+        "id": 1,
+        "name": "PLUS Basic"
+       },
+       "next_plan": null,
+       "renewal_policy": "custom",
+       "renewal_policy_label": "Custom duration",
+       "custom_duration_days": 20,
+       "cancelled_at": null,
+       "current_cycle": {
+        "id": 5,
+        "number": 3,
+        "status": "active",
+        "status_label": "Active",
+        "plan_name": {
+         "ar": "بلس الأساسي",
+         "en": "PLUS Basic"
+        },
+        "plan_label": "PLUS Basic",
+        "starts_at": "2026-10-26T18:06:00+00:00",
+        "ends_at": "2026-11-15T18:06:00+00:00",
+        "free_deliveries_total": 2,
+        "free_deliveries_used": 1,
+        "free_deliveries_remaining": 1,
+        "store_discounts": [
+         {
+          "store": {
+           "id": 2,
+           "name": "Pizza Roma"
+          },
+          "discount_type": "percent",
+          "discount_value": "5.0000",
+          "max_discount": "2.0000",
+          "min_order": null
+         }
+        ]
+       },
+       "next_cycle": null,
+       "past_cycles": [
+        {
+         "number": 1,
+         "status": "expired",
+         "status_label": "Expired",
+         "starts_at": "2026-09-16T18:06:00+00:00",
+         "ends_at": "2026-10-06T18:06:00+00:00"
+        },
+        {
+         "number": 2,
+         "status": "expired",
+         "status_label": "Expired",
+         "starts_at": "2026-10-06T18:06:00+00:00",
+         "ends_at": "2026-10-26T18:06:00+00:00"
+        }
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/plus/plans": {
+  "responses": {
+   "200": {
+    "summary": "Plans",
+    "value": {
+     "data": {
+      "plans": [
+       {
+        "id": 1,
+        "code": "demo-plus-basic",
+        "name": "PLUS Basic",
+        "description": "Demo plan: PLUS Basic",
+        "duration_days": 30,
+        "free_deliveries_per_cycle": 2,
+        "display_price": "4.9900",
+        "store_benefits": [
+         {
+          "store": {
+           "id": 2,
+           "name": "Pizza Roma"
+          },
+          "discount_type": "percent",
+          "discount_value": "5.0000",
+          "max_discount": "2.0000",
+          "min_order": null
+         }
+        ]
+       },
+       {
+        "id": 2,
+        "code": "demo-plus-gold",
+        "name": "PLUS Gold",
+        "description": "Demo plan: PLUS Gold",
+        "duration_days": 30,
+        "free_deliveries_per_cycle": 5,
+        "display_price": "9.9900",
+        "store_benefits": [
+         {
+          "store": {
+           "id": 1,
+           "name": "Shami Grill"
+          },
+          "discount_type": "percent",
+          "discount_value": "10.0000",
+          "max_discount": "3.0000",
+          "min_order": null
+         },
+         {
+          "store": {
+           "id": 2,
+           "name": "Pizza Roma"
+          },
+          "discount_type": "percent",
+          "discount_value": "5.0000",
+          "max_discount": "2.0000",
+          "min_order": null
+         }
+        ]
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/plus/requests": {
+  "responses": {
+   "200": {
+    "summary": "Request history",
+    "value": {
+     "data": {
+      "requests": [
+       {
+        "id": 16,
+        "type": "custom",
+        "type_label": "Custom",
+        "status": "pending",
+        "status_label": "Pending",
+        "source": "customer",
+        "source_label": "Customer",
+        "plan": null,
+        "note": "Bruno: question about my plan",
+        "admin_note": null,
+        "created_at": "2026-10-31T18:43:58+00:00",
+        "reviewed_at": null
+       },
+       {
+        "id": 7,
+        "type": "cancel",
+        "type_label": "Cancellation",
+        "status": "pending",
+        "status_label": "Pending",
+        "source": "customer",
+        "source_label": "Customer",
+        "plan": null,
+        "note": "Travelling for two months.",
+        "admin_note": null,
+        "created_at": "2026-10-31T16:06:00+00:00",
+        "reviewed_at": null
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/product-categories": {
+  "responses": {
+   "200": {
+    "summary": "Product categories (tree)",
+    "value": {
+     "data": {
+      "categories": [
+       {
+        "id": 1,
+        "name": "Food",
+        "slug": "demo-food",
+        "image_url": null,
+        "children": [
+         {
+          "id": 2,
+          "name": "Grills",
+          "slug": "demo-grills",
+          "image_url": null,
+          "children": []
+         },
+         {
+          "id": 3,
+          "name": "Pizza",
+          "slug": "demo-pizza",
+          "image_url": null,
+          "children": []
+         }
+        ]
+       },
+       {
+        "id": 6,
+        "name": "Groceries",
+        "slug": "demo-groceries",
+        "image_url": null,
+        "children": [
+         {
+          "id": 7,
+          "name": "Dairy",
+          "slug": "demo-dairy",
+          "image_url": null,
+          "children": []
+         },
+         {
+          "id": 8,
+          "name": "Beverages",
+          "slug": "demo-beverages",
+          "image_url": null,
+          "children": []
+         }
+        ]
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/refunds": {
+  "responses": {
+   "200": {
+    "summary": "Refund history",
+    "value": {
+     "data": {
+      "refunds": [],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 0,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/search": {
+  "responses": {
+   "200": {
+    "summary": "Search",
+    "value": {
+     "data": {
+      "branches": [
+       {
+        "id": 4,
+        "name": "West Mazzeh branch",
+        "address": "West Mazzeh branch, Damascus",
+        "lat": 33.5,
+        "lng": 36.235,
+        "store": {
+         "id": 2,
+         "name": "Pizza Roma",
+         "logo_url": null,
+         "categories": [
+          {
+           "id": 1,
+           "name": "Restaurants"
+          }
+         ]
+        },
+        "is_open_now": true,
+        "is_accepting_orders": true,
+        "min_order": null
+       }
+      ],
+      "products": [
+       {
+        "id": 6,
+        "branch_product_id": 16,
+        "name": "Margherita pizza",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-pizza-roma-margherita.svg",
+        "categories": [
+         {
+          "id": 1,
+          "name": "Food"
+         },
+         {
+          "id": 3,
+          "name": "Pizza"
+         }
+        ],
+        "price": {
+         "amount": "5.00",
+         "currency": "USD",
+         "display": null
+        },
+        "offer": null,
+        "is_available": true,
+        "requires_options": true,
+        "rating": {
+         "average": 4,
+         "count": 1,
+         "placeholder": null
+        },
+        "branch": {
+         "id": 4,
+         "name": "West Mazzeh branch",
+         "store": {
+          "id": 2,
+          "name": "Pizza Roma"
+         }
+        }
+       },
+       {
+        "id": 7,
+        "branch_product_id": 18,
+        "name": "Pepperoni pizza",
+        "image_url": "http://localhost:8080/storage/demo/products/demo-pizza-roma-pepperoni.svg",
+        "categories": [
+         {
+          "id": 1,
+          "name": "Food"
+         },
+         {
+          "id": 3,
+          "name": "Pizza"
+         }
+        ],
+        "price": {
+         "amount": "6.00",
+         "currency": "USD",
+         "display": null
+        },
+        "offer": null,
+        "is_available": true,
+        "requires_options": true,
+        "rating": {
+         "average": null,
+         "count": 0,
+         "placeholder": null
+        },
+        "branch": {
+         "id": 4,
+         "name": "West Mazzeh branch",
+         "store": {
+          "id": 2,
+          "name": "Pizza Roma"
+         }
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "q": "pizza"
+  }
+ },
+ "GET /api/v1/customer/store-categories": {
+  "responses": {
+   "200": {
+    "summary": "Store categories",
+    "value": {
+     "data": {
+      "store_categories": [
+       {
+        "id": 1,
+        "name": "Restaurants",
+        "slug": "demo-restaurants",
+        "image_url": null
+       },
+       {
+        "id": 2,
+        "name": "Supermarkets",
+        "slug": "demo-supermarkets",
+        "image_url": null
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/wallet": {
+  "responses": {
+   "200": {
+    "summary": "Wallet balances (read only)",
+    "value": {
+     "data": {
+      "wallets": []
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/customer/wallet/transactions": {
+  "responses": {
+   "200": {
+    "summary": "Wallet transactions",
+    "value": {
+     "data": {
+      "transactions": [],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 0,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/dev/otp": {
+  "responses": {
+   "200": {
+    "summary": "Dev - read last OTP (development only)",
+    "value": {
+     "data": {
+      "phone": "+12025550101",
+      "channel": "sms",
+      "code": "123456",
+      "sent_at": "2026-10-31T18:52:11+00:00"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "phone": "+12025550102"
+  }
+ },
+ "GET /api/v1/driver/availability": {
+  "responses": {
+   "200": {
+    "summary": "Get availability",
+    "value": {
+     "data": {
+      "availability": "available",
+      "availability_label": "Available",
+      "is_active": true,
+      "has_active_delivery": true,
+      "can_go_offline": false,
+      "active_orders": [
+       {
+        "id": 31,
+        "order_number": "DEMO-0031",
+        "status_label": "Driver assigned",
+        "status": "assigned"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/cash/collections": {
+  "responses": {
+   "200": {
+    "summary": "Cash collections",
+    "value": {
+     "data": {
+      "collections": [
+       {
+        "payment_id": 35,
+        "order_id": 31,
+        "order_number": "DEMO-0031",
+        "currency": "USD",
+        "amount_collected": "8.0300",
+        "collected_at": "2026-10-31T18:********:10+00:00",
+        "settlement": null,
+        "settled": false
+       },
+       {
+        "payment_id": 8,
+        "order_id": 8,
+        "order_number": "DEMO-0008",
+        "currency": "USD",
+        "amount_collected": "9.5700",
+        "collected_at": "2026-10-24T10:45:00+00:00",
+        "settlement": null,
+        "settled": false
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 3,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/cash/settlements": {
+  "responses": {
+   "200": {
+    "summary": "Daily settlements",
+    "value": {
+     "data": {
+      "settlements": [],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 0,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/cash/summary": {
+  "responses": {
+   "200": {
+    "summary": "Cash summary",
+    "value": {
+     "data": {
+      "currencies": [
+       {
+        "currency": "USD",
+        "to_collect_on_active_deliveries": "0.0000",
+        "collected_unsettled": "25.1400",
+        "collected_in_open_or_disputed_settlements": "0.0000"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/device-tokens": {
+  "responses": {
+   "200": {
+    "summary": "List device tokens",
+    "value": {
+     "data": {
+      "device_tokens": [
+       {
+        "id": 2,
+        "platform": "android",
+        "device_id": "bruno-driver-device",
+        "device_name": "Bruno",
+        "token_hint": "…a01946",
+        "is_active": true,
+        "last_seen_at": "2026-10-31T18:********:11+00:00",
+        "created_at": "2026-10-31T18:********:11+00:00"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/me": {
+  "responses": {
+   "401": {
+    "summary": "Customer token on a driver endpoint - refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Please sign in to continue.",
+     "statusCode": 401
+    }
+   },
+   "200": {
+    "summary": "Get my profile",
+    "value": {
+     "data": {
+      "driver": {
+       "id": 1,
+       "name": "Samer Driver",
+       "phone": "+12025550101",
+       "language": "ar",
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "vehicle": {
+        "type": "motorcycle",
+        "plate": "DEMO-M-101"
+       },
+       "account": {
+        "is_active": true
+       },
+       "availability": {
+        "status": "available",
+        "status_label": "Available",
+        "has_active_delivery": true,
+        "can_go_offline": false,
+        "active_orders": [
+         {
+          "id": 31,
+          "order_number": "DEMO-0031",
+          "status_label": "Driver assigned",
+          "status": "assigned"
+         }
+        ]
+       },
+       "last_location": {
+        "lat": 33.5038,
+        "lng": 36.2478,
+        "recorded_at": "2026-10-31T18:05:00+00:00"
+       },
+       "editable_fields": [
+        "language"
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/notifications": {
+  "responses": {
+   "200": {
+    "summary": "List my notifications",
+    "value": {
+     "data": {
+      "notifications": [
+       {
+        "id": "87fc89ab-f63d-45a3-818e-77bfcdb1044c",
+        "type": "driver.order_assigned",
+        "event": "assigned",
+        "order_id": 31,
+        "order_number": "DEMO-0031",
+        "message": "New delivery assigned: DEMO-0031",
+        "read_at": null,
+        "created_at": "2026-10-31T17:54:00+00:00"
+       },
+       {
+        "id": "3********ab483-767b-4340-97a4-8fa08af3072b",
+        "type": "driver.order_assigned",
+        "event": "assigned",
+        "order_id": 8,
+        "order_number": "DEMO-0008",
+        "message": "New delivery assigned: DEMO-0008",
+        "read_at": null,
+        "created_at": "2026-10-24T10:10:00+00:00"
+       }
+      ],
+      "unread_count": 3,
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 3,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/orders/active": {
+  "responses": {
+   "200": {
+    "summary": "List my active orders",
+    "value": {
+     "data": {
+      "orders": [
+       {
+        "id": 31,
+        "order_number": "DEMO-0031",
+        "status": "assigned",
+        "status_label": "Driver assigned",
+        "type": "immediate",
+        "type_label": "Immediate",
+        "scheduled_for": null,
+        "store": {
+         "id": 1,
+         "name": "Shami Grill"
+        },
+        "branch": {
+         "id": 1,
+         "name": "Mazzeh branch",
+         "address": "Mazzeh branch, Damascus",
+         "phone": "+12025550111",
+         "lat": 33.505,
+         "lng": 36.245
+        },
+        "delivery": {
+         "city": "Damascus",
+         "area": "Muhajireen & Salhiyeh",
+         "address": "Rukn al-Din / ركن الدين",
+         "address_details": "Demo address",
+         "address_label": "Home / البيت",
+         "lat": 33.55,
+         "lng": 36.3,
+         "distance_km": 7.143,
+         "instructions": null
+        },
+        "customer": {
+         "name": "Huda Mansour",
+         "phone": "+12025550107"
+        },
+        "items": [
+         {
+          "name": "Chicken shawarma wrap",
+          "quantity": 2,
+          "notes": null,
+          "options": [
+           {
+            "group": "Bread",
+            "option": "Tannour bread",
+            "quantity": 1
+           },
+           {
+            "group": "Extras",
+            "option": "Extra cheese",
+            "quantity": 1
+           }
+          ]
+         }
+        ],
+        "payment": {
+         "currency": {
+          "code": "USD",
+          "symbol": "$",
+          "decimals": 2
+         },
+         "order_total": "8.03",
+         "prepaid_amount": "0.00",
+         "cash_to_collect": "8.03",
+         "cash_collected": "0.00"
+        },
+        "timeline": {
+         "created_at": "2026-10-31T17:46:00+00:00",
+         "accepted_at": "2026-10-31T17:49:00+00:00",
+         "assigned_at": "2026-10-31T17:54:00+00:00",
+         "picked_up_at": null,
+         "delivered_at": null
+        },
+        "has_delivery_photo": false,
+        "allowed_actions": [
+         "pickup",
+         "report_problem"
+        ]
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/driver/orders/history": {
+  "responses": {
+   "200": {
+    "summary": "Delivery history",
+    "value": {
+     "data": {
+      "orders": [
+       {
+        "id": 8,
+        "order_number": "DEMO-0008",
+        "status": "delivered",
+        "status_label": "Delivered",
+        "type": "immediate",
+        "type_label": "Immediate",
+        "scheduled_for": null,
+        "store": {
+         "id": 1,
+         "name": "Shami Grill"
+        },
+        "branch": {
+         "id": 2,
+         "name": "Old City branch",
+         "address": "Old City branch, Damascus",
+         "phone": null,
+         "lat": 33.511,
+         "lng": 36.305
+        },
+        "delivery": {
+         "city": "Damascus",
+         "area": "Mazzeh & Kafr Sousa",
+         "address": null,
+         "address_details": null,
+         "address_label": null,
+         "lat": null,
+         "lng": null,
+         "distance_km": 5.197,
+         "instructions": null
+        },
+        "customer": null,
+        "items": [
+         {
+          "name": "Mixed grill platter",
+          "quantity": 1,
+          "notes": null,
+          "options": [
+           {
+            "group": "Size",
+            "option": "Large",
+            "quantity": 1
+           }
+          ]
+         },
+         {
+          "name": "Ayran",
+          "quantity": 1,
+          "notes": null,
+          "options": []
+         }
+        ],
+        "payment": {
+         "currency": {
+          "code": "USD",
+          "symbol": "$",
+          "decimals": 2
+         },
+         "order_total": "9.57",
+         "prepaid_amount": "0.00",
+         "cash_to_collect": "0.00",
+         "cash_collected": "9.57"
+        },
+        "timeline": {
+         "created_at": "2026-10-24T10:00:00+00:00",
+         "accepted_at": "2026-10-24T10:05:00+00:00",
+         "assigned_at": "2026-10-24T10:10:00+00:00",
+         "picked_up_at": "2026-10-24T10:25:00+00:00",
+         "delivered_at": "2026-10-24T10:45:00+00:00"
+        },
+        "has_delivery_photo": false,
+        "allowed_actions": []
+       },
+       {
+        "id": 1,
+        "order_number": "DEMO-0001",
+        "status": "delivered",
+        "status_label": "Delivered",
+        "type": "immediate",
+        "type_label": "Immediate",
+        "scheduled_for": null,
+        "store": {
+         "id": 1,
+         "name": "Shami Grill"
+        },
+        "branch": {
+         "id": 1,
+         "name": "Mazzeh branch",
+         "address": "Mazzeh branch, Damascus",
+         "phone": null,
+         "lat": 33.505,
+         "lng": 36.245
+        },
+        "delivery": {
+         "city": "Damascus",
+         "area": "Mazzeh & Kafr Sousa",
+         "address": null,
+         "address_details": null,
+         "address_label": null,
+         "lat": null,
+         "lng": null,
+         "distance_km": 0.571,
+         "instructions": null
+        },
+        "customer": null,
+        "items": [
+         {
+          "name": "Chicken shawarma wrap",
+          "quantity": 2,
+          "notes": null,
+          "options": [
+           {
+            "group": "Bread",
+            "option": "Saj bread",
+            "quantity": 1
+           },
+           {
+            "group": "Extras",
+            "option": "Garlic sauce",
+            "quantity": 1
+           }
+          ]
+         },
+         {
+          "name": "Ayran",
+          "quantity": 2,
+          "notes": null,
+          "options": []
+         }
+        ],
+        "payment": {
+         "currency": {
+          "code": "USD",
+          "symbol": "$",
+          "decimals": 2
+         },
+         "order_total": "7.54",
+         "prepaid_amount": "0.00",
+         "cash_to_collect": "0.00",
+         "cash_collected": "7.54"
+        },
+        "timeline": {
+         "created_at": "2026-10-18T10:00:00+00:00",
+         "accepted_at": "2026-10-18T10:05:00+00:00",
+         "assigned_at": "2026-10-18T10:10:00+00:00",
+         "picked_up_at": "2026-10-18T10:25:00+00:00",
+         "delivered_at": "2026-10-18T10:45:00+00:00"
+        },
+        "has_delivery_photo": false,
+        "allowed_actions": []
+       }
+      ],
+      "pagination": {
+       "current_page": 1,
+       "per_page": 20,
+       "total": 2,
+       "last_page": 1
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": {
+   "per_page": "20"
+  }
+ },
+ "GET /api/v1/driver/orders/{order}": {
+  "responses": {
+   "200": {
+    "summary": "Get order details",
+    "value": {
+     "data": {
+      "order": {
+       "id": 31,
+       "order_number": "DEMO-0031",
+       "status": "assigned",
+       "status_label": "Driver assigned",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "store": {
+        "id": 1,
+        "name": "Shami Grill"
+       },
+       "branch": {
+        "id": 1,
+        "name": "Mazzeh branch",
+        "address": "Mazzeh branch, Damascus",
+        "phone": "+12025550111",
+        "lat": 33.505,
+        "lng": 36.245
+       },
+       "delivery": {
+        "city": "Damascus",
+        "area": "Muhajireen & Salhiyeh",
+        "address": "Rukn al-Din / ركن الدين",
+        "address_details": "Demo address",
+        "address_label": "Home / البيت",
+        "lat": 33.55,
+        "lng": 36.3,
+        "distance_km": 7.143,
+        "instructions": null
+       },
+       "customer": {
+        "name": "Huda Mansour",
+        "phone": "+12025550107"
+       },
+       "items": [
+        {
+         "name": "Chicken shawarma wrap",
+         "quantity": 2,
+         "notes": null,
+         "options": [
+          {
+           "group": "Bread",
+           "option": "Tannour bread",
+           "quantity": 1
+          },
+          {
+           "group": "Extras",
+           "option": "Extra cheese",
+           "quantity": 1
+          }
+         ]
+        }
+       ],
+       "payment": {
+        "currency": {
+         "code": "USD",
+         "symbol": "$",
+         "decimals": 2
+        },
+        "order_total": "8.03",
+        "prepaid_amount": "0.00",
+        "cash_to_collect": "8.03",
+        "cash_collected": "0.00"
+       },
+       "timeline": {
+        "created_at": "2026-10-31T17:46:00+00:00",
+        "accepted_at": "2026-10-31T17:49:00+00:00",
+        "assigned_at": "2026-10-31T17:54:00+00:00",
+        "picked_up_at": null,
+        "delivered_at": null
+       },
+       "has_delivery_photo": false,
+       "allowed_actions": [
+        "pickup",
+        "report_problem"
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Another driver's order",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Order not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "GET /api/v1/user/cities": {
+  "responses": {
+   "200": {
+    "summary": "Legacy alias - active cities (user prefix)",
+    "value": {
+     "data": {
+      "cities": [
+       {
+        "name": "Damascus",
+        "center_lat": "33.5138000",
+        "center_lng": "36.2765000",
+        "radius_km": "18.00",
+        "is_active": true,
+        "sort_order": 0,
+        "id": 1,
+        "is_deleted": false,
+        "created_at": "2026-10-01T18:06:00.000000Z",
+        "name_translations": {
+         "ar": "دمشق",
+         "en": "Damascus"
+        }
+       },
+       {
+        "name": "Aleppo",
+        "center_lat": "36.2021000",
+        "center_lng": "37.1343000",
+        "radius_km": "15.00",
+        "is_active": true,
+        "sort_order": 0,
+        "id": 2,
+        "is_deleted": false,
+        "created_at": "2026-10-01T18:06:00.000000Z",
+        "name_translations": {
+         "ar": "حلب",
+         "en": "Aleppo"
+        }
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "PATCH /api/v1/customer/addresses/{address}": {
+  "responses": {
+   "200": {
+    "summary": "Update address",
+    "value": {
+     "data": {
+      "message": "Address saved.",
+      "address": {
+       "id": 15,
+       "label": "Bruno office (edited)",
+       "address_line": "Bruno test street",
+       "details": null,
+       "lat": 33.51,
+       "lng": 36.29,
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "is_default": false
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "label": "Bruno office (edited)"
+  },
+  "query": null
+ },
+ "PATCH /api/v1/customer/cart/items/{item}": {
+  "responses": {
+   "200": {
+    "summary": "Update quantity",
+    "value": {
+     "data": {
+      "message": "Cart updated.",
+      "cart": {
+       "id": 6,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "items": [
+        {
+         "id": 9,
+         "product_id": 10,
+         "name": "Milk 1 L",
+         "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+         "quantity": 3,
+         "notes": null,
+         "is_available": true,
+         "options": []
+        }
+       ],
+       "preview": {
+        "currency": "USD",
+        "subtotal": "3.30",
+        "offer_discount": "0.00",
+        "plus_discount": "0.00",
+        "delivery_fee": "1.19",
+        "delivery_fee_original": "1.19",
+        "free_delivery_available": true,
+        "delivery_covered": true,
+        "meets_min_order": true,
+        "total": "4.49"
+       },
+       "issue": null,
+       "updated_at": "2026-10-31T18:52:17+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "quantity": 3
+  },
+  "query": null
+ },
+ "PATCH /api/v1/customer/device-tokens/{deviceToken}": {
+  "responses": {
+   "200": {
+    "summary": "Rotate device token",
+    "value": {
+     "data": {
+      "message": "Device updated.",
+      "device_token": {
+       "id": 5,
+       "platform": "android",
+       "device_id": "bruno-device",
+       "device_name": "Bruno",
+       "token_hint": "…otated",
+       "is_active": true,
+       "last_seen_at": "2026-10-31T18:52:19+00:00",
+       "created_at": "2026-10-31T18:52:19+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "token": "<redacted>"
+  },
+  "query": null
+ },
+ "PATCH /api/v1/customer/me": {
+  "responses": {
+   "200": {
+    "summary": "New account - set an email",
+    "value": {
+     "data": {
+      "message": "Profile updated.",
+      "user": {
+       "id": 15,
+       "first_name": "Bruno",
+       "last_name": "Tester",
+       "phone": "+12025553821",
+       "email": "bruno+1793472733712@example.test",
+       "email_verified": false,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": null,
+       "delivery_city": null
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Update profile - invalid email",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The email address format is invalid.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "email": "bruno+1793472733712@example.test"
+  },
+  "query": null
+ },
+ "PATCH /api/v1/driver/availability": {
+  "responses": {
+   "409": {
+    "summary": "Go offline (refused while delivering)",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "You cannot go offline while you have an active delivery. Finish it or contact the operations team.",
+     "statusCode": 409
+    }
+   },
+   "200": {
+    "summary": "Set available",
+    "value": {
+     "data": {
+      "message": "Availability updated.",
+      "availability": "available",
+      "availability_label": "Available",
+      "is_active": true,
+      "has_active_delivery": true,
+      "can_go_offline": false,
+      "active_orders": [
+       {
+        "id": 31,
+        "order_number": "DEMO-0031",
+        "status_label": "Driver assigned",
+        "status": "assigned"
+       }
+      ]
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "availability": "available"
+  },
+  "query": null
+ },
+ "PATCH /api/v1/driver/device-tokens/{deviceToken}": {
+  "responses": {
+   "200": {
+    "summary": "Rotate device token",
+    "value": {
+     "data": {
+      "message": "Device updated.",
+      "device_token": {
+       "id": 2,
+       "platform": "android",
+       "device_id": "bruno-driver-device",
+       "device_name": "Bruno",
+       "token_hint": "…otated",
+       "is_active": true,
+       "last_seen_at": "2026-10-31T18:********:11+00:00",
+       "created_at": "2026-10-31T18:********:11+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "token": "<redacted>"
+  },
+  "query": null
+ },
+ "PATCH /api/v1/driver/profile": {
+  "responses": {
+   "200": {
+    "summary": "Update language",
+    "value": {
+     "data": {
+      "message": "Profile updated.",
+      "driver": {
+       "id": 1,
+       "name": "Samer Driver",
+       "phone": "+12025550101",
+       "language": "en",
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "vehicle": {
+        "type": "motorcycle",
+        "plate": "DEMO-M-101"
+       },
+       "account": {
+        "is_active": true
+       },
+       "availability": {
+        "status": "available",
+        "status_label": "Available",
+        "has_active_delivery": true,
+        "can_go_offline": false,
+        "active_orders": [
+         {
+          "id": 31,
+          "order_number": "DEMO-0031",
+          "status_label": "Driver assigned",
+          "status": "assigned"
+         }
+        ]
+       },
+       "last_location": {
+        "lat": 33.5038,
+        "lng": 36.2478,
+        "recorded_at": "2026-10-31T18:05:00+00:00"
+       },
+       "editable_fields": [
+        "language"
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "language": "en"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/cities/activate": {
+  "responses": {
+   "200": {
+    "summary": "Activate",
+    "value": {
+     "data": {
+      "message": "activation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/cities/create": {
+  "responses": {
+   "200": {
+    "summary": "Create",
+    "value": {
+     "data": {
+      "city": {
+       "name": "Bruno City 1793471638861",
+       "center_lat": "33.5100000",
+       "center_lng": "36.2900000",
+       "radius_km": "5.00",
+       "is_active": null,
+       "sort_order": 99,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "مدينة اختبار",
+        "en": "Bruno City 1793471638861"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Create - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The center lat field must be between -90 and 90.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "name": {
+    "ar": "مدينة اختبار",
+    "en": "Bruno City 1793471638861"
+   },
+   "center_lat": 33.51,
+   "center_lng": 36.29,
+   "radius_km": 5,
+   "sort_order": 99
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/cities/deactivate": {
+  "responses": {
+   "200": {
+    "summary": "Deactivate",
+    "value": {
+     "data": {
+      "message": "deactivation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/cities/show": {
+  "responses": {
+   "200": {
+    "summary": "Show",
+    "value": {
+     "data": {
+      "city": {
+       "name": "Bruno City 1793471638861",
+       "center_lat": "33.5100000",
+       "center_lng": "36.2900000",
+       "radius_km": "5.00",
+       "is_active": true,
+       "sort_order": 99,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "مدينة اختبار",
+        "en": "Bruno City 1793471638861"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Show - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "City not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/cities/update": {
+  "responses": {
+   "200": {
+    "summary": "Update",
+    "value": {
+     "data": {
+      "city": {
+       "name": "Bruno City 1793471638861",
+       "center_lat": "33.5100000",
+       "center_lng": "36.2900000",
+       "radius_km": "6.00",
+       "is_active": true,
+       "sort_order": 99,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "مدينة اختبار",
+        "en": "Bruno City 1793471638861"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6,
+   "radius_km": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/currencies/activate": {
+  "responses": {
+   "200": {
+    "summary": "Activate",
+    "value": {
+     "data": {
+      "message": "activation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/currencies/create": {
+  "responses": {
+   "200": {
+    "summary": "Create",
+    "value": {
+     "data": {
+      "currency": {
+       "code": "ZZH",
+       "name": "Bruno test currency",
+       "symbol": "B",
+       "decimals": 2,
+       "exchange_rate": "2.500000000000",
+       "is_active": true,
+       "rate_updated_at": "2026-10-31T18:33:58.000000Z",
+       "rate_updated_by_admin_id": 2,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "عملة اختبار",
+        "en": "Bruno test currency"
+       },
+       "is_default": false
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Create - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The verification code field must be 3 characters.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "code": "ZZH",
+   "name": {
+    "ar": "عملة اختبار",
+    "en": "Bruno test currency"
+   },
+   "symbol": "B",
+   "decimals": 2,
+   "exchange_rate": "2.5"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/currencies/deactivate": {
+  "responses": {
+   "200": {
+    "summary": "Deactivate",
+    "value": {
+     "data": {
+      "message": "deactivation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/currencies/initialize-default": {
+  "responses": {
+   "409": {
+    "summary": "Initialize default - refused when a default exists",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "A default currency already exists. Changing the default currency is not available yet.",
+     "statusCode": 409
+    }
+   }
+  }
+ },
+ "POST /api/v1/admin/currencies/show": {
+  "responses": {
+   "200": {
+    "summary": "Show",
+    "value": {
+     "data": {
+      "currency": {
+       "code": "ZZH",
+       "name": "Bruno test currency",
+       "symbol": "B",
+       "decimals": 2,
+       "exchange_rate": "2.500000000000",
+       "is_active": true,
+       "rate_updated_at": "2026-10-31T18:33:58.000000Z",
+       "rate_updated_by_admin_id": 2,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "عملة اختبار",
+        "en": "Bruno test currency"
+       },
+       "is_default": false
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Show - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Currency not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 6
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/currencies/update": {
+  "responses": {
+   "200": {
+    "summary": "Update",
+    "value": {
+     "data": {
+      "currency": {
+       "code": "ZZH",
+       "name": "Bruno test currency",
+       "symbol": "BT",
+       "decimals": 2,
+       "exchange_rate": "2.500000000000",
+       "is_active": true,
+       "rate_updated_at": "2026-10-31T18:33:58.000000Z",
+       "rate_updated_by_admin_id": 2,
+       "id": 6,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:58.000000Z",
+       "name_translations": {
+        "ar": "عملة اختبار",
+        "en": "Bruno test currency"
+       },
+       "is_default": false
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 6,
+   "symbol": "BT"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-areas/activate": {
+  "responses": {
+   "200": {
+    "summary": "Activate",
+    "value": {
+     "data": {
+      "message": "activation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 7
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-areas/create": {
+  "responses": {
+   "200": {
+    "summary": "Create",
+    "value": {
+     "data": {
+      "delivery_area": {
+       "city_id": 6,
+       "name": "Bruno area",
+       "boundary": {
+        "type": "Polygon",
+        "coordinates": [
+         [
+          [
+           36.3,
+           33.5
+          ],
+          [
+           36.31,
+           33.5
+          ]
+         ]
+        ]
+       },
+       "min_lat": "33.5000000",
+       "max_lat": "33.5100000",
+       "min_lng": "36.3000000",
+       "max_lng": "36.3100000",
+       "is_active": true,
+       "sort_order": 0,
+       "id": 7,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "name_translations": {
+        "ar": "منطقة اختبار",
+        "en": "Bruno area"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Create - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The boundary ring must have at least 4 positions (a closed triangle).",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "city_id": 6,
+   "name": {
+    "ar": "منطقة اختبار",
+    "en": "Bruno area"
+   },
+   "boundary": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       36.3,
+       33.5
+      ],
+      [
+       36.31,
+       33.5
+      ]
+     ]
+    ]
+   }
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-areas/deactivate": {
+  "responses": {
+   "200": {
+    "summary": "Deactivate",
+    "value": {
+     "data": {
+      "message": "deactivation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 7
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-areas/show": {
+  "responses": {
+   "200": {
+    "summary": "Show",
+    "value": {
+     "data": {
+      "delivery_area": {
+       "city_id": 6,
+       "name": "Bruno area",
+       "boundary": {
+        "type": "Polygon",
+        "coordinates": [
+         [
+          [
+           36.3,
+           33.5
+          ],
+          [
+           36.31,
+           33.5
+          ]
+         ]
+        ]
+       },
+       "min_lat": "33.5000000",
+       "max_lat": "33.5100000",
+       "min_lng": "36.3000000",
+       "max_lng": "36.3100000",
+       "is_active": true,
+       "sort_order": 0,
+       "id": 7,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "name_translations": {
+        "ar": "منطقة اختبار",
+        "en": "Bruno area"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Show - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "DeliveryArea not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 7
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-areas/update": {
+  "responses": {
+   "200": {
+    "summary": "Update",
+    "value": {
+     "data": {
+      "delivery_area": {
+       "city_id": 6,
+       "name": "Bruno area (edited)",
+       "boundary": {
+        "type": "Polygon",
+        "coordinates": [
+         [
+          [
+           36.3,
+           33.5
+          ],
+          [
+           36.31,
+           33.5
+          ]
+         ]
+        ]
+       },
+       "min_lat": "33.5000000",
+       "max_lat": "33.5100000",
+       "min_lng": "36.3000000",
+       "max_lng": "36.3100000",
+       "is_active": true,
+       "sort_order": 0,
+       "id": 7,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "name_translations": {
+        "ar": "منطقة اختبار",
+        "en": "Bruno area (edited)"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 7,
+   "name": {
+    "ar": "منطقة اختبار",
+    "en": "Bruno area (edited)"
+   }
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/activate": {
+  "responses": {
+   "200": {
+    "summary": "Activate",
+    "value": {
+     "data": {
+      "message": "activation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 11
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/create": {
+  "responses": {
+   "200": {
+    "summary": "Create",
+    "value": {
+     "data": {
+      "delivery_fee_rule": {
+       "city_id": 6,
+       "delivery_area_id": null,
+       "distance_from_km": "0.00",
+       "distance_to_km": "50.00",
+       "base_fee": "1.2500",
+       "per_km_fee": "0.1000",
+       "is_active": true,
+       "updated_by_admin_id": 2,
+       "id": 11,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "scope": "city",
+       "scope_key": "c:6"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Create - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The distance to km field must be greater than 10.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "city_id": 6,
+   "distance_from_km": 0,
+   "distance_to_km": 50,
+   "base_fee": "1.25",
+   "per_km_fee": "0.10"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/deactivate": {
+  "responses": {
+   "200": {
+    "summary": "Deactivate",
+    "value": {
+     "data": {
+      "message": "deactivation done"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 11
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/quote": {
+  "responses": {
+   "200": {
+    "summary": "Quote a delivery fee",
+    "value": {
+     "data": {
+      "quote": {
+       "covered": true,
+       "reason": null,
+       "distance_km": 2.162,
+       "distance_method": "haversine",
+       "delivery_area_id": 2,
+       "delivery_fee_rule_id": 6,
+       "rule_scope": "area",
+       "fee": "0.7162"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Quote - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The city field is required.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "city_id": 1,
+   "origin_lat": 33.51,
+   "origin_lng": 36.27,
+   "destination_lat": 33.52,
+   "destination_lng": 36.29
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/show": {
+  "responses": {
+   "200": {
+    "summary": "Show",
+    "value": {
+     "data": {
+      "delivery_fee_rule": {
+       "city_id": 6,
+       "delivery_area_id": null,
+       "distance_from_km": "0.00",
+       "distance_to_km": "50.00",
+       "base_fee": "1.2500",
+       "per_km_fee": "0.1000",
+       "is_active": true,
+       "updated_by_admin_id": 2,
+       "id": 11,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "scope": "city",
+       "scope_key": "c:6"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Show - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "DeliveryFeeRule not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 11
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/delivery-fee-rules/update": {
+  "responses": {
+   "200": {
+    "summary": "Update",
+    "value": {
+     "data": {
+      "delivery_fee_rule": {
+       "city_id": 6,
+       "delivery_area_id": null,
+       "distance_from_km": "0.00",
+       "distance_to_km": "50.00",
+       "base_fee": "1.5000",
+       "per_km_fee": "0.1000",
+       "is_active": true,
+       "updated_by_admin_id": 2,
+       "id": 11,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:59.000000Z",
+       "scope": "city",
+       "scope_key": "c:6"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 11,
+   "base_fee": "1.50"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/login": {
+  "responses": {
+   "400": {
+    "summary": "Login - invalid credentials",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The sign-in details are incorrect.",
+     "statusCode": 400
+    }
+   },
+   "200": {
+    "summary": "Login (success)",
+    "value": {
+     "data": {
+      "token": "<redacted>",
+      "token_id": 13,
+      "admin": {
+       "name": "Local Super Admin",
+       "email": "admin@example.test",
+       "email_verified_at": null,
+       "is_active": true,
+       "id": 2,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:15:41.000000Z"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "email": "admin@example.test",
+   "password": "<redacted>"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/login-challenge/verify": {
+  "responses": {
+   "400": {
+    "summary": "Login challenge - invalid (challenge not enabled)",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The purpose field is required.",
+     "statusCode": 400
+    }
+   }
+  }
+ },
+ "POST /api/v1/admin/logout": {
+  "responses": {
+   "200": {
+    "summary": "Logout",
+    "value": {
+     "data": {
+      "message": "Signed out successfully."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/admin/password/reset": {
+  "responses": {
+   "400": {
+    "summary": "Reset - invalid reset token",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "No account matches these details.",
+     "statusCode": 400
+    }
+   }
+  }
+ },
+ "POST /api/v1/admin/password/send-otp": {
+  "responses": {
+   "200": {
+    "summary": "Send reset OTP (generic answer)",
+    "value": {
+     "data": {
+      "message": "A verification code was sent."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "actor": "admin",
+   "email": "nobody@example.test",
+   "channel": "email"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/password/verify-otp": {
+  "responses": {
+   "400": {
+    "summary": "Verify reset OTP - wrong code",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "No account matches these details.",
+     "statusCode": 400
+    }
+   }
+  }
+ },
+ "POST /api/v1/admin/settings/create": {
+  "responses": {
+   "200": {
+    "summary": "Create",
+    "value": {
+     "data": {
+      "setting": {
+       "key": "bruno.test_1793471637831",
+       "value": "bruno",
+       "is_monetary": false,
+       "updated_by_admin_id": 2,
+       "id": 13,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:57.000000Z"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Create - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The key field format is invalid.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "key": "bruno.test_1793471637831",
+   "value": "bruno",
+   "is_monetary": false
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/settings/show": {
+  "responses": {
+   "200": {
+    "summary": "Show",
+    "value": {
+     "data": {
+      "setting": {
+       "key": "bruno.test_1793471637831",
+       "value": "bruno",
+       "is_monetary": false,
+       "updated_by_admin_id": 2,
+       "id": 13,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:57.000000Z"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Show - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Setting not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 13
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/settings/update": {
+  "responses": {
+   "200": {
+    "summary": "Update",
+    "value": {
+     "data": {
+      "setting": {
+       "key": "bruno.test_1793471637831",
+       "value": "bruno-updated",
+       "is_monetary": false,
+       "updated_by_admin_id": 2,
+       "id": 13,
+       "is_deleted": false,
+       "created_at": "2026-10-31T18:33:57.000000Z"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 13,
+   "value": "bruno-updated"
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/users/activate": {
+  "responses": {
+   "200": {
+    "summary": "Activate the customer again",
+    "value": {
+     "data": {
+      "message": "Activated successfully."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Activate - unknown customer",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "User not found",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": {
+   "id": 8
+  },
+  "query": null
+ },
+ "POST /api/v1/admin/users/deactivate": {
+  "responses": {
+   "200": {
+    "summary": "Deactivate a customer",
+    "value": {
+     "data": {
+      "message": "Deactivated successfully."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "id": 8
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/addresses": {
+  "responses": {
+   "200": {
+    "summary": "Add address",
+    "value": {
+     "data": {
+      "message": "Address saved.",
+      "address": {
+       "id": 15,
+       "label": "Bruno office",
+       "address_line": "Bruno test street",
+       "details": null,
+       "lat": 33.51,
+       "lng": 36.29,
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "is_default": false
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Validation envelope",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The address field is required.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "label": "Bruno office",
+   "address_line": "Bruno test street",
+   "lat": 33.51,
+   "lng": 36.29
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/addresses/{address}/default": {
+  "responses": {
+   "200": {
+    "summary": "Make it the default",
+    "value": {
+     "data": {
+      "address": {
+       "id": 15,
+       "label": "Bruno office (edited)",
+       "address_line": "Bruno test street",
+       "details": null,
+       "lat": 33.51,
+       "lng": 36.29,
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "is_default": true
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/customer/auth/logout": {
+  "responses": {
+   "200": {
+    "summary": "Logout",
+    "value": {
+     "data": {
+      "message": "Logged out."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "device_id": "bruno-device"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/auth/otp/request": {
+  "responses": {
+   "200": {
+    "summary": "Request OTP (login)",
+    "value": {
+     "data": {
+      "message": "A verification code was sent.",
+      "channel": "sms",
+      "expires_in": 600,
+      "resend_in": 60
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "phone": "+12025550101"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/auth/otp/verify": {
+  "responses": {
+   "422": {
+    "summary": "Verify OTP - wrong code",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The code is invalid or expired.",
+     "statusCode": 422
+    }
+   },
+   "200": {
+    "summary": "Verify OTP (login)",
+    "value": {
+     "data": {
+      "status": "logged_in",
+      "token": "<redacted>",
+      "user": {
+       "id": 2,
+       "first_name": "Karim",
+       "last_name": "Nasser",
+       "phone": "+12025550101",
+       "email": "customer-02@demo.waffrli.test",
+       "email_verified": true,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": {
+        "id": 3,
+        "label": "Home / البيت",
+        "address_line": "Kafr Sousa / كفرسوسة",
+        "details": "Demo address",
+        "lat": 33.499,
+        "lng": 36.27,
+        "city": {
+         "id": 1,
+         "name": "Damascus"
+        },
+        "is_default": true
+       },
+       "delivery_city": {
+        "id": 1,
+        "name": "Damascus"
+       }
+      },
+      "token_type": "Bearer"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "phone": "+12025550101",
+   "code": "123456",
+   "device_id": "bruno-device",
+   "device_name": "Bruno"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/auth/recovery/request": {
+  "responses": {
+   "200": {
+    "summary": "Recovery - request (same answer for any phone)",
+    "value": {
+     "data": {
+      "message": "A verification code was sent.",
+      "channel": null,
+      "expires_in": 600,
+      "resend_in": 60
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "phone": "+12025559999"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/auth/recovery/verify": {
+  "responses": {
+   "422": {
+    "summary": "Recovery - wrong code",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The code is invalid or expired.",
+     "statusCode": 422
+    }
+   },
+   "200": {
+    "summary": "Recovery - verify (account restored)",
+    "value": {
+     "data": {
+      "message": "Your account was restored.",
+      "token": "<redacted>",
+      "token_type": "Bearer",
+      "user": {
+       "id": 15,
+       "first_name": "Bruno",
+       "last_name": "Tester",
+       "phone": "+12025553821",
+       "email": "bruno+1793472733712@example.test",
+       "email_verified": false,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": null,
+       "delivery_city": null
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "phone": "+12025553821",
+   "code": "123456",
+   "device_id": "bruno-new-device"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/auth/register": {
+  "responses": {
+   "400": {
+    "summary": "Register - first and last name required",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The last name field is required.",
+     "statusCode": 400
+    }
+   },
+   "200": {
+    "summary": "Register (success)",
+    "value": {
+     "data": {
+      "status": "registered",
+      "token": "<redacted>",
+      "token_type": "Bearer",
+      "user": {
+       "id": 15,
+       "first_name": "Bruno",
+       "last_name": "Tester",
+       "phone": "+12025553821",
+       "email": null,
+       "email_verified": false,
+       "avatar_url": null,
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": null,
+       "delivery_city": null
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "422": {
+    "summary": "Register - registration token is single use",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The registration session is invalid or expired. Verify your phone again.",
+     "statusCode": 422
+    }
+   }
+  },
+  "request": {
+   "registration_token": "<redacted>",
+   "first_name": "Bruno",
+   "last_name": "Tester",
+   "language": "en",
+   "device_id": "bruno-new-device"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/broadcasting/auth": {
+  "responses": {
+   "200": {
+    "summary": "Realtime - authorize my private channel",
+    "value": {
+     "auth": "<redacted>"
+    }
+   },
+   "403": {
+    "summary": "Realtime - another user channel refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "You are not allowed to listen on this channel.",
+     "statusCode": 403
+    }
+   }
+  },
+  "request": {
+   "socket_id": "1234.5678",
+   "channel_name": "private-user.2"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/cart/items": {
+  "responses": {
+   "200": {
+    "summary": "Add item",
+    "value": {
+     "data": {
+      "message": "Cart updated.",
+      "cart": {
+       "id": 6,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "items": [
+        {
+         "id": 9,
+         "product_id": 10,
+         "name": "Milk 1 L",
+         "image_url": "http://localhost:8080/storage/demo/products/demo-fresh-market-milk.svg",
+         "quantity": 1,
+         "notes": null,
+         "is_available": true,
+         "options": []
+        }
+       ],
+       "preview": {
+        "currency": "USD",
+        "subtotal": "1.10",
+        "offer_discount": "0.00",
+        "plus_discount": "0.00",
+        "delivery_fee": "1.19",
+        "delivery_fee_original": "1.19",
+        "free_delivery_available": true,
+        "delivery_covered": true,
+        "meets_min_order": false,
+        "total": "2.29"
+       },
+       "issue": null,
+       "updated_at": "2026-10-31T18:52:17+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "422": {
+    "summary": "Add item - invalid quantity",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The quantity field must be between 1 and 99.",
+     "errors": {
+      "quantity": [
+       "The quantity field must be between 1 and 99."
+      ]
+     },
+     "statusCode": 422
+    }
+   }
+  },
+  "request": {
+   "branch_id": 6,
+   "product_id": 10,
+   "quantity": 1
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/carts/{cart}/checkout": {
+  "responses": {
+   "422": {
+    "summary": "Checkout - idempotency key required",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The Idempotency-Key (uuid) field is required.",
+     "statusCode": 422
+    }
+   },
+   "200": {
+    "summary": "Checkout - client totals are ignored",
+    "value": {
+     "data": {
+      "message": "Order placed.",
+      "replayed": false,
+      "order": {
+       "id": 38,
+       "order_number": "WF261031-EE0XNT",
+       "status": "pending",
+       "status_label": "Pending",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "currency": {
+        "code": "USD",
+        "symbol": "$",
+        "decimals": 2
+       },
+       "total": "4.49",
+       "created_at": "2026-10-31T18:52:18+00:00",
+       "can_cancel": true,
+       "can_request_cancellation": false,
+       "items": [
+        {
+         "product_id": 10,
+         "name": {
+          "ar": "حليب ١ لتر",
+          "en": "Milk 1 L"
+         },
+         "quantity": 3,
+         "unit_price": "1.10",
+         "line_total": "3.30",
+         "notes": null,
+         "options": []
+        }
+       ],
+       "amounts": {
+        "subtotal": "3.30",
+        "offer_discount": "0.00",
+        "plus_discount": "0.00",
+        "delivery_fee_original": "1.19",
+        "delivery_fee": "1.19",
+        "free_delivery_applied": false,
+        "total": "4.49"
+       },
+       "payments": [
+        {
+         "method": "cash",
+         "method_label": "Cash on delivery",
+         "amount": "4.49",
+         "status": "pending",
+         "status_label": "Pending",
+         "collected": "0.00",
+         "reversed": "0.00",
+         "refunded": "0.00"
+        }
+       ],
+       "refunds": [],
+       "delivery": {
+        "address": {
+         "line": "Kafr Sousa / كفرسوسة",
+         "label": "Home / البيت",
+         "details": "Demo address"
+        },
+        "lat": 33.499,
+        "lng": 36.27,
+        "distance_km": 2.922,
+        "notes": "Bruno test order"
+       },
+       "driver": null,
+       "realtime_channel": "order.38",
+       "status_history": [
+        {
+         "from": null,
+         "from_label": null,
+         "to": "pending",
+         "to_label": "Pending",
+         "at": "2026-10-31T18:52:18+00:00"
+        }
+       ],
+       "cancellation": null,
+       "cancellation_requests": []
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "total": "0.01",
+   "notes": "Bruno test order"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/cities/detect": {
+  "responses": {
+   "200": {
+    "summary": "Detect city from coordinates",
+    "value": {
+     "data": {
+      "city": {
+       "name": "Damascus",
+       "center_lat": "33.5138000",
+       "center_lng": "36.2765000",
+       "radius_km": "18.00",
+       "is_active": true,
+       "sort_order": 0,
+       "id": 1,
+       "is_deleted": false,
+       "created_at": "2026-10-01T18:06:00.000000Z",
+       "name_translations": {
+        "ar": "دمشق",
+        "en": "Damascus"
+       }
+      },
+      "distance_km": 1.321,
+      "distance_method": "haversine"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "lat": 33.51,
+   "lng": 36.29
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/device-tokens": {
+  "responses": {
+   "200": {
+    "summary": "Register device token",
+    "value": {
+     "data": {
+      "message": "Device registered for notifications.",
+      "device_token": {
+       "id": 5,
+       "platform": "android",
+       "device_id": "bruno-device",
+       "device_name": "Bruno",
+       "token_hint": "…0ab14f",
+       "is_active": true,
+       "last_seen_at": "2026-10-31T18:52:19+00:00",
+       "created_at": "2026-10-31T18:52:19+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Register - invalid platform",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The token field must be at least 20 characters.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "token": "<redacted>",
+   "platform": "android",
+   "device_id": "bruno-device",
+   "device_name": "Bruno"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/me/avatar": {
+  "responses": {
+   "200": {
+    "summary": "Upload avatar",
+    "value": {
+     "data": {
+      "user": {
+       "id": 2,
+       "first_name": "Karim",
+       "last_name": "Nasser",
+       "phone": "+12025550101",
+       "email": "customer-02@demo.waffrli.test",
+       "email_verified": true,
+       "avatar_url": "http://localhost:8080/storage/avatars/2/1f082a18-421b-4eeb-951b-ba876f328c7c.png",
+       "language": "en",
+       "account_status": "active",
+       "account_status_label": "Active",
+       "profile_completed": true,
+       "display_currency": null,
+       "selected_address": {
+        "id": 3,
+        "label": "Home / البيت",
+        "address_line": "Kafr Sousa / كفرسوسة",
+        "details": "Demo address",
+        "lat": 33.499,
+        "lng": 36.27,
+        "city": {
+         "id": 1,
+         "name": "Damascus"
+        },
+        "is_default": true
+       },
+       "delivery_city": {
+        "id": 1,
+        "name": "Damascus"
+       }
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/customer/me/email/verification": {
+  "responses": {
+   "200": {
+    "summary": "New account - send email verification code",
+    "value": {
+     "data": {
+      "message": "A verification code was sent to your email."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {},
+  "query": null
+ },
+ "POST /api/v1/customer/me/email/verify": {
+  "responses": {
+   "422": {
+    "summary": "New account - verify email with a wrong code",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The code is invalid or expired.",
+     "statusCode": 422
+    }
+   }
+  }
+ },
+ "POST /api/v1/customer/notifications/read": {
+  "responses": {
+   "200": {
+    "summary": "Mark all read",
+    "value": {
+     "data": {
+      "marked": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {},
+  "query": null
+ },
+ "POST /api/v1/customer/notifications/{notification}/read": {
+  "responses": {
+   "404": {
+    "summary": "Mark another account notification - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  }
+ },
+ "POST /api/v1/customer/orders/{order}/cancel": {
+  "responses": {
+   "200": {
+    "summary": "Cancel before acceptance",
+    "value": {
+     "data": {
+      "message": "Order cancelled.",
+      "order": {
+       "id": 38,
+       "order_number": "WF261031-EE0XNT",
+       "status": "cancelled",
+       "status_label": "Cancelled",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "branch": {
+        "id": 6,
+        "name": "Shaalan branch",
+        "store": {
+         "id": 3,
+         "name": "Fresh Market"
+        }
+       },
+       "currency": {
+        "code": "USD",
+        "symbol": "$",
+        "decimals": 2
+       },
+       "total": "4.49",
+       "created_at": "2026-10-31T18:52:18+00:00",
+       "can_cancel": false,
+       "can_request_cancellation": false,
+       "items": [
+        {
+         "product_id": 10,
+         "name": {
+          "ar": "حليب ١ لتر",
+          "en": "Milk 1 L"
+         },
+         "quantity": 3,
+         "unit_price": "1.10",
+         "line_total": "3.30",
+         "notes": null,
+         "options": []
+        }
+       ],
+       "amounts": {
+        "subtotal": "3.30",
+        "offer_discount": "0.00",
+        "plus_discount": "0.00",
+        "delivery_fee_original": "1.19",
+        "delivery_fee": "1.19",
+        "free_delivery_applied": false,
+        "total": "4.49"
+       },
+       "payments": [
+        {
+         "method": "cash",
+         "method_label": "Cash on delivery",
+         "amount": "4.49",
+         "status": "cancelled",
+         "status_label": "Cancelled",
+         "collected": "0.00",
+         "reversed": "0.00",
+         "refunded": "0.00"
+        }
+       ],
+       "refunds": [],
+       "delivery": {
+        "address": {
+         "line": "Kafr Sousa / كفرسوسة",
+         "label": "Home / البيت",
+         "details": "Demo address"
+        },
+        "lat": 33.499,
+        "lng": 36.27,
+        "distance_km": 2.922,
+        "notes": "Bruno test order"
+       },
+       "driver": null,
+       "realtime_channel": null,
+       "status_history": [
+        {
+         "from": null,
+         "from_label": null,
+         "to": "pending",
+         "to_label": "Pending",
+         "at": "2026-10-31T18:52:18+00:00"
+        },
+        {
+         "from": "pending",
+         "from_label": "Pending",
+         "to": "cancelled",
+         "to_label": "Cancelled",
+         "at": "2026-10-31T18:52:18+00:00"
+        }
+       ],
+       "cancellation": {
+        "by": "customer",
+        "by_label": "Customer",
+        "reason": "customer_request",
+        "reason_label": "Customer request",
+        "at": "2026-10-31T18:52:18+00:00"
+       },
+       "cancellation_requests": []
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "409": {
+    "summary": "Cancel again - refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "This order can no longer be cancelled directly. Send a cancellation request instead.",
+     "statusCode": 409
+    }
+   }
+  },
+  "request": {
+   "note": "Bruno test cleanup"
+  },
+  "query": null
+ },
+ "POST /api/v1/customer/orders/{order}/cancellation-request": {
+  "responses": {
+   "409": {
+    "summary": "Cancellation request before acceptance - refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "A cancellation request is possible only for accepted orders without an open request.",
+     "statusCode": 409
+    }
+   }
+  }
+ },
+ "POST /api/v1/customer/plus/requests": {
+  "responses": {
+   "409": {
+    "summary": "Submit a custom request",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "You already have a pending request of this type.",
+     "statusCode": 409
+    }
+   },
+   "422": {
+    "summary": "Submit - invalid type",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The selected type is invalid.",
+     "errors": {
+      "type": [
+       "The selected type is invalid."
+      ]
+     },
+     "statusCode": 422
+    }
+   }
+  }
+ },
+ "POST /api/v1/customer/products/{product}/favorite": {
+  "responses": {
+   "200": {
+    "summary": "Add favorite (idempotent)",
+    "value": {
+     "data": {
+      "message": "Added to favorites.",
+      "product_id": 10,
+      "is_favorite": true
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Favorite a missing product - not found",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/customer/products/{product}/rating": {
+  "responses": {
+   "200": {
+    "summary": "Rate a purchased product (verified purchaser)",
+    "value": {
+     "data": {
+      "message": "Thank you for your rating.",
+      "my_rating": {
+       "rating": 5,
+       "comment": "Bruno: great",
+       "is_hidden": false
+      },
+      "product_rating": {
+       "average": 5,
+       "count": 1,
+       "placeholder": null
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Rate without purchase - refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Not found.",
+     "statusCode": 404
+    }
+   },
+   "422": {
+    "summary": "Rate - invalid value",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The rating field must be between 1 and 5.",
+     "errors": {
+      "rating": [
+       "The rating field must be between 1 and 5."
+      ]
+     },
+     "statusCode": 422
+    }
+   }
+  },
+  "request": {
+   "order_id": 22,
+   "rating": 5,
+   "comment": "Bruno: great"
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/broadcasting/auth": {
+  "responses": {
+   "200": {
+    "summary": "Realtime - authorize my private channel",
+    "value": {
+     "auth": "<redacted>"
+    }
+   },
+   "403": {
+    "summary": "Realtime - another driver channel refused",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "You are not allowed to listen on this channel.",
+     "statusCode": 403
+    }
+   }
+  },
+  "request": {
+   "socket_id": "1234.5678",
+   "channel_name": "private-driver.1"
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/device-tokens": {
+  "responses": {
+   "200": {
+    "summary": "Register device token",
+    "value": {
+     "data": {
+      "message": "Device registered for notifications.",
+      "device_token": {
+       "id": 2,
+       "platform": "android",
+       "device_id": "bruno-driver-device",
+       "device_name": "Bruno",
+       "token_hint": "…a01946",
+       "is_active": true,
+       "last_seen_at": "2026-10-31T18:********:11+00:00",
+       "created_at": "2026-10-31T18:********:11+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Register - invalid platform",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The token field must be at least 20 characters.",
+     "statusCode": 400
+    }
+   }
+  },
+  "request": {
+   "token": "<redacted>",
+   "platform": "android",
+   "device_id": "bruno-driver-device",
+   "device_name": "Bruno"
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/location": {
+  "responses": {
+   "200": {
+    "summary": "Update my location",
+    "value": {
+     "data": {
+      "message": "Location updated.",
+      "location": {
+       "lat": 33.5101,
+       "lng": 36.2911,
+       "recorded_at": "2026-10-31T18:********:10+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "400": {
+    "summary": "Invalid coordinates",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The latitude field must be between -90 and 90.",
+     "statusCode": 400
+    }
+   },
+   "409": {
+    "summary": "Location without an active delivery",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Location updates are accepted only while you have an assigned or picked-up delivery.",
+     "statusCode": 409
+    }
+   }
+  },
+  "request": {
+   "lat": 33.5101,
+   "lng": 36.2911
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/login": {
+  "responses": {
+   "401": {
+    "summary": "Login - invalid credentials",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The phone number or password is incorrect.",
+     "statusCode": 401
+    }
+   },
+   "400": {
+    "summary": "Login - validation error",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The phone number field format is invalid.",
+     "statusCode": 400
+    }
+   },
+   "200": {
+    "summary": "Login (success)",
+    "value": {
+     "data": {
+      "token": "<redacted>",
+      "token_type": "Bearer",
+      "driver": {
+       "id": 1,
+       "name": "Samer Driver",
+       "phone": "+12025550101",
+       "language": "ar",
+       "city": {
+        "id": 1,
+        "name": "Damascus"
+       },
+       "vehicle": {
+        "type": "motorcycle",
+        "plate": "DEMO-M-101"
+       },
+       "account": {
+        "is_active": true
+       },
+       "availability": {
+        "status": "available",
+        "status_label": "Available",
+        "has_active_delivery": true,
+        "can_go_offline": false,
+        "active_orders": [
+         {
+          "id": 31,
+          "order_number": "DEMO-0031",
+          "status_label": "Driver assigned",
+          "status": "assigned"
+         }
+        ]
+       },
+       "last_location": {
+        "lat": 33.5038,
+        "lng": 36.2478,
+        "recorded_at": "2026-10-31T18:05:00+00:00"
+       },
+       "editable_fields": [
+        "language"
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "phone": "+12025550101",
+   "password": "<redacted>",
+   "device_name": "Bruno"
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/logout": {
+  "responses": {
+   "200": {
+    "summary": "Logout",
+    "value": {
+     "data": {
+      "message": "Logged out."
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/driver/notifications/read": {
+  "responses": {
+   "200": {
+    "summary": "Mark all as read",
+    "value": {
+     "data": {
+      "message": "2 notifications marked as read.",
+      "marked": 2
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {},
+  "query": null
+ },
+ "POST /api/v1/driver/notifications/{notification}/read": {
+  "responses": {
+   "200": {
+    "summary": "Mark one as read",
+    "value": {
+     "data": {
+      "message": "Notification marked as read.",
+      "notification": {
+       "id": "87fc89ab-f63d-45a3-818e-77bfcdb1044c",
+       "type": "driver.order_assigned",
+       "event": "assigned",
+       "order_id": 31,
+       "order_number": "DEMO-0031",
+       "message": "New delivery assigned: DEMO-0031",
+       "read_at": "2026-10-31T18:********:11+00:00",
+       "created_at": "2026-10-31T17:54:00+00:00"
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "404": {
+    "summary": "Someone else's notification",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "Order not found.",
+     "statusCode": 404
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/driver/orders/{order}/deliver": {
+  "responses": {
+   "422": {
+    "summary": "Deliver before pickup (invalid transition)",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "An order cannot move from Driver assigned to Delivered.",
+     "statusCode": 422
+    }
+   },
+   "200": {
+    "summary": "Complete delivery (cash + photo)",
+    "value": {
+     "data": {
+      "message": "Delivery completed.",
+      "order": {
+       "id": 31,
+       "order_number": "DEMO-0031",
+       "status": "delivered",
+       "status_label": "Delivered",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "store": {
+        "id": 1,
+        "name": "Shami Grill"
+       },
+       "branch": {
+        "id": 1,
+        "name": "Mazzeh branch",
+        "address": "Mazzeh branch, Damascus",
+        "phone": null,
+        "lat": 33.505,
+        "lng": 36.245
+       },
+       "delivery": {
+        "city": "Damascus",
+        "area": "Muhajireen & Salhiyeh",
+        "address": null,
+        "address_details": null,
+        "address_label": null,
+        "lat": null,
+        "lng": null,
+        "distance_km": 7.143,
+        "instructions": null
+       },
+       "customer": null,
+       "items": [
+        {
+         "name": "Chicken shawarma wrap",
+         "quantity": 2,
+         "notes": null,
+         "options": [
+          {
+           "group": "Bread",
+           "option": "Tannour bread",
+           "quantity": 1
+          },
+          {
+           "group": "Extras",
+           "option": "Extra cheese",
+           "quantity": 1
+          }
+         ]
+        }
+       ],
+       "payment": {
+        "currency": {
+         "code": "USD",
+         "symbol": "$",
+         "decimals": 2
+        },
+        "order_total": "8.03",
+        "prepaid_amount": "0.00",
+        "cash_to_collect": "0.00",
+        "cash_collected": "8.03"
+       },
+       "timeline": {
+        "created_at": "2026-10-31T17:46:00+00:00",
+        "accepted_at": "2026-10-31T17:49:00+00:00",
+        "assigned_at": "2026-10-31T17:54:00+00:00",
+        "picked_up_at": "2026-10-31T18:********:10+00:00",
+        "delivered_at": "2026-10-31T18:********:10+00:00"
+       },
+       "has_delivery_photo": true,
+       "allowed_actions": []
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "409": {
+    "summary": "Complete delivery again (duplicate)",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "This order has already been delivered.",
+     "statusCode": 409
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/driver/orders/{order}/pickup": {
+  "responses": {
+   "200": {
+    "summary": "Pick up order",
+    "value": {
+     "data": {
+      "message": "Order picked up.",
+      "order": {
+       "id": 31,
+       "order_number": "DEMO-0031",
+       "status": "picked_up",
+       "status_label": "Picked up",
+       "type": "immediate",
+       "type_label": "Immediate",
+       "scheduled_for": null,
+       "store": {
+        "id": 1,
+        "name": "Shami Grill"
+       },
+       "branch": {
+        "id": 1,
+        "name": "Mazzeh branch",
+        "address": "Mazzeh branch, Damascus",
+        "phone": "+12025550111",
+        "lat": 33.505,
+        "lng": 36.245
+       },
+       "delivery": {
+        "city": "Damascus",
+        "area": "Muhajireen & Salhiyeh",
+        "address": "Rukn al-Din / ركن الدين",
+        "address_details": "Demo address",
+        "address_label": "Home / البيت",
+        "lat": 33.55,
+        "lng": 36.3,
+        "distance_km": 7.143,
+        "instructions": null
+       },
+       "customer": {
+        "name": "Huda Mansour",
+        "phone": "+12025550107"
+       },
+       "items": [
+        {
+         "name": "Chicken shawarma wrap",
+         "quantity": 2,
+         "notes": null,
+         "options": [
+          {
+           "group": "Bread",
+           "option": "Tannour bread",
+           "quantity": 1
+          },
+          {
+           "group": "Extras",
+           "option": "Extra cheese",
+           "quantity": 1
+          }
+         ]
+        }
+       ],
+       "payment": {
+        "currency": {
+         "code": "USD",
+         "symbol": "$",
+         "decimals": 2
+        },
+        "order_total": "8.03",
+        "prepaid_amount": "0.00",
+        "cash_to_collect": "8.03",
+        "cash_collected": "0.00"
+       },
+       "timeline": {
+        "created_at": "2026-10-31T17:46:00+00:00",
+        "accepted_at": "2026-10-31T17:49:00+00:00",
+        "assigned_at": "2026-10-31T17:54:00+00:00",
+        "picked_up_at": "2026-10-31T18:********:10+00:00",
+        "delivered_at": null
+       },
+       "has_delivery_photo": false,
+       "allowed_actions": [
+        "deliver",
+        "report_problem"
+       ]
+      }
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   },
+   "422": {
+    "summary": "Pick up again (invalid transition)",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "An order cannot move from Picked up to Picked up.",
+     "statusCode": 422
+    }
+   }
+  },
+  "request": null,
+  "query": null
+ },
+ "POST /api/v1/driver/orders/{order}/problems": {
+  "responses": {
+   "200": {
+    "summary": "Report a delivery problem",
+    "value": {
+     "data": {
+      "message": "The problem was reported to the operations team.",
+      "order_id": 31,
+      "order_number": "DEMO-0031",
+      "type": "customer_unreachable",
+      "type_label": "Customer unreachable",
+      "notified_admins": 1
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "type": "customer_unreachable",
+   "note": "Bruno test: no answer at the door"
+  },
+  "query": null
+ },
+ "POST /api/v1/driver/password": {
+  "responses": {
+   "422": {
+    "summary": "Change password - wrong current password",
+    "value": {
+     "data": null,
+     "status": false,
+     "error": "The current password is incorrect.",
+     "statusCode": 422
+    }
+   }
+  }
+ },
+ "POST /api/v1/user/cities/detect": {
+  "responses": {
+   "200": {
+    "summary": "Legacy alias - detect city (user prefix)",
+    "value": {
+     "data": {
+      "city": {
+       "name": "Damascus",
+       "center_lat": "33.5138000",
+       "center_lng": "36.2765000",
+       "radius_km": "18.00",
+       "is_active": true,
+       "sort_order": 0,
+       "id": 1,
+       "is_deleted": false,
+       "created_at": "2026-10-01T18:06:00.000000Z",
+       "name_translations": {
+        "ar": "دمشق",
+        "en": "Damascus"
+       }
+      },
+      "distance_km": 1.321,
+      "distance_method": "haversine"
+     },
+     "status": true,
+     "error": null,
+     "statusCode": 200
+    }
+   }
+  },
+  "request": {
+   "lat": 33.51,
+   "lng": 36.29
+  },
+  "query": null
+ }
+}

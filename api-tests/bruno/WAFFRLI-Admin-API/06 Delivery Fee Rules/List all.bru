@@ -1,0 +1,29 @@
+meta {
+  name: List all
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/delivery-fee-rules/all
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("delivery_fee_rules listed", function () {
+    expect(res.getBody().data.delivery_fee_rules).to.be.an("array");
+  });
+}

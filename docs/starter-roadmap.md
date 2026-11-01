@@ -3459,3 +3459,38 @@ in full below.
 **Results:** `php artisan test` → 225 passed (1083 assertions), zero
 regressions. Committed as a follow-up to the Phase 11 initial commit
 (`7ff0b5b`).
+
+## WAFFRLI — Customer APIs, ONE Reverb WebSocket, FCM and remaining integrations (2026-11-03)
+
+Branch `feature/customer-api-realtime`, created from `origin/feature/driver-api` (`cbab0c0`). Details:
+
+- `docs/waffrli/customer-api.md`
+- `docs/waffrli/realtime-and-push.md`
+- `docs/waffrli/currency-switch.md`
+- `api-tests/bruno/WAFFRLI-Customer/README.md`
+
+| Batch | Scope | Status |
+|---|---|---|
+| 1–2 | Phone OTP identity (SMS + WhatsApp fallback, purpose-bound hashed codes, cooldown/attempts/rate limits, one device, recovery), profile, addresses, delivery city | done |
+| 3 | City-scoped catalog, search, offers, favorites, verified ratings | done |
+| 4–5 | Carts, idempotent checkout (wallet + PLUS, atomic), orders, cancellations, wallet/payments read-only, PLUS APIs | done |
+| 6 | ONE Reverb server, per-identity channel auth, channel ownership rules, status/GPS/ops events | done |
+| 7 | FCM HTTP v1 (+ fake), device tokens, notifications API, marketing | done (no real push sent: no credentials) |
+| 8 | Filament bell alerts, live lists and driver map with polling fallback, marketing screen | done |
+| 9 | Safe default-currency switch with MySQL concurrency tests | done; flag off by default |
+| 10 | Bruno customer collection, docs, MySQL + SQLite regression | done |
+
+Verification:
+
+- PHPUnit: 471 tests on SQLite (13 skipped: 9 pre-existing, 4 MySQL-only) and 471 on MySQL 8 (0 skipped), all passing. Both runs were on the batch 9 state.
+- Bruno CLI 2.15.1 on a MySQL 8 demo database with a local Reverb server: customer collection 91 requests / 286 tests, driver collection 37 / 126, all passing.
+- Browser (Playwright/Chromium) check of the Filament driver map against a real local Reverb server:
+  - the WebSocket connected and `private-admin.drivers-map` was authorized by the admin session;
+  - a real `POST /api/v1/driver/location` reached the page as `driver.location`;
+  - the marker moved after about 2.2 s, against a 30 s polling fallback.
+
+Not done or not verifiable here:
+
+- real SMS, WhatsApp and FCM delivery (provider credentials needed);
+- a load test of Reverb;
+- a Reverb deployment behind TLS (wss) on a real host.

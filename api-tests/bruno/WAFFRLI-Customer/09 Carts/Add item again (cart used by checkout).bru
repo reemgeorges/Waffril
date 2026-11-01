@@ -1,0 +1,38 @@
+meta {
+  name: Add item again (cart used by checkout)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{base_url}}/api/v1/customer/cart/items
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "branch_id": {{branch_id}},
+    "product_id": {{product_id}},
+    "quantity": 3
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) { bru.setVar("cart_id", String(res.getBody().data.cart.id)); bru.setVar("item_id", String(res.getBody().data.cart.items[0].id)); }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}

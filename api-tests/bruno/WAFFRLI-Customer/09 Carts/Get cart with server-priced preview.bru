@@ -1,0 +1,32 @@
+meta {
+  name: Get cart with server-priced preview
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/carts/{{cart_id}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("totals computed by the server", function () {
+    const c = res.getBody().data.cart;
+    expect(c.preview).to.be.an("object");
+    expect(c.preview).to.have.property("total");
+  });
+}

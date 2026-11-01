@@ -1,0 +1,22 @@
+meta {
+  name: Read delivered order items
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/orders/{{delivered_order_id}}
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const items = (res.getBody().data && res.getBody().data.order) ? res.getBody().data.order.items : [];
+  bru.setVar("rated_product_id", items.length ? String(items[0].product_id) : "");
+}
+
+tests {
+  test("order readable when the demo customer has one", function () {
+    if (bru.getVar("delivered_order_id")) { expect(res.getStatus()).to.equal(200); }
+  });
+}
