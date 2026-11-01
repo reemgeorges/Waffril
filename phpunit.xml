@@ -23,6 +23,9 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="recording"/>
+        <env name="REVERB_APP_ID" value="testing-app" force="true"/>
+        <env name="REVERB_APP_KEY" value="testing-key" force="true"/>
+        <env name="REVERB_APP_SECRET" value="testing-secret" force="true"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="WAFFRLI_LEGACY_USER_AUTH" value="true"/>
         <!-- WAFFRLI (2026-11-05): tests never depend on a developer's local .env -->
