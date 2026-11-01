@@ -7,28 +7,46 @@ This branch is based on `origin/feature/final-audit-i18n`. Everything below was 
 
 Each result says how it was obtained. Anything that was **not** executed is listed under [Not executed / blockers](#not-executed--blockers).
 
-## Summary of results
+## Final release gate (2026-11-01, branch `feature/docker-e2e-qa`)
 
-| Check | Command | Result |
+Every row was executed in this run. Nothing below is extrapolated.
+
+| Gate | Command | Result |
 |---|---|---|
-| PHPUnit, SQLite (default) | `docker compose exec app php vendor/bin/phpunit` | **511 tests: 0 failures, 0 errors, 13 skipped** |
-| PHPUnit, **MySQL 8.4** (`waffrli_testing`) | `docker compose exec -e DB_CONNECTION=mysql -e DB_DATABASE=waffrli_testing app php vendor/bin/phpunit` | 511 tests: 1 skipped, and 50 errors in the first run. See note 1: after the fix, **the 62 tests of the 8 affected classes pass on MySQL** (0 errors). |
-| Bruno CLI 2.15.1, Customer | `bru run --env Local` | **108/108 requests, 335/335 tests** |
-| Bruno, Driver | same | **46/46, 148/148** |
-| Bruno, Admin | same | **69/69, 221/221** |
-| API route coverage | `php artisan waffrli:api-inventory --check` | **136 routes, all covered** |
-| OpenAPI | `php artisan waffrli:openapi --check` + Redocly CLI lint | **valid, 0 errors** (one warning: the license has no URL) |
-| E2E on the stack (HTTP + real WebSocket + browser) | `node e2e/run.mjs` | **33 passed, 0 failed, 0 skipped** ([report](qa/e2e-latest.md)) |
-| Filament browser validation | `node e2e/filament-qa.mjs` | **104 page views clean** ([report](qa/filament-latest.md)) |
-| Seeders on MySQL | `WaffrliDemoSeederTest`, `DriverMapTest` (MySQL) | **21 tests, 957 assertions, passing** |
-| Pint | `vendor/bin/pint --test` on the files this branch changed | clean (note 2) |
-| Static analysis | — | **not executed** (blocker 3) |
+| PHPUnit, **MySQL 8.4**, full suite, one complete run (`waffrli_testing`) | `docker compose exec -e DB_CONNECTION=mysql -e DB_DATABASE=waffrli_testing app php vendor/bin/phpunit` | **529 tests, 7143 assertions: 0 failures, 0 errors, 1 skipped** (a DDL test that would commit MySQL's test transaction; it runs on SQLite). 5 PHPUnit deprecation notices, from doc-comment metadata in starter tests. |
+| PHPUnit, SQLite, full suite | `docker compose exec app php vendor/bin/phpunit` | **529 tests: 0 failures, 0 errors, 13 skipped** (MySQL-only tests) |
+| Tests never touch the dev database | row counts of all 68 tables, plus `CHECKSUM TABLE` of orders, wallets, wallet_transactions, order_payments and plus_cycles, before and after the MySQL run | **identical** |
+| Tests never modify committed files | `git status` after both runs; `OpenApiAndPostmanGenerationTest` and `MakeAuthModuleOpenApiTest` now snapshot and restore `docs/openapi` and `docs/postman` | **clean** |
+| Unknown API routes | `ApiErrorHandlingTest` (15 cases; 12 fail on the old handler) | **404** in the envelope, localized (ar/en), no path echo. Wrong method: 405. Real errors: still 500, with details hidden in production. 401 unchanged. |
+| Bruno CLI 2.15.1 on Docker | `bru run --env Local` in each collection | **Customer 108/108 (335 tests), Driver 46/46 (148), Admin 69/69 (221)** |
+| Route coverage | `php artisan waffrli:api-inventory --check` | **136 routes, all covered** (dev OTP and the disabled legacy routes are exempt) |
+| OpenAPI | `waffrli:openapi --check` + Redocly lint | **valid, 0 errors**; drift test green |
+| E2E on the stack (HTTP + real WebSocket + Chromium) | `node e2e/run.mjs` | **34 passed, 0 failed, 0 skipped** ([report](qa/e2e-latest.md)) |
+| Reverb mobile clients | E2E steps 0.1, WS.2, WS.4 + `ReverbOriginConfigTest` | **No Origin** (native app) accepted; foreign and look-alike origins refused (4009); private-channel auth, isolation, no foreign GPS, reconnection |
+| Filament browser validation | `node e2e/filament-qa.mjs` | **104/104 page views clean** (AR/RTL and EN/LTR, dark and light, desktop and mobile) |
+| Shared API portal, two accounts | `node e2e/portal-collab.mjs` | **9/9** ([report](qa/portal-latest.md)) |
+| Fresh setup from a clean checkout | `./scripts/setup.sh --demo --yes --no-admin --portal` in an isolated Compose project | **exit 0.** All services healthy; `/up`, `/admin/login`, `/docs`, product images and portal all 200; demo data seeded. Data survived `down`/`up`. One defect found and fixed (`APP_KEY`, see below). |
+| Schema SQL vs migrations | fresh `migrate` into a throwaway database, then `mysqldump --no-data`, then `diff` | **identical** (68 tables) |
+| Restore safety | `restore.sh` against a non-allow-listed database and with `APP_ENV=production` | **refused (exit 3)** in both cases; allowed test database restored |
+| Dependency security | `composer audit`; `npm audit` | Composer: **no advisories**. npm: **0 high, 0 moderate** (`undici` overridden to 7.30.1); 6 low, all in Scalar's AI chat, which is disabled in our viewer. |
+| Secrets | pattern scan of tracked files, logs, docs and portal exports | **none found** |
+| Docker exposure | `docker compose ps` | only `127.0.0.1` ports; MySQL, Redis and the portal's PostgreSQL are not reachable from outside the host. Redis and portal PostgreSQL are not published at all. |
+| Pint | changed files | clean. 99 issues in the untouched starter files predate this branch. |
+| **Static analysis** | — | **NOT RUN.** Larastan could not be downloaded in this sandbox. `composer.json` and `composer.lock` are verified unmodified. |
+| **Windows / PowerShell** | — | **NOT TESTED** (no PowerShell or Windows here). The scripts were reviewed line by line. Manual steps are under [Not executed / blockers](#not-executed--blockers). |
+| CI | `.github/workflows/ci.yml` | added. The result on the pull request is reported in the PR. |
 
-**Note 1, MySQL errors.** All 50 errors had the same cause: `file_put_contents(): Permission denied`. The scaffold-generator tests write into `database/migrations`, `routes/` and `docs/`, and in this sandbox those directories belonged to root while the containers run as UID 1000. With `DOCKER_UID` set to the developer's UID (the default setup), they are writable. After fixing the ownership, the 8 affected classes ran again on MySQL: 62 tests, 0 errors.
+### Defects found and fixed in this final pass
 
-The same investigation found a **real test bug**, now fixed. `OpenApiAndPostmanGenerationTest` and `MakeAuthModuleOpenApiTest` deleted the **committed** `docs/openapi` and `docs/postman` folders in `tearDown()` on every run. They now snapshot those folders and restore them byte for byte (`tests/Concerns/PreservesGeneratedDocs`).
-
-**Note 2, Pint.** The repository has 99 pre-existing style issues in starter files this branch does not touch. Two touched files (`BasicResource.php`, `TestCase.php`) already failed Pint on the base branch and were left as they were, to avoid unrelated diffs.
+| Defect | Fix |
+|---|---|
+| Unknown `/api/*` routes answered **500**; the handler did not handle `HttpExceptionInterface` | Status preserved in the envelope; 3 legacy tests corrected; regression test added |
+| Native mobile WebSocket clients (no `Origin`) were refused unless origins were `*` | `REVERB_ALLOW_ORIGINLESS_CLIENTS` opt-in; browsers stay restricted to listed hosts |
+| Starter generator tests **deleted the committed** `docs/openapi` and `docs/postman` on every run | Snapshot and restore (`tests/Concerns/PreservesGeneratedDocs`) |
+| Generated starter docs depended on the developer's `APP_NAME` | `APP_NAME` pinned in `phpunit.xml` |
+| Fresh setup failed at `key:generate`, because the container could not write a host-owned `.env` | `APP_KEY` generated by the setup script |
+| `restore.sh` could target any database in the local MySQL | Hard guards: `APP_ENV`, the Compose `mysql` host, and an allow-list of database names |
+| `undici` high and moderate advisories (Scalar's Node-side dependency) | npm `overrides` → 7.30.1 |
 
 ## 1. Docker environment
 
@@ -180,20 +198,22 @@ Screenshots are in `qa/screenshots/`. Map tiles from OpenStreetMap could not loa
 | Queue | 3 tries with 10 s backoff. `queue:failed` is empty. Failed jobs are visible through `php artisan queue:failed`. |
 | Latency (Docker dev, OPcache with timestamp checks) | p50 30–60 ms, p95 under 80 ms on `/up`, driver and admin endpoints (25 requests each). |
 
-## Open findings (not changed, decision needed)
+## Open findings
 
-1. **Unknown `/api/*` routes answer 500 instead of 404.** This is a documented legacy starter contract, and about 30 starter tests assert it. Changing it to 404 is recommended, but it needs that test migration.
-2. **Admin paginated keys** are `deliveryareas` and `deliveryfeerules` (lower-cased model name, plural), while `/all` returns `delivery_areas`. This is a starter `BasicCrudService` contract, kept for compatibility and documented.
-3. **Reverb origins vs native apps.** A WebSocket client that sends no `Origin` header is refused unless `REVERB_ALLOWED_ORIGINS=*`. Verify what the mobile apps send before restricting origins in production. That trade-off is a product decision.
-4. **Test hygiene:** the starter generator tests write into the source tree (`database/migrations`, `routes/`). They clean up after themselves, but they need a writable checkout.
+1. **Admin paginated keys** are `deliveryareas` and `deliveryfeerules` (lower-cased model name, plural), while `/all` returns `delivery_areas`. This is a starter `BasicCrudService` contract, kept for compatibility and documented in Bruno and OpenAPI.
+2. **Test hygiene:** the starter generator tests write into the source tree (`database/migrations`, `routes/`) and clean up afterwards, so they need a writable checkout. Their committed docs are now restored byte for byte.
+3. **Portal onboarding window:** Hoppscotch's onboarding endpoint is open until the first administrator signs in to `/admin`. Do that immediately after the first start. Local installs bind to `127.0.0.1`.
 
 ## Not executed / blockers
 
-1. **`scripts/setup.ps1` and the `scripts/db/*.ps1` scripts were not executed.** PowerShell is not installed in the sandbox, and downloading it was refused by the sandbox policy. `setup.sh` was executed end to end; the PowerShell scripts mirror its steps.
-2. **Windows/WSL2 itself** was not available. The stack was validated on Linux, Docker Engine 29.9 with Compose 5.6.
-3. **Static analysis** (Larastan/PHPStan) could not be installed: Composer could not download the package from GitHub through the sandbox network. There is no analyser configured in the project.
-4. **Sandbox network limits (reported, not bypassed):**
-   - Docker Hub rate-limited the image pulls (429), so the images were pulled from `mirror.gcr.io`;
-   - `deb.debian.org`, `pecl.php.net` and the Alpine CDN were blocked (403), hence the Ubuntu base image;
-   - OpenStreetMap tiles were unreachable.
-5. **Real SMS, WhatsApp and FCM delivery** were not tested. No provider credentials exist, and none were invented.
+1. **Windows PowerShell execution: NOT TESTED.** `scripts/setup.ps1` and `scripts/db/*.ps1` were reviewed for PowerShell 5.1/7 syntax and parity with the Bash scripts, which were executed. Manual verification on a Windows 10/11 machine with Docker Desktop and WSL2:
+   1. `git clone …`, then `cd waffrli`.
+   2. `powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -Demo -Yes -Portal`; expect exit 0 and the URL list.
+   3. Open http://localhost:8080/admin, http://localhost:8080/docs, http://localhost:3000 and http://localhost:8025.
+   4. Run `docker compose ps`: all services are healthy, and the only published ports are `127.0.0.1`.
+   5. Run `docker compose down`, then `docker compose --profile portal up -d`; the data is still there.
+   6. Run `.\scripts\db\backup.ps1`, then `.\scripts\db\restore.ps1 backups\<file>`; typing anything other than the database name cancels.
+2. **Static analysis: NOT RUN.** It is not installable in this sandbox. Recommended: `composer require --dev larastan/larastan` on a developer machine, then run it at level 5 with a baseline.
+3. **Portal access from two different computers: NOT TESTED.** The two accounts used two browser profiles on one machine. HTTPS deployment steps are in `api-portal.md` §5.
+4. **Real SMS, WhatsApp and FCM delivery: NOT TESTED.** No provider credentials exist, and none were invented. Fake drivers were used, and the reports say so.
+5. **Sandbox network limits (reported, not bypassed):** Docker Hub rate limits; `deb.debian.org`, `pecl.php.net` and the Alpine CDN blocked; no Packagist or npm access from containers; OpenStreetMap tiles unreachable; GitHub release downloads blocked for PowerShell and Larastan.

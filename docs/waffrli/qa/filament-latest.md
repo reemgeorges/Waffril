@@ -1,4 +1,4 @@
-# Filament browser validation — 2026-10-31T19:12:55.322Z
+# Filament browser validation — 2026-11-01T14:28:36.161Z
 
 Real Chromium against http://localhost:8080. 104 page views (41 distinct panel pages × AR/EN × dark/light, plus mobile 390×844). Screenshots: `e2e/results/filament/`.
 
