@@ -74,7 +74,13 @@ if [[ -f node_modules/.package-lock.json ]]; then echo "node_modules present (ke
 else docker compose run --rm --no-deps node sh -c 'npm ci --no-audit --no-fund'; fi
 
 step "5/10 Application key"
-if [[ -z "$(env_value APP_KEY)" ]]; then docker compose run --rm --no-deps app php artisan key:generate; else echo "APP_KEY already set (kept)."; fi
+# Generated here (not by `artisan key:generate` in the container), so the
+# container never has to write .env — works whatever user owns the checkout.
+if [[ -z "$(env_value APP_KEY)" ]]; then
+  key="base64:$(head -c 32 /dev/urandom | base64 | tr -d '\n')"
+  if grep -qE '^APP_KEY=' .env; then sed -i.bak "s|^APP_KEY=.*|APP_KEY=${key}|" .env && rm -f .env.bak; else echo "APP_KEY=${key}" >> .env; fi
+  echo "APP_KEY generated."
+else echo "APP_KEY already set (kept)."; fi
 
 step "6/10 Migrations (local development database)"
 docker compose run --rm app php artisan migrate

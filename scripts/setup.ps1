@@ -93,8 +93,16 @@ if (Test-Path node_modules/.package-lock.json) { Write-Host "node_modules presen
 else { Compose run --rm --no-deps node sh -c 'npm ci --no-audit --no-fund' }
 
 Step '5/10 Application key'
-if ([string]::IsNullOrEmpty((EnvValue (Get-Content .env) 'APP_KEY'))) {
-    Compose run --rm --no-deps app php artisan key:generate
+# Generated here (not by `artisan key:generate` in the container), so the
+# container never has to write .env.
+$envLines = Get-Content .env
+if ([string]::IsNullOrEmpty((EnvValue $envLines 'APP_KEY'))) {
+    $kb = New-Object byte[] 32
+    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($kb)
+    $key = 'base64:' + [Convert]::ToBase64String($kb)
+    if ($null -ne (EnvValue $envLines 'APP_KEY')) { $envLines = $envLines -replace '^APP_KEY=.*$', "APP_KEY=$key" } else { $envLines += "APP_KEY=$key" }
+    [IO.File]::WriteAllLines((Join-Path (Get-Location) '.env'), [string[]]$envLines, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host 'APP_KEY generated.'
 } else { Write-Host 'APP_KEY already set (kept).' }
 
 Step '6/10 Migrations (local development database)'
