@@ -13,6 +13,11 @@ Artisan::command('inspire', function () {
 Schedule::command('waffrli:flag-urgent-orders')->everyMinute()->withoutOverlapping();
 Schedule::command('waffrli:sync-plus-cycles')->everyFiveMinutes()->withoutOverlapping();
 
+// WAFFRLI dispatch B3 (2026-11-10): delivery-offer safety net (lost expiry
+// jobs, stalled dispatches, no-driver recovery). A no-op while delivery
+// offers are disabled. Sub-minute: `schedule:work` runs it every 15 s.
+Schedule::command('waffrli:dispatch-sweep')->everyFifteenSeconds()->withoutOverlapping();
+
 // WAFFRLI (2026-11-04): housekeeping that existed but was never scheduled.
 // Deletes only OTP rows expired for more than a day and Sanctum tokens past
 // their own expires_at (off-peak, 03:15 / 03:25 Asia/Damascus).

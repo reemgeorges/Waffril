@@ -6,6 +6,8 @@ use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
 use App\Events\Realtime\DeliveryOfferChanged;
 use App\Exceptions\BusinessRuleException;
+use App\Jobs\Delivery\AdvanceDeliveryDispatch;
+use App\Jobs\Delivery\ExpireDeliveryOffer;
 use App\Models\Admin;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
@@ -38,8 +40,12 @@ use Illuminate\Support\Facades\DB;
  * `private-driver.{id}` (DeliveryOfferChanged: offer.created / accepted /
  * withdrawn) and a new offer is pushed over FCM (DriverDeliveryOfferCreated),
  * all after the transaction commits (Realtime::publish / Notify::send).
+ * B3 (2026-11-10): each offer queues its own ExpireDeliveryOffer at the
+ * deadline, and a rejected, expired or driver-withdrawn offer queues
+ * AdvanceDeliveryDispatch (the next driver, DeliveryDispatcher). Both are
+ * dispatched after commit and are idempotent.
  * Offers still cannot be created while config('dispatch.offers_enabled')
- * is off (the default), and no admin screen or job creates them yet.
+ * is off (the default), and no admin screen creates them yet (B4).
  */
 class DeliveryOfferService
 {
@@ -77,10 +83,14 @@ class DeliveryOfferService
         return $this->createOffer($order, $driver, DeliveryOffer::SOURCE_ADMIN, $admin, true, []);
     }
 
-    /** The system offers the next attempt of the CURRENT round (driver chosen by B3). */
-    public function offerAutomatically(Order $order, Driver $driver, array $selectionMeta = []): DeliveryOffer
+    /**
+     * The system offers the next attempt of the CURRENT round, or the first
+     * attempt of a NEW automatic round (recovery). Driver chosen by
+     * DeliveryDispatcher.
+     */
+    public function offerAutomatically(Order $order, Driver $driver, array $selectionMeta = [], bool $newRound = false): DeliveryOffer
     {
-        return $this->createOffer($order, $driver, DeliveryOffer::SOURCE_AUTO, null, false, $selectionMeta);
+        return $this->createOffer($order, $driver, DeliveryOffer::SOURCE_AUTO, null, $newRound, $selectionMeta);
     }
 
     protected function createOffer(Order $order, Driver $driver, string $source, ?Admin $admin, bool $newRound, array $meta): DeliveryOffer
@@ -138,13 +148,18 @@ class DeliveryOfferService
                     'dispatch_round' => $round,
                     'dispatch_attempts' => $attempt,
                     'no_driver_since' => null,
-                    'no_driver_alerted_at' => null,
                     'updated_at' => $now,
-                ]);
+                ] + ($source === DeliveryOffer::SOURCE_ADMIN
+                    // Admins are alerted again only after an admin acted; automatic
+                    // retries keep the "already alerted" mark (no alert spam).
+                    ? ['no_driver_alerted_at' => null]
+                    : []));
 
-                // After commit: the live event, then one push per device.
+                // After commit: the live event, then one push per device, and the
+                // offer's own expiry at its deadline (B3).
                 Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::CREATED, $offer));
                 Notify::send($driver, new DriverDeliveryOfferCreated($offer, $order));
+                ExpireDeliveryOffer::dispatch($offer->id)->delay($offer->expires_at)->afterCommit();
 
                 return $offer;
             });
@@ -373,6 +388,13 @@ class DeliveryOfferService
         if ($status !== DeliveryOfferStatus::Accepted) {
             // Rejected, expired or cancelled: the driver's devices close the offer.
             Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::WITHDRAWN, $offer));
+        }
+        // B3: the order moves on to the next driver. Not for admin overrides,
+        // restarts or cancelled orders (an admin or the order decides there).
+        $next = in_array($status, [DeliveryOfferStatus::Rejected, DeliveryOfferStatus::Expired], true)
+            || ($status === DeliveryOfferStatus::Cancelled && ($attributes['cancel_reason'] ?? null) === DeliveryOffer::CANCEL_DRIVER_UNAVAILABLE);
+        if ($next && self::enabled()) {
+            AdvanceDeliveryDispatch::dispatch((int) $offer->order_id)->afterCommit();
         }
 
         return $offer;

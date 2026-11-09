@@ -7,13 +7,15 @@
  * waits until a shared start instant, performs one action on a delivery
  * offer and prints a JSON result line. Test-only: never used by the app.
  *
- *   php offer_race_worker.php <accept|expire|withdraw> <offerId> <driverId> <startAtMicrotime>
+ *   php offer_race_worker.php <accept|expire|withdraw|advance|expire_job> <offerId> <driverId> <startAtMicrotime>
  */
 
 use App\Exceptions\BusinessRuleException;
+use App\Jobs\Delivery\ExpireDeliveryOffer;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
+use App\Services\Delivery\DeliveryDispatcher;
 use App\Services\Delivery\DeliveryOfferService;
 use Illuminate\Contracts\Console\Kernel;
 
@@ -42,6 +44,9 @@ try {
         'accept' => $service->accept($offer, $driver)->status->value,
         'expire' => $service->expire($offer) ? 'expired' : 'noop',
         'withdraw' => ($service->cancelPendingForOrder(Order::findOrFail($offer->order_id), DeliveryOffer::CANCEL_ADMIN_OVERRIDE)?->status->value) ?? 'noop',
+        // B3: pick the next driver / run the delayed expiry job.
+        'advance' => app(DeliveryDispatcher::class)->advance((int) $offer->order_id),
+        'expire_job' => app()->call([new ExpireDeliveryOffer((int) $offer->id), 'handle']),
     };
     fwrite(STDOUT, json_encode(['ok' => true, 'action' => $action, 'result' => $result, 'started' => $started, 'finished' => microtime(true)]).PHP_EOL);
 } catch (BusinessRuleException $e) {

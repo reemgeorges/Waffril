@@ -28,6 +28,8 @@ class AdminAlerts
         'order.placed' => ['orders.view', 'heroicon-o-shopping-bag', 'info'],
         'order.cancellation_requested' => ['orders.resolve_cancellation_requests', 'heroicon-o-x-circle', 'warning'],
         'order.problem_reported' => ['orders.view', 'heroicon-o-exclamation-triangle', 'danger'],
+        // Dispatch B3 (2026-11-10): an order is waiting for a driver (sent once per entry into the queue).
+        'order.no_driver_available' => ['orders.assign', 'heroicon-o-user-minus', 'warning'],
         'plus.request_submitted' => ['plus.approve', 'heroicon-o-star', 'info'],
     ];
 

@@ -32,6 +32,9 @@ final class PlatformSettings
             'dispatch.offer_timeout_seconds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 90],
             'dispatch.max_attempts_per_round' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10],
             'dispatch.auto_recovery' => ['group' => 'dispatch', 'type' => 'bool', 'default' => true],
+            // B3: when a queued order may start a new automatic round.
+            'dispatch.recovery_round_cooldown_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 5],
+            'dispatch.max_auto_rounds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 2],
             'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
             'plus.renewal_request_lead_days' => ['group' => 'plus', 'type' => 'int', 'default' => 3],
         ];

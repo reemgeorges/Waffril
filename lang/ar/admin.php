@@ -602,6 +602,8 @@ return [
         ],
         'keys' => [
             'dispatch' => [
+                'recovery_round_cooldown_minutes' => 'دقائق الانتظار قبل جولة تلقائية جديدة',
+                'max_auto_rounds' => 'عدد الجولات التلقائية قبل تدخل المسؤول',
                 'offer_timeout_seconds' => 'مهلة قبول العرض (بالثواني، 30-300)',
                 'max_attempts_per_round' => 'الحد الأقصى للعروض في جولة التوزيع (1-50)',
                 'auto_recovery' => 'إعادة محاولة الطلبات المنتظرة عند توفر سائق',
@@ -797,6 +799,7 @@ return [
         'order_placed' => ['title' => 'طلب جديد', 'body' => 'تم إنشاء الطلب :reference.'],
         'order_cancellation_requested' => ['title' => 'طلب إلغاء', 'body' => 'طلب العميل إلغاء :reference.'],
         'order_problem_reported' => ['title' => 'مشكلة في التوصيل', 'body' => 'أبلغ سائق عن مشكلة في :reference.'],
+        'order_no_driver_available' => ['title' => 'طلب بانتظار سائق', 'body' => 'لا يوجد سائق متاح للطلب :reference. أسنده يدوياً أو انتظر إعادة المحاولة التلقائية.'],
         'plus_request_submitted' => ['title' => 'طلب بلس جديد', 'body' => 'طلب بلس :reference بانتظار المراجعة.'],
     ],
     'marketing' => [

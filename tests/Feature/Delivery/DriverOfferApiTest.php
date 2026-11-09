@@ -5,6 +5,8 @@ namespace Tests\Feature\Delivery;
 use App\Contracts\Push\PushTransport;
 use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
+use App\Jobs\Delivery\AdvanceDeliveryDispatch;
+use App\Jobs\Delivery\ExpireDeliveryOffer;
 use App\Jobs\Push\SendPushMessage;
 use App\Models\Admin;
 use App\Models\City;
@@ -21,6 +23,7 @@ use App\Services\Push\FakePushTransport;
 use App\Services\Push\FcmHttpV1Transport;
 use App\Support\Broadcasting\RecordingBroadcaster;
 use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\Feature\Admin\AdminPanelTestCase;
@@ -254,6 +257,8 @@ class DriverOfferApiTest extends AdminPanelTestCase
 
     public function test_withdrawn_events_for_reject_expiry_and_cancellation(): void
     {
+        // Each offer is created by hand here; the B3 automatic follow-ups are tested in DeliveryDispatcherTest.
+        Bus::fake([AdvanceDeliveryDispatch::class, ExpireDeliveryOffer::class]);
         $service = app(DeliveryOfferService::class);
         $order = $this->acceptedOrder();
         [$a, $b, $c] = [$this->newDriver(), $this->newDriver(), $this->newDriver()];

@@ -12,7 +12,7 @@ class ScheduleTest extends TestCase
     {
         $commands = collect(app(Schedule::class)->events())->map(fn ($event) => (string) $event->command)->implode("\n");
 
-        foreach (['waffrli:flag-urgent-orders', 'waffrli:sync-plus-cycles', 'otp:cleanup-expired', 'tokens:cleanup-expired'] as $command) {
+        foreach (['waffrli:flag-urgent-orders', 'waffrli:sync-plus-cycles', 'otp:cleanup-expired', 'tokens:cleanup-expired', 'waffrli:dispatch-sweep'] as $command) {
             $this->assertStringContainsString($command, $commands);
         }
     }

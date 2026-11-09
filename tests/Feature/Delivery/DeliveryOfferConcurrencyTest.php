@@ -4,6 +4,8 @@ namespace Tests\Feature\Delivery;
 
 use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
+use App\Jobs\Delivery\AdvanceDeliveryDispatch;
+use App\Jobs\Delivery\ExpireDeliveryOffer;
 use App\Models\Admin;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
@@ -13,6 +15,7 @@ use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Order\OrderAdminService;
 use Database\Seeders\AdminAccessSeeder;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Support\WaffrliFixtures;
@@ -184,5 +187,47 @@ class DeliveryOfferConcurrencyTest extends TestCase
             $this->assertSame(0, $this->assignedHistory($order));
         }
         $this->assertLessThanOrEqual(1, collect($results)->where('action', 'expire')->where('result', 'expired')->count(), 'Expired at most once.');
+    }
+
+    public function test_six_simultaneous_dispatch_steps_create_exactly_one_next_offer(): void
+    {
+        [$order, $driver, $offer] = $this->pendingOffer();
+        $this->driver($order->city);
+        $this->driver($order->city);
+        // Reject without the automatic follow-up, so the competitors race for it.
+        Bus::fake([AdvanceDeliveryDispatch::class, ExpireDeliveryOffer::class]);
+        app(DeliveryOfferService::class)->reject($offer, $driver, 'busy');
+
+        $results = $this->race(array_fill(0, 6, 'advance'), $offer, $driver, microtime(true) + 3);
+
+        $this->assertSame(1, DeliveryOffer::query()->pending()->where('order_id', $order->id)->count(), 'Exactly one next offer.');
+        $this->assertSame(2, DeliveryOffer::query()->where('order_id', $order->id)->count());
+        $this->assertSame(1, collect($results)->where('result', 'offered')->count(), json_encode($results));
+        $this->assertTrue(collect($results)->every(fn ($r) => $r['ok'] && in_array($r['result'], ['offered', 'pending'], true)), json_encode($results));
+        $this->assertLessThan(collect($results)->min('finished'), collect($results)->max('started'), 'The workers did not overlap.');
+    }
+
+    public function test_the_expiry_job_racing_acceptance_at_the_deadline_never_double_assigns(): void
+    {
+        [$order, $driver, $offer] = $this->pendingOffer();
+        $next = $this->driver($order->city);
+        $deadline = now()->addSeconds(3)->startOfSecond();
+        DB::table('delivery_offers')->where('id', $offer->id)->update(['expires_at' => $deadline]);
+
+        $this->race(['accept', 'expire_job', 'accept', 'expire_job', 'accept', 'expire_job'], $offer, $driver, (float) $deadline->getTimestamp());
+
+        $offer->refresh();
+        $order->refresh();
+        if ($offer->status === DeliveryOfferStatus::Accepted) {
+            $this->assertSame([OrderStatus::Assigned, $driver->id], [$order->status, (int) $order->driver_id]);
+            $this->assertSame(1, DeliveryOffer::query()->where('order_id', $order->id)->count(), 'No next offer after acceptance.');
+        } else {
+            $this->assertSame(DeliveryOfferStatus::Expired, $offer->status);
+            $this->assertSame(OrderStatus::Accepted, $order->status);
+            $pending = DeliveryOffer::query()->pending()->where('order_id', $order->id)->get();
+            $this->assertCount(1, $pending, 'Exactly one next offer after expiry.');
+            $this->assertSame($next->id, (int) $pending->first()->driver_id);
+        }
+        $this->assertLessThanOrEqual(1, $this->assignedHistory($order));
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Services\Driver;
 
 use App\Exceptions\BusinessRuleException;
+use App\Jobs\Delivery\RecoverDeliveryDispatch;
 use App\Models\Driver;
+use App\Services\Delivery\DeliveryOfferService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -77,7 +79,7 @@ class DriverAccountService
             throw new BusinessRuleException(__('validation.in', ['attribute' => 'availability']), 422);
         }
 
-        return DB::transaction(function () use ($driver, $availability) {
+        $driver = DB::transaction(function () use ($driver, $availability) {
             $driver = Driver::query()->lockForUpdate()->findOrFail($driver->getKey());
 
             if ($availability === Driver::AVAILABILITY_OFFLINE && $driver->activeOrders()->exists()) {
@@ -88,5 +90,15 @@ class DriverAccountService
 
             return $driver->fresh(['city']);
         });
+
+        // Delivery offers (dispatch B3, 2026-11-10), after the driver's lock is
+        // released (offers lock order -> offer -> driver). No-ops while offers are off.
+        if (DeliveryOfferService::enabled()) {
+            $availability === Driver::AVAILABILITY_OFFLINE
+                ? app(DeliveryOfferService::class)->cancelPendingForDriver($driver)
+                : RecoverDeliveryDispatch::dispatch();
+        }
+
+        return $driver;
     }
 }

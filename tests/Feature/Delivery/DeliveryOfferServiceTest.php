@@ -5,6 +5,8 @@ namespace Tests\Feature\Delivery;
 use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
+use App\Jobs\Delivery\AdvanceDeliveryDispatch;
+use App\Jobs\Delivery\ExpireDeliveryOffer;
 use App\Models\Admin;
 use App\Models\City;
 use App\Models\DeliveryOffer;
@@ -16,6 +18,7 @@ use App\Services\Customer\CustomerOrderService;
 use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Order\OrderAdminService;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Bus;
 use Tests\Feature\Admin\AdminPanelTestCase;
 use Tests\Support\WaffrliFixtures;
 
@@ -36,6 +39,9 @@ class DeliveryOfferServiceTest extends AdminPanelTestCase
     {
         parent::setUp();
         config(['dispatch.offers_enabled' => true]);
+        // B1 domain primitives, tested in isolation from the B3 dispatcher
+        // (whose automatic follow-ups are covered by DeliveryDispatcherTest).
+        Bus::fake([AdvanceDeliveryDispatch::class, ExpireDeliveryOffer::class]);
         $this->admin = $this->superAdmin();
         $this->cityModel = $this->city();
     }

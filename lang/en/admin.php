@@ -602,6 +602,8 @@ return [
         ],
         'keys' => [
             'dispatch' => [
+                'recovery_round_cooldown_minutes' => 'Minutes in the queue before an automatic new round',
+                'max_auto_rounds' => 'Automatic new rounds before an admin must act',
                 'offer_timeout_seconds' => 'Offer acceptance time (seconds, 30-300)',
                 'max_attempts_per_round' => 'Maximum offers per dispatch round (1-50)',
                 'auto_recovery' => 'Retry orders waiting for a driver when one becomes available',
@@ -797,6 +799,7 @@ return [
         'order_placed' => ['title' => 'New order', 'body' => 'Order :reference was placed.'],
         'order_cancellation_requested' => ['title' => 'Cancellation request', 'body' => 'The customer asked to cancel :reference.'],
         'order_problem_reported' => ['title' => 'Delivery problem reported', 'body' => 'A driver reported a problem on :reference.'],
+        'order_no_driver_available' => ['title' => 'Order waiting for a driver', 'body' => 'No driver is available for :reference. Assign one manually or wait for automatic retry.'],
         'plus_request_submitted' => ['title' => 'New PLUS request', 'body' => 'PLUS request :reference is waiting for review.'],
     ],
     'marketing' => [

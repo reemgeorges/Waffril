@@ -18,5 +18,13 @@ return [
     'offers_enabled' => (bool) env('WAFFRLI_DELIVERY_OFFERS_ENABLED', false),
 
     'timeout_bounds_seconds' => [30, 300],
+
+    // B3 (2026-11-10): a driver's GPS position is used for ranking only if
+    // reported within this many minutes (drivers send GPS only while
+    // delivering, so idle positions are usually stale and ignored).
+    'location_fresh_minutes' => (int) env('WAFFRLI_DISPATCH_LOCATION_FRESH_MINUTES', 10),
+
+    // Orders handled per sweep run (overdue offers, stalled, recovery).
+    'sweep_batch' => 50,
     'max_attempts_bounds' => [1, 50],
 ];

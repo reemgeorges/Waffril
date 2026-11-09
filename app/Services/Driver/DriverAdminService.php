@@ -5,6 +5,7 @@ namespace App\Services\Driver;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\Driver;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Audit\AdminAudit;
 use App\Support\Auth\AdminPermissions;
 
@@ -24,6 +25,7 @@ class DriverAdminService
         $driver->forceFill(['is_active' => $active] + ($active ? [] : ['availability' => Driver::AVAILABILITY_OFFLINE]))->save();
         if (! $active) {
             $driver->tokens()->delete();
+            $this->withdrawOffer($driver);
         }
         AdminAudit::log($active ? 'driver.activated' : 'driver.deactivated', $driver, [], $admin);
 
@@ -38,6 +40,7 @@ class DriverAdminService
         }
 
         $driver->forceFill(['availability' => Driver::AVAILABILITY_OFFLINE])->save();
+        $this->withdrawOffer($driver);
         AdminAudit::log('driver.forced_offline', $driver, [], $admin);
 
         return $driver;
@@ -47,6 +50,14 @@ class DriverAdminService
     {
         if (! AdminPermissions::allows($admin, 'drivers.manage')) {
             throw new BusinessRuleException(__('admin.errors.forbidden'), 403);
+        }
+    }
+
+    /** Dispatch B3 (2026-11-10): an unavailable driver's pending delivery offer moves on to the next driver. */
+    protected function withdrawOffer(Driver $driver): void
+    {
+        if (DeliveryOfferService::enabled()) {
+            app(DeliveryOfferService::class)->cancelPendingForDriver($driver);
         }
     }
 }

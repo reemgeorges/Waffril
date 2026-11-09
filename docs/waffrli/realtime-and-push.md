@@ -190,7 +190,7 @@ Push messages are sent for:
   - otherwise everything keeps polling.
 - **Bell:**
   - Filament database notifications, polled every 30 s and live on `admin.{id}`;
-  - sent to admins who can act: new order (`orders.view`), cancellation request (`orders.resolve_cancellation_requests`), driver problem report (`orders.view`), PLUS request (`plus.approve`).
+  - sent to admins who can act: new order (`orders.view`), cancellation request (`orders.resolve_cancellation_requests`), driver problem report (`orders.view`), PLUS request (`plus.approve`), and an order waiting for a driver (`orders.assign`; delivery-offer dispatch B3, sent once each time the order enters the no-driver queue until an admin acts).
 - **Live lists:** a single `admin.orders` subscription re-renders the orders list, cancellation requests and the dashboard widgets.
 - **Driver map:**
   - live on `admin.drivers-map` and `admin.orders`; each event triggers one server re-read, throttled to every 2 s;
