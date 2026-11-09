@@ -27,6 +27,11 @@ final class PlatformSettings
             'orders.scheduled_min_lead_minutes' => ['group' => 'scheduled_orders', 'type' => 'int', 'default' => 60],
             'orders.scheduled_max_days_ahead' => ['group' => 'scheduled_orders', 'type' => 'int', 'default' => 7],
             'delivery.driver_recommendation_limit' => ['group' => 'delivery', 'type' => 'int', 'default' => 5],
+            // Delivery offers (dispatch B1, 2026-11-10). No effect until
+            // config('dispatch.offers_enabled') is on; bounds in config/dispatch.php.
+            'dispatch.offer_timeout_seconds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 90],
+            'dispatch.max_attempts_per_round' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10],
+            'dispatch.auto_recovery' => ['group' => 'dispatch', 'type' => 'bool', 'default' => true],
             'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
             'plus.renewal_request_lead_days' => ['group' => 'plus', 'type' => 'int', 'default' => 3],
         ];

@@ -395,6 +395,13 @@ return [
         'unsettled' => 'Not settled',
     ],
     'errors' => [
+        'dispatch_disabled' => 'Delivery offers are not enabled yet.',
+        'dispatch_order_not_accepted' => 'Only accepted orders can be offered to a driver.',
+        'dispatch_offer_pending' => 'This order already has a pending delivery offer.',
+        'dispatch_no_round' => 'Start the dispatch by choosing the first driver.',
+        'dispatch_attempts_exhausted' => 'The maximum number of offers for this round was reached.',
+        'dispatch_driver_has_offer' => 'This driver is already answering another delivery offer.',
+        'dispatch_driver_already_offered' => 'This driver was already offered this order in this round.',
         'amount_must_be_positive' => 'The amount must be greater than zero (max 4 decimals).',
         'branch_closed' => 'The branch is closed or not accepting orders at that time.',
         'cash_collected_exceeds_amount' => 'Collected cash cannot exceed the cash amount of the order.',
@@ -583,6 +590,7 @@ return [
     'settings' => [
         'title' => 'Platform settings',
         'groups' => [
+            'dispatch' => 'Delivery offers (not active yet)',
             'general' => 'General',
             'support' => 'Support contacts',
             'operations' => 'Operations',
@@ -593,6 +601,11 @@ return [
             'plus' => 'PLUS',
         ],
         'keys' => [
+            'dispatch' => [
+                'offer_timeout_seconds' => 'Offer acceptance time (seconds, 30-300)',
+                'max_attempts_per_round' => 'Maximum offers per dispatch round (1-50)',
+                'auto_recovery' => 'Retry orders waiting for a driver when one becomes available',
+            ],
             'general' => [
                 'platform_name' => 'Platform name',
             ],
@@ -829,5 +842,25 @@ return [
     ],
     'locale_switch' => [
         'label' => 'Interface language',
+    ],
+    'dispatch' => [
+        'status_pending' => 'Waiting for the driver',
+        'status_accepted' => 'Accepted',
+        'status_rejected' => 'Rejected',
+        'status_expired' => 'Expired',
+        'status_cancelled' => 'Withdrawn',
+        'source_admin' => 'Chosen by an admin',
+        'source_auto' => 'Automatic',
+        'reject_too_far' => 'Too far',
+        'reject_busy' => 'Busy',
+        'reject_vehicle_issue' => 'Vehicle issue',
+        'reject_other' => 'Other',
+        'cancel_admin_override' => 'Assigned directly by an admin',
+        'cancel_admin_restart' => 'Dispatch restarted',
+        'cancel_order_cancelled' => 'Order cancelled',
+        'cancel_order_unassignable' => 'Order no longer assignable',
+        'cancel_driver_unavailable' => 'Driver became unavailable',
+        'state_offering' => 'Offering to drivers',
+        'state_no_driver' => 'No driver available',
     ],
 ];

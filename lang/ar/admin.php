@@ -395,6 +395,13 @@ return [
         'unsettled' => 'غير مسوّى',
     ],
     'errors' => [
+        'dispatch_disabled' => 'عروض التوصيل غير مفعّلة بعد.',
+        'dispatch_order_not_accepted' => 'يمكن عرض الطلبات المقبولة فقط على السائقين.',
+        'dispatch_offer_pending' => 'لهذا الطلب عرض توصيل بانتظار الرد.',
+        'dispatch_no_round' => 'ابدأ التوزيع باختيار السائق الأول.',
+        'dispatch_attempts_exhausted' => 'تم بلوغ الحد الأقصى لعروض هذه الجولة.',
+        'dispatch_driver_has_offer' => 'هذا السائق يرد حالياً على عرض توصيل آخر.',
+        'dispatch_driver_already_offered' => 'عُرض هذا الطلب على هذا السائق في هذه الجولة مسبقاً.',
         'amount_must_be_positive' => 'يجب أن يكون المبلغ أكبر من صفر (4 منازل عشرية كحد أقصى).',
         'branch_closed' => 'الفرع مغلق أو لا يستقبل الطلبات في ذلك الوقت.',
         'cash_collected_exceeds_amount' => 'لا يمكن أن يتجاوز النقد المحصّل مبلغ الدفع النقدي للطلب.',
@@ -583,6 +590,7 @@ return [
     'settings' => [
         'title' => 'إعدادات المنصة',
         'groups' => [
+            'dispatch' => 'عروض التوصيل (غير مفعّلة بعد)',
             'general' => 'عام',
             'support' => 'جهات الدعم',
             'operations' => 'التشغيل',
@@ -593,6 +601,11 @@ return [
             'plus' => 'بلس',
         ],
         'keys' => [
+            'dispatch' => [
+                'offer_timeout_seconds' => 'مهلة قبول العرض (بالثواني، 30-300)',
+                'max_attempts_per_round' => 'الحد الأقصى للعروض في جولة التوزيع (1-50)',
+                'auto_recovery' => 'إعادة محاولة الطلبات المنتظرة عند توفر سائق',
+            ],
             'general' => [
                 'platform_name' => 'اسم المنصة',
             ],
@@ -829,5 +842,25 @@ return [
     ],
     'locale_switch' => [
         'label' => 'لغة الواجهة',
+    ],
+    'dispatch' => [
+        'status_pending' => 'بانتظار رد السائق',
+        'status_accepted' => 'مقبول',
+        'status_rejected' => 'مرفوض',
+        'status_expired' => 'منتهي',
+        'status_cancelled' => 'مسحوب',
+        'source_admin' => 'اختيار المسؤول',
+        'source_auto' => 'تلقائي',
+        'reject_too_far' => 'بعيد جداً',
+        'reject_busy' => 'مشغول',
+        'reject_vehicle_issue' => 'مشكلة في المركبة',
+        'reject_other' => 'سبب آخر',
+        'cancel_admin_override' => 'أسنده المسؤول مباشرة',
+        'cancel_admin_restart' => 'أُعيد بدء التوزيع',
+        'cancel_order_cancelled' => 'أُلغي الطلب',
+        'cancel_order_unassignable' => 'لم يعد الطلب قابلاً للإسناد',
+        'cancel_driver_unavailable' => 'أصبح السائق غير متاح',
+        'state_offering' => 'جارٍ العرض على السائقين',
+        'state_no_driver' => 'لا يوجد سائق متاح',
     ],
 ];

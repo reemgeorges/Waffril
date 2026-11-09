@@ -91,6 +91,11 @@ return [
 
     // WAFFRLI driver API (2026-11-02).
     'driver' => [
+        'offer_expired' => 'This delivery offer has expired.',
+        'offer_unavailable' => 'This delivery offer is no longer available.',
+        'offer_driver_unavailable' => 'You can\'t accept this offer right now (offline or already delivering).',
+        'offer_not_found' => 'Delivery offer not found.',
+        'offer_reject_reason_invalid' => 'Choose a valid reason.',
         'invalid_credentials' => 'The phone number or password is incorrect.',
         'account_inactive' => 'This driver account is inactive. Contact the operations team.',
         'logged_out' => 'Logged out.',

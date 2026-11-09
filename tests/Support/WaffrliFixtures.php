@@ -224,6 +224,16 @@ trait WaffrliFixtures
         app(DriverCashSettlementService::class)->prepare($driver, $usd, now()->toDateString(), $admin);
         app(ProductRatingService::class)->record($user, $product, Order::where('status', 'delivered')->firstOrFail(), 4, 'good');
 
+        // Dispatch (B1): an accepted order with one pending admin delivery offer
+        // (inserted directly: delivery offers are switched off by default).
+        $offered = app(OrderAdminService::class)->accept($this->order($user, $branch, '8'), $admin);
+        DB::table('delivery_offers')->insert([
+            'order_id' => $offered->id, 'driver_id' => $this->driver($city)->id, 'round' => 1, 'attempt' => 1,
+            'status' => 'pending', 'source' => 'admin', 'offered_by_admin_id' => $admin->id,
+            'offered_at' => now(), 'expires_at' => now()->addSeconds(90), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('orders')->where('id', $offered->id)->update(['dispatch_state' => 'offering', 'dispatch_round' => 1, 'dispatch_attempts' => 1]);
+
         // PLUS: plan discount, new request approved into membership/cycle/snapshot.
         $plan = PlusPlan::create(['code' => 'gold', 'name' => ['en' => 'Gold'], 'free_deliveries_per_cycle' => 2, 'display_price' => 5]);
         PlusStoreDiscount::create(['plus_plan_id' => $plan->id, 'store_id' => $store->id, 'discount_type' => 'percent', 'discount_value' => 10, 'max_discount_amount' => 5]);

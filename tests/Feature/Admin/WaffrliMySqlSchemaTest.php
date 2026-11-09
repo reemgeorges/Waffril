@@ -89,6 +89,14 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
             'chk_delivery_fee_rules_fees' => ['delivery_fee_rules', ['base_fee' => -1]],
             'chk_dcs_amounts' => ['driver_cash_settlements', ['expected_amount' => -1]],
             'chk_dcs_status' => ['driver_cash_settlements', ['status' => 'lost']],
+            'chk_do_admin_source' => ['delivery_offers', ['offered_by_admin_id' => null]],
+            'chk_do_cancel_reason' => ['delivery_offers', ['cancel_reason' => 'admin_restart']],
+            'chk_do_reject_reason' => ['delivery_offers', ['reject_reason' => 'busy']],
+            'chk_do_responded' => ['delivery_offers', ['responded_at' => $raw('offered_at')]],
+            'chk_do_round_attempt' => ['delivery_offers', ['round' => 0]],
+            'chk_do_source' => ['delivery_offers', ['source' => 'driver']],
+            'chk_do_status' => ['delivery_offers', ['status' => 'lost', 'responded_at' => $raw('offered_at')]],
+            'chk_do_window' => ['delivery_offers', ['expires_at' => $raw('offered_at')]],
             'chk_drivers_availability' => ['drivers', ['availability' => 'busy']],
             'chk_drivers_language' => ['drivers', ['language' => 'fr']],
             'chk_drivers_phone_e164' => ['drivers', ['phone' => '0912345678']],
@@ -113,6 +121,9 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
             'chk_or_amount' => ['order_refunds', ['amount' => 0]],
             'chk_osh_actor' => ['order_status_histories', ['actor_type' => 'robot']],
             'chk_orders_amounts' => ['orders', ['delivery_fee_original' => -1]],
+            'chk_orders_dispatch_accepted_only' => ['orders', ['dispatch_state' => 'offering'], ['status' => 'delivered']],
+            'chk_orders_dispatch_state' => ['orders', ['dispatch_state' => 'searching'], ['status' => 'accepted']],
+            'chk_orders_no_driver_since' => ['orders', ['no_driver_since' => $raw('created_at')], ['status' => 'delivered']],
             'chk_orders_free_delivery' => ['orders', ['free_delivery_applied' => 1, 'plus_cycle_id' => null]],
             'chk_orders_rate' => ['orders', ['exchange_rate' => 0]],
             'chk_orders_schedule' => ['orders', ['type' => 'scheduled', 'scheduled_for' => null]],
@@ -198,12 +209,18 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
         // One fee band per scope (area / city / global) and start distance.
         DB::table('delivery_fee_rules')->insert(['distance_from_km' => 0, 'distance_to_km' => 3, 'base_fee' => 1, 'per_km_fee' => 0]);
         $this->assertRejected(1062, fn () => DB::table('delivery_fee_rules')->insert(['distance_from_km' => 0, 'distance_to_km' => 9, 'base_fee' => 1, 'per_km_fee' => 0]));
+        // One pending delivery offer per order and per driver; final offers free both.
+        $pendingOffer = DB::table('delivery_offers')->where('status', 'pending')->first();
+        $offerRow = ['round' => 1, 'source' => 'auto', 'offered_at' => now(), 'expires_at' => now()->addSeconds(90)];
+        $this->assertRejected(1062, fn () => DB::table('delivery_offers')->insert($offerRow + ['order_id' => $pendingOffer->order_id, 'driver_id' => $this->driver($data['city'])->id, 'attempt' => 2]));
+        $this->assertRejected(1062, fn () => DB::table('delivery_offers')->insert($offerRow + ['order_id' => $orderId, 'driver_id' => $pendingOffer->driver_id, 'attempt' => 1]));
         // A verified email is unique (generated verified_email column).
         $this->assertSame(1, DB::table('users')->where('id', $user->id)->whereNotNull('verified_email')->count());
 
         $markers = collect(DB::select("SELECT CONCAT(table_name, '.', column_name) AS col, extra AS extra FROM information_schema.columns WHERE table_schema = ? AND extra LIKE '%GENERATED%' AND table_name <> 'failed_jobs'", [DB::connection()->getDatabaseName()]));
         $this->assertEqualsCanonicalizing([
             'currencies.default_marker', 'currency_redenominations.inflight_marker', 'delivery_fee_rules.scope_key',
+            'delivery_offers.pending_driver_marker', 'delivery_offers.pending_order_marker',
             'order_cancellation_requests.pending_marker', 'plus_cycles.active_marker', 'plus_requests.pending_key',
             'user_addresses.default_marker', 'users.verified_email',
         ], $markers->pluck('col')->all());

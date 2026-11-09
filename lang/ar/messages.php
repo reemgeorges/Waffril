@@ -91,6 +91,11 @@ return [
 
     // WAFFRLI driver API (2026-11-02).
     'driver' => [
+        'offer_expired' => 'انتهت مهلة عرض التوصيل هذا.',
+        'offer_unavailable' => 'عرض التوصيل هذا لم يعد متاحاً.',
+        'offer_driver_unavailable' => 'لا يمكنك قبول هذا العرض الآن (غير متاح أو لديك توصيلة).',
+        'offer_not_found' => 'عرض التوصيل غير موجود.',
+        'offer_reject_reason_invalid' => 'اختر سبباً صحيحاً.',
         'invalid_credentials' => 'رقم الهاتف أو كلمة المرور غير صحيحة.',
         'account_inactive' => 'حساب السائق غير نشط. تواصل مع فريق العمليات.',
         'logged_out' => 'تم تسجيل الخروج.',

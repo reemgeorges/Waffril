@@ -18,6 +18,12 @@ class Order extends BasePlatformModel
 
     public const TYPE_SCHEDULED = 'scheduled';
 
+    /** Dispatch (delivery offers, 2026-11-10): an offer is out or being chosen. */
+    public const DISPATCH_OFFERING = 'offering';
+
+    /** Dispatch: no eligible driver; waiting in the admin assignment queue. */
+    public const DISPATCH_NO_DRIVER = 'no_driver';
+
     protected $fillable = [
         'order_number' => 'order_number',
         'user_id' => 'user_id',
@@ -70,6 +76,10 @@ class Order extends BasePlatformModel
         'assigned_at' => 'datetime',
         'picked_up_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'dispatch_round' => 'integer',
+        'dispatch_attempts' => 'integer',
+        'no_driver_since' => 'datetime',
+        'no_driver_alerted_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -115,6 +125,16 @@ class Order extends BasePlatformModel
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class)->withTrashed();
+    }
+
+    public function deliveryOffers(): HasMany
+    {
+        return $this->hasMany(DeliveryOffer::class);
+    }
+
+    public function assignedViaOffer(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryOffer::class, 'assigned_via_offer_id');
     }
 
     public function plusCycle(): BelongsTo

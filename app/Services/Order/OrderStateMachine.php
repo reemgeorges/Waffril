@@ -3,11 +3,12 @@
 namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
-use App\Exceptions\BusinessRuleException;
 use App\Events\Realtime\OrderStatusChanged;
+use App\Exceptions\BusinessRuleException;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Notifications\CustomerOrderUpdate;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Realtime\Notify;
 use App\Services\Realtime\Realtime;
 
@@ -52,6 +53,14 @@ class OrderStateMachine
                 'from' => $from->label(),
                 'to' => $to->label(),
             ]));
+        }
+
+        // Delivery offers (dispatch B1, 2026-11-10): an order leaving
+        // `accepted` (driver accepted, admin assigned directly, cancelled)
+        // withdraws any pending offer and clears its dispatch state in this
+        // same transaction. Nothing happens for orders without a dispatch.
+        if ($from === OrderStatus::Accepted && $to !== OrderStatus::Accepted) {
+            $attributes = array_merge(DeliveryOfferService::onLeavingAccepted($order, $to), $attributes);
         }
 
         $updated = Order::query()
