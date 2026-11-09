@@ -1,0 +1,24 @@
+meta {
+  name: Accept unknown offer (404)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/offers/999999999/accept
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 404, nothing assigned", function () {
+    expect(res.getStatus()).to.equal(404);
+    expect(res.getBody().status).to.equal(false);
+  });
+}
+
+docs {
+  With a real pending offer id: 200 with data.offer (accepted) and data.order
+  (the assigned delivery, as GET /driver/orders/{id}). Retrying returns the
+  same result. Expired, rejected or withdrawn offers answer 409.
+}

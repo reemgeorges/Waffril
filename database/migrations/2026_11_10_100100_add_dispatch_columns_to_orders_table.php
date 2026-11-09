@@ -60,7 +60,11 @@ return new class extends Migration
         }
 
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign('fk_orders_assigned_offer');
+            // By name on MySQL; by column on SQLite (it stores no constraint
+            // names, Laravel rebuilds the table).
+            SchemaConstraints::isMySql()
+                ? $table->dropForeign('fk_orders_assigned_offer')
+                : $table->dropForeign(['assigned_via_offer_id']);
             $table->dropIndex('idx_orders_dispatch_state');
             $table->dropColumn(['dispatch_state', 'dispatch_round', 'dispatch_attempts', 'no_driver_since', 'no_driver_alerted_at', 'assigned_via_offer_id']);
         });

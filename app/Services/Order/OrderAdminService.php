@@ -12,13 +12,13 @@ use App\Models\OrderCancellation;
 use App\Models\OrderCancellationRequest;
 use App\Models\OrderPayment;
 use App\Models\PlusCycle;
-use App\Notifications\DriverOrderUpdate;
 use App\Notifications\CustomerOrderUpdate;
+use App\Notifications\DriverOrderUpdate;
 use App\Services\Audit\AdminAudit;
-use App\Services\Realtime\Notify;
 use App\Services\Catalog\BranchHoursService;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Plus\PlusService;
+use App\Services\Realtime\Notify;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Money\Money;
@@ -139,6 +139,8 @@ class OrderAdminService
                 'driver_id' => $driver->id,
                 'assigned_at' => now(),
                 'assigned_by_admin_id' => $admin->id,
+                // Dispatch B2: a direct (re)assignment is not an accepted offer.
+                'assigned_via_offer_id' => null,
             ], null, $driver->id);
 
             AdminAudit::log('order.driver_assigned', $order, ['driver_id' => $driver->id], $admin);
@@ -165,6 +167,7 @@ class OrderAdminService
                 'driver_id' => null,
                 'assigned_at' => null,
                 'assigned_by_admin_id' => null,
+                'assigned_via_offer_id' => null,
             ], 'driver unassigned', $previous);
 
             AdminAudit::log('order.driver_unassigned', $order, ['driver_id' => $previous], $admin);

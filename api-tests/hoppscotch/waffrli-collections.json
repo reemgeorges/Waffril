@@ -11251,6 +11251,106 @@
    },
    {
     "v": 12,
+    "name": "Delivery Offers",
+    "folders": [],
+    "requests": [
+     {
+      "v": "17",
+      "name": "Current offer",
+      "method": "GET",
+      "endpoint": "<<base_url>>/api/v1/driver/offers/current",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"HTTP 200\", function () {\n  expect(res.getStatus()).to.equal(200);\n});\n\ntest(\"standard envelope\", function () {\n  const b = res.getBody();\n  expect(b).to.have.all.keys(\"data\", \"status\", \"error\", \"statusCode\");\n  expect(b.statusCode).to.equal(res.getStatus());\n});\n\ntest(\"offer is null or privacy-limited\", function () {\n  const offer = res.getBody().data.offer;\n  if (offer === null) {\n    return; // no pending offer (delivery offers are off by default)\n  }\n  expect(offer).to.include.keys(\"id\", \"status\", \"order\", \"store\", \"pickup\", \"delivery\", \"payment\", \"expires_at\", \"server_now\", \"remaining_seconds\", \"allowed_actions\");\n  expect(offer).to.not.have.property(\"customer\");\n  expect(Object.keys(offer.delivery)).to.eql([\"city\", \"area\", \"distance_km\"]);\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
+      },
+      "body": {
+       "contentType": null,
+       "body": null
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": "The driver's pending delivery offer, or null. Delivery offers are disabled by\ndefault (WAFFRLI_DELIVERY_OFFERS_ENABLED=false), so this is null until dispatch\nis enabled. An offer past its deadline is expired on read."
+     },
+     {
+      "v": "17",
+      "name": "Unknown offer (404)",
+      "method": "GET",
+      "endpoint": "<<base_url>>/api/v1/driver/offers/999999999",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"hidden as 404 (another driver's offer looks the same)\", function () {\n  expect(res.getStatus()).to.equal(404);\n  expect(res.getBody().data).to.equal(null);\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
+      },
+      "body": {
+       "contentType": null,
+       "body": null
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": null
+     },
+     {
+      "v": "17",
+      "name": "Accept unknown offer (404)",
+      "method": "POST",
+      "endpoint": "<<base_url>>/api/v1/driver/offers/999999999/accept",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"HTTP 404, nothing assigned\", function () {\n  expect(res.getStatus()).to.equal(404);\n  expect(res.getBody().status).to.equal(false);\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
+      },
+      "body": {
+       "contentType": null,
+       "body": null
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": "With a real pending offer id: 200 with data.offer (accepted) and data.order\n(the assigned delivery, as GET /driver/orders/{id}). Retrying returns the\nsame result. Expired, rejected or withdrawn offers answer 409."
+     },
+     {
+      "v": "17",
+      "name": "Reject offer with invalid reason (400)",
+      "method": "POST",
+      "endpoint": "<<base_url>>/api/v1/driver/offers/999999999/reject",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"validation error (400, repository convention)\", function () {\n  expect(res.getStatus()).to.equal(400);\n  expect(res.getBody().status).to.equal(false);\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
+      },
+      "body": {
+       "contentType": "application/json",
+       "body": "{\n  \"reason\": \"tired\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": "reason: too_far | busy | vehicle_issue | other (note required for other,\nmax 500 characters). With a valid reason and a real pending offer: 200 with\ndata.offer (rejected); retrying is harmless; a rejected offer cannot be accepted."
+     }
+    ],
+    "auth": {
+     "authType": "inherit",
+     "authActive": true
+    },
+    "headers": [],
+    "variables": [],
+    "description": null,
+    "preRequestScript": "",
+    "testScript": ""
+   },
+   {
+    "v": 12,
     "name": "Logout",
     "folders": [],
     "requests": [
@@ -11303,7 +11403,7 @@
         "body": "{\n  \"data\": {\n    \"message\": \"Logged out.\"\n  },\n  \"status\": true,\n  \"error\": null,\n  \"statusCode\": 200\n}"
        }
       },
-      "description": "Route: `POST /api/v1/driver/logout`. Same request in Bruno: `WAFFRLI-Driver/12 Logout/Logout.bru`."
+      "description": "Route: `POST /api/v1/driver/logout`. Same request in Bruno: `WAFFRLI-Driver/13 Logout/Logout.bru`."
      },
      {
       "v": "17",
@@ -11383,7 +11483,7 @@
         "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"Please sign in to continue.\",\n  \"statusCode\": 401\n}"
        }
       },
-      "description": "Route: `GET /api/v1/driver/me`. Same request in Bruno: `WAFFRLI-Driver/12 Logout/Token revoked after logout.bru`."
+      "description": "Route: `GET /api/v1/driver/me`. Same request in Bruno: `WAFFRLI-Driver/13 Logout/Token revoked after logout.bru`."
      }
     ],
     "auth": {

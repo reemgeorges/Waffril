@@ -44,6 +44,10 @@ All routes except `login` require `Authorization: Bearer <driver token>`.
 | GET | `/notifications?unread=1` | own stored notifications plus `unread_count` |
 | POST | `/notifications/{uuid}/read` | mark one of your own notifications as read (others → 404) |
 | POST | `/notifications/read` | `{ids?: uuid[]}`: mark several, or all unread, as read |
+| GET | `/offers/current` | the pending delivery offer or `null` (B2, 2026-11-10; see below) |
+| GET | `/offers/{id}` | one of your own offers in any state (others → 404) |
+| POST | `/offers/{id}/accept` | accept: the order becomes `assigned` to you; idempotent |
+| POST | `/offers/{id}/reject` | `{reason: too_far\|busy\|vehicle_issue\|other, note?}` (note required for `other`) |
 
 ## Rules enforced
 
@@ -73,9 +77,67 @@ All routes except `login` require `Authorization: Bearer <driver token>`.
   - Customer name and phone, the full address, delivery coordinates and instructions appear only while the delivery is active.
   - History keeps only the city or area, distance, items and amounts.
 - **Notifications:**
-  - Drivers receive stored notifications when an admin assigns, unassigns or cancels one of their deliveries (`driver.order_*`).
+  - Drivers receive notifications when an admin assigns, unassigns or cancels one of their deliveries (`driver.order_*`).
   - Admins receive `driver.problem_reported`.
-  - Delivery is through the database channel only. FCM is not installed; it would be added in each notification's `via()`.
+  - Since 2026-11-03 these go through the database, Reverb (`private-driver.{id}`) and FCM push (`App\Notifications\AppNotification`). The earlier "database only" note is outdated.
+
+## Delivery offers (B2, 2026-11-10)
+
+**Status:** the endpoints exist, but offers are created only when dispatch is enabled (`WAFFRLI_DELIVERY_OFFERS_ENABLED`, **off** by default). Until then `offers/current` is always `null`, and orders are assigned directly by admins as before.
+
+Not built yet:
+
+- **B3:** automatic choice of the next driver and the expiry job.
+- **B4:** the admin screens and enabling dispatch.
+
+See `docs/waffrli/delivery-offers.md`.
+
+### What an offer shows
+
+`data.offer` (`DriverOfferResource`) contains:
+
+| Field | Content |
+|---|---|
+| Identity | `id`, `status` (`pending \| accepted \| rejected \| expired \| cancelled`), `status_label` |
+| `order` | `id`, `order_number`, `type`, `scheduled_for`, `items_count`, `lines_count` |
+| `store` | `id`, `name` |
+| `pickup` | branch `name`, `address`, `lat`, `lng` |
+| `delivery` | `city`, `area`, `distance_km` |
+| `payment` | `currency`, `order_total`, `prepaid_amount`, `cash_to_collect` |
+| Timing | `offered_at`, `expires_at`, `server_now`, `remaining_seconds` |
+| Outcome | `responded_at`, `reject_reason`, `allowed_actions` (`accept`, `reject` while open) |
+
+**Before acceptance** the offer never contains the customer's name, phone, address, delivery coordinates or instructions. After acceptance they come with the order (`data.order` of the accept response, or `GET /orders/{id}`), as for any active delivery.
+
+**Timing:** clients count down with `expires_at - server_now`; the server decides. An offer past its deadline is refused (409) and is expired when read through `offers/current`.
+
+### Accept and reject
+
+| Request | Result |
+|---|---|
+| `POST /offers/{id}/accept` | **200** with `data.offer` (accepted) and `data.order` (the assigned delivery, `DriverOrderResource`). Retrying returns the same result without a second assignment. |
+| `POST /offers/{id}/reject` | **200** with `data.offer` (rejected). Retrying is harmless. |
+
+Errors:
+
+| Status | When |
+|---|---|
+| 409 | Expired, rejected or withdrawn offers; an order that is no longer assignable; you are no longer eligible (offline, inactive, already delivering) |
+| 404 | Another driver's offer |
+| 400 | Invalid reject reason (validation) |
+
+**Concurrency:** verified on MySQL with separate processes released at the same instant:
+
+- 6 simultaneous accepts assign exactly once;
+- accepts racing withdrawals leave one outcome;
+- accepts racing the deadline never assign after expiry.
+
+### Realtime and push
+
+- Reverb on `private-driver.{id}` carries `offer.created`, `offer.accepted` and `offer.withdrawn`.
+- FCM sends `data.event = driver.offer_created` to every device.
+
+See `docs/waffrli/realtime-and-push.md`.
 
 ## Example
 

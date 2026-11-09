@@ -91,6 +91,8 @@ return [
 
     // WAFFRLI driver API (2026-11-02).
     'driver' => [
+        'offer_accepted' => 'Delivery accepted. It is now yours.',
+        'offer_rejected' => 'Offer declined.',
         'offer_expired' => 'This delivery offer has expired.',
         'offer_unavailable' => 'This delivery offer is no longer available.',
         'offer_driver_unavailable' => 'You can\'t accept this offer right now (offline or already delivering).',

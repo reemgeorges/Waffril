@@ -3,6 +3,7 @@
 namespace App\Services\Push;
 
 use App\Contracts\Push\PushTransport;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -26,6 +27,14 @@ class FcmHttpV1Transport implements PushTransport
     public function send(string $token, array $message): string
     {
         $credentials = $this->credentials();
+        $android = ['priority' => 'HIGH'];
+        $apns = ['apns-priority' => '10'];
+        // Time-limited messages (delivery offers): FCM drops them after the deadline.
+        if (isset($message['expires_at'])) {
+            $expiresAt = Carbon::parse($message['expires_at']);
+            $android['ttl'] = max(0, (int) now()->diffInSeconds($expiresAt, false)).'s';
+            $apns['apns-expiration'] = (string) $expiresAt->getTimestamp();
+        }
         $response = Http::timeout((int) config('waffrli.push.fcm.timeout', 10))
             ->withToken($this->accessToken($credentials))
             ->acceptJson()
@@ -34,8 +43,8 @@ class FcmHttpV1Transport implements PushTransport
                     'token' => $token,
                     'notification' => ['title' => $message['title'], 'body' => $message['body']],
                     'data' => array_map('strval', $message['data']),
-                    'android' => ['priority' => 'HIGH'],
-                    'apns' => ['headers' => ['apns-priority' => '10']],
+                    'android' => $android,
+                    'apns' => ['headers' => $apns],
                 ],
             ]);
 

@@ -1,0 +1,39 @@
+meta {
+  name: Current offer
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/driver/offers/current
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.have.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+
+  test("offer is null or privacy-limited", function () {
+    const offer = res.getBody().data.offer;
+    if (offer === null) {
+      return; // no pending offer (delivery offers are off by default)
+    }
+    expect(offer).to.include.keys("id", "status", "order", "store", "pickup", "delivery", "payment", "expires_at", "server_now", "remaining_seconds", "allowed_actions");
+    expect(offer).to.not.have.property("customer");
+    expect(Object.keys(offer.delivery)).to.eql(["city", "area", "distance_km"]);
+  });
+}
+
+docs {
+  The driver's pending delivery offer, or null. Delivery offers are disabled by
+  default (WAFFRLI_DELIVERY_OFFERS_ENABLED=false), so this is null until dispatch
+  is enabled. An offer past its deadline is expired on read.
+}

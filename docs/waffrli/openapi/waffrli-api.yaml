@@ -9270,6 +9270,191 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       x-throttle:
         - driver-api
+  /api/v1/driver/offers/current:
+    get:
+      tags:
+        - Driver
+      operationId: driver.offersCurrent.get
+      summary: 'Driveroffercontroller Current'
+      description: |-
+        Requires a `driver` token.
+        Throttle: `driver-api`.
+        Handler: `Driver\DriverOfferController@current`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      security:
+        -
+          driverToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+  '/api/v1/driver/offers/{offer}':
+    get:
+      tags:
+        - Driver
+      operationId: driver.offersOffer.get
+      summary: 'Driveroffercontroller Show'
+      description: |-
+        Requires a `driver` token.
+        Throttle: `driver-api`.
+        Handler: `Driver\DriverOfferController@show`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        -
+          driverToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+  '/api/v1/driver/offers/{offer}/accept':
+    post:
+      tags:
+        - Driver
+      operationId: driver.offersOfferAccept.post
+      summary: 'Driveroffercontroller Accept'
+      description: |-
+        Requires a `driver` token.
+        Throttle: `driver-api`.
+        Handler: `Driver\DriverOfferController@accept`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        -
+          driverToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+  '/api/v1/driver/offers/{offer}/reject':
+    post:
+      tags:
+        - Driver
+      operationId: driver.offersOfferReject.post
+      summary: 'Driveroffercontroller Reject'
+      description: |-
+        Requires a `driver` token.
+        Throttle: `driver-api`.
+        Handler: `Driver\DriverOfferController@reject`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        -
+          driverToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  nullable: true
+                  type: string
+                  maxLength: 500
+                  description: 'required_if: reason,other'
+                reason:
+                  type: string
+                  enum:
+                    - too_far
+                    - busy
+                    - vehicle_issue
+                    - other
+              required:
+                - reason
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
   /api/v1/driver/orders/active:
     get:
       tags:

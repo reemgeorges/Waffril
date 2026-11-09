@@ -1,0 +1,30 @@
+meta {
+  name: Reject offer with invalid reason (400)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/driver/offers/999999999/reject
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "reason": "tired"
+  }
+}
+
+tests {
+  test("validation error (400, repository convention)", function () {
+    expect(res.getStatus()).to.equal(400);
+    expect(res.getBody().status).to.equal(false);
+  });
+}
+
+docs {
+  reason: too_far | busy | vehicle_issue | other (note required for other,
+  max 500 characters). With a valid reason and a real pending offer: 200 with
+  data.offer (rejected); retrying is harmless; a rejected offer cannot be accepted.
+}

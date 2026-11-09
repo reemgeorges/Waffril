@@ -25,6 +25,8 @@ return [
         ],
     ],
     'driver' => [
+        'offer_title' => 'New delivery offer',
+        'offer_body' => 'Order :number: accept or decline within :seconds seconds.',
         'order_title' => 'WAFFRLI delivery',
         'order' => [
             'assigned' => 'New delivery assigned: :number',

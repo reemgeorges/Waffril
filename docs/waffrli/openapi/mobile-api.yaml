@@ -2338,6 +2338,138 @@ paths:
       security:
         -
           bearerAuth: []
+  /api/v1/driver/offers/current:
+    get:
+      tags:
+        - driver
+      operationId: driver.offersCurrent.get
+      summary: 'Driveroffercontroller Current'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/offers/{offer}':
+    get:
+      tags:
+        - driver
+      operationId: driver.offersOffer.get
+      summary: 'Driveroffercontroller Show'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/offers/{offer}/accept':
+    post:
+      tags:
+        - driver
+      operationId: driver.offersOfferAccept.post
+      summary: 'Driveroffercontroller Accept'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/driver/offers/{offer}/reject':
+    post:
+      tags:
+        - driver
+      operationId: driver.offersOfferReject.post
+      summary: 'Driveroffercontroller Reject'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: offer
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - driver-api
+      security:
+        -
+          bearerAuth: []
   /api/v1/driver/orders/active:
     get:
       tags:

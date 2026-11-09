@@ -91,6 +91,8 @@ return [
 
     // WAFFRLI driver API (2026-11-02).
     'driver' => [
+        'offer_accepted' => 'تم قبول التوصيل، الطلب صار لك.',
+        'offer_rejected' => 'تم رفض العرض.',
         'offer_expired' => 'انتهت مهلة عرض التوصيل هذا.',
         'offer_unavailable' => 'عرض التوصيل هذا لم يعد متاحاً.',
         'offer_driver_unavailable' => 'لا يمكنك قبول هذا العرض الآن (غير متاح أو لديك توصيلة).',

@@ -5,6 +5,7 @@ use App\Http\Controllers\Driver\DriverAvailabilityController;
 use App\Http\Controllers\Driver\DriverCashController;
 use App\Http\Controllers\Driver\DriverLocationController;
 use App\Http\Controllers\Driver\DriverNotificationController;
+use App\Http\Controllers\Driver\DriverOfferController;
 use App\Http\Controllers\Driver\DriverOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,12 @@ Route::prefix('driver')->group(function () {
         Route::post('orders/{order}/pickup', [DriverOrderController::class, 'pickup'])->whereNumber('order');
         Route::post('orders/{order}/deliver', [DriverOrderController::class, 'deliver'])->whereNumber('order');
         Route::post('orders/{order}/problems', [DriverOrderController::class, 'reportProblem'])->whereNumber('order');
+
+        // Delivery offers (dispatch B2, 2026-11-10): the driver's own offers only.
+        Route::get('offers/current', [DriverOfferController::class, 'current']);
+        Route::get('offers/{offer}', [DriverOfferController::class, 'show'])->whereNumber('offer');
+        Route::post('offers/{offer}/accept', [DriverOfferController::class, 'accept'])->whereNumber('offer');
+        Route::post('offers/{offer}/reject', [DriverOfferController::class, 'reject'])->whereNumber('offer');
 
         Route::post('location', [DriverLocationController::class, 'update'])->middleware('throttle:driver-location');
 

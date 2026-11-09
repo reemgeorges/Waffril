@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,6 +24,9 @@ use Throwable;
  * - Skipped while the recipient's private Reverb channel is occupied (the
  *   open app already received the broadcast) when skip_when_online is on.
  * - Unregistered tokens are deactivated. Logs carry the token row id only.
+ * - Time-limited messages (optional `expires_at`, e.g. delivery offers,
+ *   2026-11-10) are dropped once expired, so a late retry never pushes a
+ *   stale offer.
  */
 class SendPushMessage implements ShouldQueue
 {
@@ -30,7 +34,7 @@ class SendPushMessage implements ShouldQueue
 
     public int $tries;
 
-    /** @param  array{title: string, body: string, data: array<string, string>}  $message */
+    /** @param  array{title: string, body: string, data: array<string, string>, expires_at?: string}  $message */
     public function __construct(
         public int $deviceTokenId,
         public array $message,
@@ -51,6 +55,11 @@ class SendPushMessage implements ShouldQueue
         $token = DeviceToken::query()->find($this->deviceTokenId);
         if (! $token || ! $token->is_active) {
             return 'skipped_inactive';
+        }
+        if (isset($this->message['expires_at']) && ! now()->lessThan(Carbon::parse($this->message['expires_at']))) {
+            Log::info('push.skipped_expired', ['token_id' => $token->id, 'key' => $this->dedupeKey]);
+
+            return 'skipped_expired';
         }
         if ($this->presenceChannel && config('waffrli.push.skip_when_online', true) && $presence->isOccupied($this->presenceChannel)) {
             Log::info('push.skipped_online', ['token_id' => $token->id, 'key' => $this->dedupeKey]);

@@ -4,13 +4,17 @@ namespace App\Services\Delivery;
 
 use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
+use App\Events\Realtime\DeliveryOfferChanged;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
+use App\Notifications\DriverDeliveryOfferCreated;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Order\OrderStateMachine;
+use App\Services\Realtime\Notify;
+use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Settings\PlatformSettings;
 use Illuminate\Database\QueryException;
@@ -30,9 +34,12 @@ use Illuminate\Support\Facades\DB;
  * one pending offer per order, one per driver, one offer per driver per
  * order per round. Time is server time only.
  *
- * B1 has no HTTP routes, jobs, notifications or admin UI: nothing calls
- * this service in production yet, and offers cannot be created while
- * config('dispatch.offers_enabled') is off (the default).
+ * B2 (2026-11-10): every change is announced to the offered driver on
+ * `private-driver.{id}` (DeliveryOfferChanged: offer.created / accepted /
+ * withdrawn) and a new offer is pushed over FCM (DriverDeliveryOfferCreated),
+ * all after the transaction commits (Realtime::publish / Notify::send).
+ * Offers still cannot be created while config('dispatch.offers_enabled')
+ * is off (the default), and no admin screen or job creates them yet.
  */
 class DeliveryOfferService
 {
@@ -135,6 +142,10 @@ class DeliveryOfferService
                     'updated_at' => $now,
                 ]);
 
+                // After commit: the live event, then one push per device.
+                Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::CREATED, $offer));
+                Notify::send($driver, new DriverDeliveryOfferCreated($offer, $order));
+
                 return $offer;
             });
         } catch (QueryException $e) {
@@ -195,6 +206,7 @@ class DeliveryOfferService
                 'assigned_by_admin_id' => $roundAdminId,
                 'assigned_via_offer_id' => $offer->id,
             ], 'delivery offer accepted', $driver->id);
+            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::ACCEPTED, $offer));
 
             return ['order' => $order];
         });
@@ -335,6 +347,7 @@ class DeliveryOfferService
                 'responded_at' => now(),
                 'cancel_reason' => $to === OrderStatus::Cancelled ? DeliveryOffer::CANCEL_ORDER_CANCELLED : DeliveryOffer::CANCEL_ADMIN_OVERRIDE,
             ])->save();
+            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::WITHDRAWN, $pending));
         }
 
         return $order->dispatch_state !== null || $pending ? self::clearedDispatch() : [];
@@ -357,6 +370,10 @@ class DeliveryOfferService
     protected function finalize(DeliveryOffer $offer, DeliveryOfferStatus $status, array $attributes = []): DeliveryOffer
     {
         $offer->forceFill(['status' => $status, 'responded_at' => now()] + $attributes)->save();
+        if ($status !== DeliveryOfferStatus::Accepted) {
+            // Rejected, expired or cancelled: the driver's devices close the offer.
+            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::WITHDRAWN, $offer));
+        }
 
         return $offer;
     }

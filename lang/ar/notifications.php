@@ -25,6 +25,8 @@ return [
         ],
     ],
     'driver' => [
+        'offer_title' => 'عرض توصيل جديد',
+        'offer_body' => 'الطلب :number: اقبله أو ارفضه خلال :seconds ثانية.',
         'order_title' => 'توصيل وفرلي',
         'order' => [
             'assigned' => 'تم إسناد توصيل جديد إليك: :number',

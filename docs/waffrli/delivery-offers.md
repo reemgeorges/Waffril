@@ -1,9 +1,10 @@
 # Delivery offers: driver accept/reject dispatch (B1 foundation, 2026-11-10)
 
-**Status: foundation only, not active.**
+**Status: not active.**
 
-- B1 adds the schema, the model, the settings and the domain service with its invariants.
-- No HTTP route, job, notification or admin screen uses it yet.
+- **B1** added the schema, the model, the settings and the domain service with its invariants.
+- **B2** (2026-11-10) added the driver API (`GET offers/current`, `GET offers/{id}`, `POST offers/{id}/accept`, `POST offers/{id}/reject`), the Reverb `offer.*` events on `private-driver.{id}` and the FCM offer push. See "B2 additions" below.
+- No job and no admin screen creates offers yet.
 - `config('dispatch.offers_enabled')` (env `WAFFRLI_DELIVERY_OFFERS_ENABLED`) is **off** by default. While it is off, no offer can be created, and the existing direct admin assignment (`OrderAdminService::assignDriver`) remains the only assignment path, behaving exactly as before.
 
 ## Workflow (target)
@@ -99,11 +100,30 @@ To run the MySQL group:
 DB_CONNECTION=mysql DB_DATABASE=waffrli_test php artisan test --group mysql
 ```
 
+## B2 additions (2026-11-10)
+
+| Piece | File |
+|---|---|
+| Controller (own offers only; others 404) | `App\Http\Controllers\Driver\DriverOfferController` |
+| Payload (privacy-limited, server timing) | `App\Http\Resources\Model\Driver\DriverOfferResource` |
+| Reject validation | `App\Http\Requests\Model\Driver\DriverOfferRejectRequest` (400 on invalid reason) |
+| Reverb events (published after commit by the service) | `App\Events\Realtime\DeliveryOfferChanged` (`offer.created \| offer.accepted \| offer.withdrawn`) |
+| FCM push (one per device, deduplicated, never after the deadline) | `App\Notifications\DriverDeliveryOfferCreated` |
+| Push deadline | `SendPushMessage` (`skipped_expired`) and `FcmHttpV1Transport` (TTL); optional, other messages unchanged |
+| Direct-assignment link | `OrderAdminService::assignDriver` / `unassignDriver` clear `assigned_via_offer_id` (a direct (re)assignment is not an accepted offer) |
+
+**Tests:**
+
+- `DriverOfferApiTest` (13 tests): authorization, privacy, accept and reject, duplicates, expiry, events, push and compatibility.
+- `DeliveryOfferConcurrencyTest` (3 tests, `mysql` group): real separate processes against `waffrli_test`, with checks that the processes overlapped.
+
+**Documentation:** Bruno folder `WAFFRLI-Driver/12 Delivery Offers` (Logout moved to `13`), OpenAPI, the mobile contract and the portal export were regenerated.
+
 ## Next milestones
 
 | Milestone | Scope |
 |---|---|
-| B2 | Driver API (`GET offers/current`, `GET offers/{id}`, `POST offers/{id}/accept`, `POST offers/{id}/reject`), resources, Reverb and FCM events. |
+| B2 | **Done (2026-11-10):** driver API, resources, Reverb and FCM events. |
 | B3 | Automatic redispatch, expiry job and sweep, the no-driver queue and its alerts, auto-recovery. |
 | B4 | Filament: send offer, dispatch panel and history, queue, override and restart, then enabling the switch. |
 | B5 | Docs, OpenAPI and Bruno. |

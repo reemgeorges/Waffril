@@ -122,8 +122,17 @@ Revocation:
 | `admin.operational` | `admin.orders` | type (`order.placed`, `order.cancellation_requested`, `order.problem_reported`, `plus.request_submitted`), id, reference |
 | `Illuminate\Notifications\Events\BroadcastNotificationCreated` | `user.{id}` / `driver.{id}` | the stored notification (event + identifiers + text) |
 | `database-notifications.sent` | `admin.{id}` | Filament bell refresh |
+| `offer.created`, `offer.accepted`, `offer.withdrawn` | `driver.{id}` of the offered driver only (B2, 2026-11-10) | `event`, `offer_id`, `order_id`, `status` (at the change), `reason` (reject or cancel reason), `at`, and `offer` (the same privacy-limited `DriverOfferResource` as `GET /api/v1/driver/offers/{id}`, in the driver's language) |
 
-No payload carries addresses, phone numbers, amounts, notes or codes.
+No payload carries addresses, phone numbers, notes or codes.
+
+The offer events are the one exception that carries amounts: `payment.cash_to_collect` and the order total, which the driver needs to decide. They still never carry customer details.
+
+**Delivery offer events** (`App\Events\Realtime\DeliveryOfferChanged`):
+
+- They are published after the transaction commits, so nothing is announced for a rolled-back change.
+- `offer.withdrawn` covers rejected (on other devices of the same driver), expired, and cancelled (admin override or restart, order cancelled, driver unavailable).
+- Events can arrive late, twice or out of order. Clients key on `offer_id`, let any final status win over `pending`, and re-read `GET /api/v1/driver/offers/current` after reconnecting.
 
 ## 2. Push notifications (FCM HTTP v1)
 
@@ -151,9 +160,21 @@ Push messages are sent for:
 
 - customer order progress (accepted, driver assigned, on the way, delivered, cancelled), a declined cancellation request, refunds, and PLUS approved or rejected;
 - driver assignment, unassignment and cancellation;
+- a new delivery offer (B2, 2026-11-10). See "Delivery offer push" below.
 - admin marketing messages.
 
 **No real push has been sent from this work**: no Firebase credentials were available. The FCM transport is tested against `Http::fake` (signed JWT, request shape, UNREGISTERED handling, retry on 5xx). Real delivery needs a project with credentials and a device test.
+
+### Delivery offer push (B2, 2026-11-10)
+
+`App\Notifications\DriverDeliveryOfferCreated` sends one push per active driver device (up to 3):
+
+- **Channel:** push only. The offer is not stored in the notification list; online drivers get the Reverb event instead (the push is skipped while `driver.{id}` is occupied).
+- **Content:** high priority. `data` holds `event=driver.offer_created`, `offer_id`, `order_id`, `order_number`, `expires_at` and `notification_id`, with no customer data.
+- **No duplicates:** the notification id is derived from the offer, so a repeated dispatch never pushes twice to the same device.
+- **Deadline:** the message carries `expires_at`. `SendPushMessage` drops a retry that runs after the deadline (`skipped_expired`), and `FcmHttpV1Transport` sets `android.ttl` and `apns-expiration`, so FCM drops it too.
+- **Unchanged:** messages without `expires_at` behave as before.
+- **Failures:** a push failure never changes the offer. It is logged and retried within the deadline.
 
 ### Marketing
 
