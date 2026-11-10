@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Support\BusinessAction;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Platform\PlatformSettingsService;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Settings\PlatformSettings;
@@ -69,9 +70,12 @@ class PlatformSettingsPage extends Page
     {
         $sections = [];
         foreach (collect(PlatformSettings::definitions())->groupBy('group', true) as $group => $definitions) {
-            $sections[] = Section::make(__("admin.settings.groups.{$group}"))->columns(2)->schema(
-                $definitions->map(fn ($definition, $key) => $this->input($key, $definition))->values()->all()
-            );
+            $sections[] = Section::make(__("admin.settings.groups.{$group}"))->columns(2)
+                // Dispatch B4: say whether delivery offers are live (env flag, not editable here).
+                ->description($group === 'dispatch' ? (DeliveryOfferService::enabled() ? __('admin.settings.dispatch_enabled') : __('admin.settings.dispatch_disabled')) : null)
+                ->schema(
+                    $definitions->map(fn ($definition, $key) => $this->input($key, $definition))->values()->all()
+                );
         }
 
         return $schema->components($sections)->statePath('data');
@@ -84,7 +88,9 @@ class PlatformSettingsPage extends Page
 
         return match ($definition['type']) {
             'bool' => Toggle::make($name)->label($label),
-            'int' => TextInput::make($name)->label($label)->integer()->minValue(0)->required(),
+            'int' => TextInput::make($name)->label($label)->integer()->minValue($definition['min'] ?? 0)->maxValue($definition['max'] ?? null)->required(),
+            'select' => Select::make($name)->label($label)->required()
+                ->options(collect($definition['options'] ?? [])->mapWithKeys(fn ($option) => [$option => __("admin.settings.options.{$option}")])),
             'rating' => TextInput::make($name)->label($label)->numeric()->minValue(1)->maxValue(5)->helperText(__('admin.help.placeholder_rating')),
             'phone' => TextInput::make($name)->label($label)->tel()->regex('/^\+[1-9]\d{6,14}$/')->helperText(__('admin.help.e164')),
             'timezone' => Select::make($name)->label($label)->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))->searchable()->required(),

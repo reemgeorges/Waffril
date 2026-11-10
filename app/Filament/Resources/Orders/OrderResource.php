@@ -6,18 +6,22 @@ use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\CancellationRequestsRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\DeliveryOffersRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
+use App\Filament\Resources\Orders\Support\DispatchPanel;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
 use App\Models\Order;
+use App\Services\Delivery\DeliveryOfferService;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -59,6 +63,12 @@ class OrderResource extends AdminResource
             ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency));
 
         return $schema->components([
+            // Dispatch B4 (2026-11-10): live delivery-offer status.
+            Section::make(__('admin.dispatch.panel_title'))->icon('heroicon-o-paper-airplane')
+                ->visible(fn (Order $record) => DispatchPanel::visible($record))
+                ->schema([
+                    View::make('filament.orders.dispatch-panel')->viewData(fn (Order $record) => ['panel' => DispatchPanel::data($record)]),
+                ]),
             Section::make(__('admin.orders.summary'))->columns(4)->schema([
                 TextEntry::make('order_number')->label(__('admin.fields.order_number')),
                 TextEntry::make('status')->label(__('admin.fields.status'))->badge()
@@ -93,7 +103,11 @@ class OrderResource extends AdminResource
 
     public static function table(Table $table): Table
     {
+        $waitingTab = fn ($livewire) => ($livewire->activeTab ?? null) === 'waiting_for_driver';
+
         return $table
+            // Dispatch B4: orders without an available driver stand out.
+            ->recordClasses(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER ? 'waffrli-row-no-driver' : null)
             ->columns([
                 TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable(),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
@@ -105,6 +119,19 @@ class OrderResource extends AdminResource
                 TextColumn::make('branch.name')->label(__('admin.fields.branch')),
                 TextColumn::make('city.name')->label(__('admin.fields.city'))->toggleable(),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
+                // Dispatch B4: "Waiting for driver" queue columns (that tab only).
+                TextColumn::make('branch.store.name')->label(__('admin.dispatch.restaurant'))->visible($waitingTab),
+                TextColumn::make('order_age')->label(__('admin.dispatch.order_age'))->visible($waitingTab)
+                    ->state(fn (Order $record) => $record->created_at?->diffForHumans(short: true)),
+                TextColumn::make('dispatch_state')->label(__('admin.dispatch.state'))->badge()->visible($waitingTab)
+                    ->formatStateUsing(fn ($state) => __("admin.dispatch.state_{$state}"))
+                    ->color(fn ($state) => $state === Order::DISPATCH_NO_DRIVER ? 'danger' : 'warning'),
+                TextColumn::make('dispatch_attempts')->label(__('admin.dispatch.attempts'))->visible($waitingTab)
+                    ->formatStateUsing(fn ($state, Order $record) => $record->dispatch_round.' / '.$state.'/'.DeliveryOfferService::maxAttemptsPerRound()),
+                TextColumn::make('latestDeliveryOffer.status')->label(__('admin.dispatch.latest_offer'))->badge()->visible($waitingTab)
+                    ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state ? DispatchPanel::statusColor($state) : 'gray')->placeholder('—'),
+                IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
+                    ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle'),
                 TextColumn::make('total')->label(__('admin.fields.total'))
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
@@ -142,6 +169,7 @@ class OrderResource extends AdminResource
             StatusHistoriesRelationManager::class,
             CancellationRequestsRelationManager::class,
             RefundsRelationManager::class,
+            DeliveryOffersRelationManager::class,
         ];
     }
 

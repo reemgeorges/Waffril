@@ -132,6 +132,11 @@ class Order extends BasePlatformModel
         return $this->hasMany(DeliveryOffer::class);
     }
 
+    public function latestDeliveryOffer(): HasOne
+    {
+        return $this->hasOne(DeliveryOffer::class)->latestOfMany();
+    }
+
     public function assignedViaOffer(): BelongsTo
     {
         return $this->belongsTo(DeliveryOffer::class, 'assigned_via_offer_id');

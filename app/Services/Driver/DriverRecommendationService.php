@@ -59,7 +59,7 @@ class DriverRecommendationService
      *  1. longest wait since the driver's last offer (never offered first);
      *  2. fewest deliveries completed today (operations time zone);
      *  3. nearest to the branch, but ONLY with a position reported within
-     *     config('dispatch.location_fresh_minutes'); stale or missing
+     *     the `dispatch.location_fresh_minutes` setting; stale or missing
      *     positions are ignored (ranked after fresh ones);
      *  4. driver id, for a stable order.
      *
@@ -71,7 +71,7 @@ class DriverRecommendationService
     public function dispatchCandidates(Order $order, int $round, int $limit = 10): Collection
     {
         $branch = $order->branch;
-        $freshSince = now()->subMinutes(max(1, (int) config('dispatch.location_fresh_minutes', 10)));
+        $freshSince = now()->subMinutes(max(1, (int) PlatformSettings::get('dispatch.location_fresh_minutes')));
         $todayStart = now(PlatformSettings::get('operations.timezone') ?: 'UTC')->startOfDay()->utc();
 
         return $this->eligibleQuery($order)

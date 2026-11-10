@@ -7,16 +7,18 @@
  * waits until a shared start instant, performs one action on a delivery
  * offer and prints a JSON result line. Test-only: never used by the app.
  *
- *   php offer_race_worker.php <accept|expire|withdraw|advance|expire_job> <offerId> <driverId> <startAtMicrotime>
+ *   php offer_race_worker.php <accept|expire|withdraw|advance|expire_job|force> <offerId> <driverId> <startAtMicrotime>
  */
 
 use App\Exceptions\BusinessRuleException;
 use App\Jobs\Delivery\ExpireDeliveryOffer;
+use App\Models\Admin;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Services\Delivery\DeliveryDispatcher;
 use App\Services\Delivery\DeliveryOfferService;
+use App\Services\Order\OrderAdminService;
 use Illuminate\Contracts\Console\Kernel;
 
 require __DIR__.'/../../../vendor/autoload.php';
@@ -47,6 +49,13 @@ try {
         // B3: pick the next driver / run the delayed expiry job.
         'advance' => app(DeliveryDispatcher::class)->advance((int) $offer->order_id),
         'expire_job' => app()->call([new ExpireDeliveryOffer((int) $offer->id), 'handle']),
+        // B4: an admin force-assigns ANOTHER eligible driver of the same city.
+        'force' => app(OrderAdminService::class)->forceAssignDriver(
+            Order::findOrFail($offer->order_id),
+            Driver::query()->where('city_id', $driver->city_id)->whereKeyNot($driver->id)->orderBy('id')->firstOrFail(),
+            Admin::query()->orderBy('id')->firstOrFail(),
+            'concurrency test override',
+        )->status->value,
     };
     fwrite(STDOUT, json_encode(['ok' => true, 'action' => $action, 'result' => $result, 'started' => $started, 'finished' => microtime(true)]).PHP_EOL);
 } catch (BusinessRuleException $e) {

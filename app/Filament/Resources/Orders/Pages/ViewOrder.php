@@ -5,10 +5,12 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\BusinessAction;
+use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderCancellation;
 use App\Models\OrderPayment;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Driver\DriverDeliveryService;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Order\OrderAdminService;
@@ -23,8 +25,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 
 /**
  * WAFFRLI (2026-10-31). Order workflow actions. Every action calls the
@@ -40,11 +44,37 @@ class ViewOrder extends ViewRecord
         return app(OrderAdminService::class);
     }
 
+    /** Dispatch B4: the dispatch panel polls this; realtime admin.orders events call it too. */
+    public function refreshDispatch(): void
+    {
+        $this->record->refresh();
+    }
+
+    #[On('waffrli-orders-changed')]
+    public function refreshFromRealtime(): void
+    {
+        $this->refreshDispatch();
+    }
+
+    protected function offers(): DeliveryOfferService
+    {
+        return app(DeliveryOfferService::class);
+    }
+
+    protected function hasPendingOffer(Order $record): bool
+    {
+        return DeliveryOffer::query()->where('pending_order_marker', $record->id)->exists();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             $this->acceptAction(),
             $this->assignAction(),
+            $this->sendOfferAction(),
+            $this->restartDispatchAction(),
+            $this->withdrawOfferAction(),
+            $this->forceAssignAction(),
             Action::make('unassign')->label(__('admin.orders.unassign'))->icon('heroicon-o-user-minus')->color('gray')
                 ->visible(fn (Order $record) => $record->status === OrderStatus::Assigned && AdminPermissions::currentAllows('orders.assign'))
                 ->requiresConfirmation()
@@ -71,7 +101,9 @@ class ViewOrder extends ViewRecord
     {
         return Action::make('assign')->label(fn (Order $record) => $record->driver_id ? __('admin.orders.reassign') : __('admin.orders.assign'))
             ->icon('heroicon-o-truck')->color('primary')
-            ->visible(fn (Order $record) => in_array($record->status, [OrderStatus::Accepted, OrderStatus::Assigned], true) && AdminPermissions::currentAllows('orders.assign'))
+            // Dispatch B4: while delivery offers are enabled, drivers accept offers instead.
+            ->visible(fn (Order $record) => ! DeliveryOfferService::enabled()
+                && in_array($record->status, [OrderStatus::Accepted, OrderStatus::Assigned], true) && AdminPermissions::currentAllows('orders.assign'))
             ->schema(fn (Order $record) => [
                 Select::make('driver_id')->label(__('admin.orders.recommended_drivers'))->required()
                     ->options(app(DriverRecommendationService::class)->recommend($record)->mapWithKeys(fn ($row) => [
@@ -82,6 +114,88 @@ class ViewOrder extends ViewRecord
             ->action(fn (Order $record, array $data) => BusinessAction::run(
                 fn ($admin) => $this->service()->assignDriver($record, Driver::findOrFail($data['driver_id']), $admin)
             ));
+    }
+
+    /** Eligible drivers for a NEW round, fairest first (only free, available, same-city drivers). */
+    protected function offerDriverOptions(Order $record): array
+    {
+        return app(DriverRecommendationService::class)->dispatchCandidates($record, $record->dispatch_round + 1, 50)
+            ->mapWithKeys(fn ($row) => [$row['driver']->id => implode(' — ', array_filter([
+                $row['driver']->name,
+                $row['meta']['location_used'] ? __('admin.dispatch.meta_distance', ['km' => $row['meta']['distance_km']]) : __('admin.dispatch.meta_no_fresh_gps'),
+                __('admin.dispatch.meta_deliveries_today', ['count' => $row['meta']['deliveries_today']]),
+                $row['meta']['last_offered_at'] ? __('admin.dispatch.meta_last_offer', ['ago' => Carbon::parse($row['meta']['last_offered_at'])->diffForHumans()]) : __('admin.dispatch.meta_never_offered'),
+            ]))])->all();
+    }
+
+    protected function offerDriverField(Order $record): Select
+    {
+        return Select::make('driver_id')->label(__('admin.dispatch.choose_driver'))->required()->searchable()
+            ->options(fn () => $this->offerDriverOptions($record))
+            ->helperText(__('admin.dispatch.choose_driver_help', ['seconds' => DeliveryOfferService::timeoutSeconds()]));
+    }
+
+    /** First offer of an order (no dispatch yet): the admin picks the driver; the order stays accepted. */
+    protected function sendOfferAction(): Action
+    {
+        return Action::make('sendOffer')->label(__('admin.dispatch.send_offer'))->icon('heroicon-o-paper-airplane')->color('primary')
+            ->visible(fn (Order $record) => DeliveryOfferService::enabled() && $record->status === OrderStatus::Accepted
+                && $record->dispatch_round === 0 && ! $this->hasPendingOffer($record) && AdminPermissions::currentAllows('orders.assign'))
+            ->schema(fn (Order $record) => [$this->offerDriverField($record)])
+            ->action(function (Order $record, array $data) {
+                BusinessAction::run(fn ($admin) => $this->offers()->offerByAdmin($record, Driver::findOrFail($data['driver_id']), $admin), __('admin.dispatch.offer_sent'));
+                $this->refreshDispatch();
+            });
+    }
+
+    /** New admin round (after a no-driver queue, a pause, or to replace the pending offer). */
+    protected function restartDispatchAction(): Action
+    {
+        return Action::make('restartDispatch')->label(__('admin.dispatch.restart'))->icon('heroicon-o-arrow-path')->color('warning')
+            ->visible(fn (Order $record) => DeliveryOfferService::enabled() && $record->status === OrderStatus::Accepted
+                && $record->dispatch_round > 0 && AdminPermissions::currentAllows('orders.assign'))
+            ->schema(fn (Order $record) => [$this->offerDriverField($record)])
+            ->requiresConfirmation()
+            ->modalDescription(fn (Order $record) => $this->hasPendingOffer($record) ? __('admin.dispatch.restart_withdraws') : __('admin.dispatch.restart_help'))
+            ->action(function (Order $record, array $data) {
+                BusinessAction::run(fn ($admin) => $this->offers()->restartByAdmin($record, Driver::findOrFail($data['driver_id']), $admin), __('admin.dispatch.offer_sent'));
+                $this->refreshDispatch();
+            });
+    }
+
+    /** Withdraw = PAUSE: no automatic next driver until an admin sends a new offer. */
+    protected function withdrawOfferAction(): Action
+    {
+        return Action::make('withdrawOffer')->label(__('admin.dispatch.withdraw'))->icon('heroicon-o-hand-raised')->color('gray')
+            ->visible(fn (Order $record) => DeliveryOfferService::enabled() && $this->hasPendingOffer($record) && AdminPermissions::currentAllows('orders.assign'))
+            ->requiresConfirmation()
+            ->modalDescription(__('admin.dispatch.withdraw_help'))
+            ->action(function (Order $record) {
+                BusinessAction::run(fn ($admin) => $this->offers()->withdrawByAdmin($record, $admin));
+                $this->refreshDispatch();
+            });
+    }
+
+    /** Emergency only: assigns without the driver's acceptance; separate permission, reason required, audited. */
+    protected function forceAssignAction(): Action
+    {
+        return Action::make('forceAssign')->label(__('admin.dispatch.force_assign'))->icon('heroicon-o-bolt')->color('danger')
+            ->visible(fn (Order $record) => DeliveryOfferService::enabled()
+                && in_array($record->status, [OrderStatus::Accepted, OrderStatus::Assigned], true) && AdminPermissions::currentAllows('orders.force_assign'))
+            ->schema(fn (Order $record) => [
+                Select::make('driver_id')->label(__('admin.orders.recommended_drivers'))->required()->searchable()
+                    ->options(app(DriverRecommendationService::class)->recommend($record, 50)->mapWithKeys(fn ($row) => [
+                        $row['driver']->id => $row['driver']->name.' — '.($row['distance_km'] !== null ? $row['distance_km'].' km' : __('admin.drivers.no_position')),
+                    ])),
+                Textarea::make('reason')->label(__('admin.dispatch.force_reason'))->required()->minLength(5)->maxLength(500),
+            ])
+            ->requiresConfirmation()
+            ->modalIcon('heroicon-o-exclamation-triangle')
+            ->modalDescription(__('admin.dispatch.force_warning'))
+            ->action(function (Order $record, array $data) {
+                BusinessAction::run(fn ($admin) => $this->service()->forceAssignDriver($record, Driver::findOrFail($data['driver_id']), $admin, (string) $data['reason']));
+                $this->refreshDispatch();
+            });
     }
 
     protected function cancelAction(): Action

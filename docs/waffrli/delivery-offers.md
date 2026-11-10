@@ -5,7 +5,8 @@
 - **B1** added the schema, the model, the settings and the domain service with its invariants.
 - **B2** (2026-11-10) added the driver API (`GET offers/current`, `GET offers/{id}`, `POST offers/{id}/accept`, `POST offers/{id}/reject`), the Reverb `offer.*` events on `private-driver.{id}` and the FCM offer push. See "B2 additions" below.
 - **B3** (2026-11-10) added automatic reassignment: fair rotation, the per-offer expiry job, the scheduled sweep, the no-driver queue with a single admin alert, and auto-recovery. See "B3 additions" below.
-- No admin screen creates offers yet (B4), and the switch is still off.
+- **B4** (2026-11-10) added the Filament dispatch management: send, withdraw, restart, emergency assignment, the live panel, offer history, the "Waiting for driver" queue and the validated settings. See "B4 additions" below.
+- The switch is still **off**. See the "Activation checklist" below; activate only after explicit approval.
 - `config('dispatch.offers_enabled')` (env `WAFFRLI_DELIVERY_OFFERS_ENABLED`) is **off** by default. While it is off, no offer can be created, and the existing direct admin assignment (`OrderAdminService::assignDriver`) remains the only assignment path, behaving exactly as before.
 
 ## Workflow (target)
@@ -202,11 +203,120 @@ php artisan schedule:work                      # scheduler: runs the 15 s sweep 
 - **Interrupted workers:** delayed jobs stay in the `jobs` table and run when a worker starts again. Jobs that were lost or failed are covered by the sweep within 15 s: overdue offers are expired and the dispatch moves on. Even with no worker **and** no scheduler, an expired offer can never be accepted (the server compares `expires_at`), and `GET /driver/offers/current` expires it on read.
 - **Production:** a cron running `php artisan schedule:run` every minute (sub-minute tasks keep it running for the minute) plus a supervised `queue:work`. Not configured by this work.
 
+## B4 additions (2026-11-10): Filament dispatch management
+
+### Order page actions
+
+While `dispatch.offers_enabled` is on:
+
+| Action | Permission | Behavior |
+|---|---|---|
+| Send delivery offer | `orders.assign` | First offer of an accepted order. The admin picks from the dispatch candidates of a new round (active, available, same city, free; fairest first, with GPS freshness, deliveries today and last offer). The order **stays `accepted`**, and `driver_id` is set only when the driver accepts. |
+| Restart dispatch | `orders.assign` | A new admin round with a chosen driver. It withdraws any pending offer (`admin_restart`) in the same transaction, keeps the history, re-arms the no-driver alert and resets the automatic-round count. |
+| Withdraw offer | `orders.assign` | **Pauses** the dispatch: the pending offer is cancelled (`admin_withdrawn`), `dispatch_state` is cleared, and **no** driver is offered automatically until an admin sends or restarts. Requires confirmation. |
+| Emergency assignment | **`orders.force_assign`** (new) | Assigns without the driver's acceptance, for exceptions only. Requires a warning confirmation and a written reason (at least 5 characters). The usual status and eligibility rules apply. A pending offer is withdrawn atomically (`admin_override`), and the action is audited as `order.driver_force_assigned` with the reason and the withdrawn offer. |
+
+**While offers are on:**
+
+- The old "Assign driver" button is hidden, and `OrderAdminService::assignDriver` refuses (409), so nothing bypasses driver acceptance.
+- "Unassign" still works and returns the order to `accepted`, ready for a new offer.
+
+**While offers are off,** the page and `assignDriver` behave exactly as before, and none of the new actions appear.
+
+### Dispatch panel and history
+
+- **"Delivery dispatch" panel:** a section on the order page, shown when offers are on or the order has offers. It shows:
+  - the state: waiting for the driver, choosing the next driver, no driver available, paused, not started, accepted by the driver, or closed;
+  - a "needs attention" badge;
+  - the round and attempts (n of 10);
+  - the current offer: driver, source, sent time, expiry and a live countdown (informational; the server decides);
+  - the last answer with its reason;
+  - what happens next: automatic reassignment, recovery state, automatic rounds used, the next possible automatic round, whether admins were alerted.
+- **Refreshing:** the panel polls every 5 s while an offer is out, and every 15 s while the order waits for a driver. It also refreshes on `admin.orders` realtime events.
+- **"Delivery offers" table:** a read-only history of every offer, oldest first. It shows round/attempt, driver, source, sender, status, sent and answered times, the reason (rejection with note, withdrawal or expiry) and "why this driver" (rank, deliveries today, fresh-GPS distance, recovery).
+
+### "Waiting for driver" queue
+
+- **Location:** a tab on the orders list, shown while offers are on or such orders exist.
+- **Contents:** accepted orders with `dispatch_state` of `offering` or `no_driver`, no-driver orders first, then the oldest.
+- **Columns:** restaurant, order age, dispatch state, round and attempts, latest offer status, and "needs attention".
+- **Highlighting:** no-driver rows are highlighted. The tab badge counts the waiting orders and turns red when one has no driver. Each row opens the order page (its dispatch panel).
+
+### Admin monitoring
+
+- **Live refresh:** every offer change (sent, rejected, expired, accepted, withdrawn, automatic reassignment) and every entry into the no-driver queue publishes `admin.operational` with type `order.dispatch_updated` on `admin.orders`. Open order pages and lists refresh live, with no bell alert, so there is no spam.
+- **Bell alert:** only for "order waiting for a driver" (B3), sent to admins with `orders.assign`, once until an admin acts.
+- **Audit log:** `order.offer_sent`, `order.offer_withdrawn`, `order.dispatch_restarted` and `order.driver_force_assigned`.
+
+### Settings (Platform settings, "Delivery offers" section)
+
+The section says whether offers are live. The values are validated on save (form and `PlatformSettingsService`):
+
+| Setting | Default | Range |
+|---|---|---|
+| Offer acceptance time | 90 s | 30–300 |
+| Offers per round | 10 | 1–50 |
+| Automatic retry | on | |
+| Minutes before an automatic new round | 5 | 1–1440 |
+| Automatic new rounds | 2 | 0–10 |
+| Rotation strategy | `fair_rotation` | the only implemented strategy |
+| GPS freshness | 10 min | 1–120 |
+
+The switch itself (`WAFFRLI_DELIVERY_OFFERS_ENABLED`) is an environment variable and is not editable in the panel.
+
+### Schema
+
+The migration `2026_11_10_120000_add_admin_withdrawn_offer_cancel_reason` adds `admin_withdrawn` to `chk_do_cancel_reason` (MySQL). Its `down()` maps such rows to `admin_override`.
+
+### Tests
+
+- `DispatchFilamentTest` (12 tests): Filament actions, permissions, eligibility, panel and polling, history, queue, withdraw and restart, emergency assignment, concurrent admins, settings validation, the disabled switch and customer compatibility.
+- `DeliveryOfferConcurrencyTest` (MySQL): now also races emergency assignment against driver acceptance.
+- In 4 earlier B1/B2 tests that exercise an admin override while offers are on, direct `assignDriver` became `forceAssignDriver`. Their assertions are unchanged.
+
+## Activation checklist (not executed; needs explicit approval)
+
+1. **Code and database:**
+   - All migrations up to `2026_11_10_120000_add_admin_withdrawn_offer_cancel_reason` applied: `php artisan migrate --force`. Locally this is already done.
+   - Permissions seeded, so `orders.force_assign` exists: `php artisan db:seed --class="Database\Seeders\AdminAccessSeeder"`. Read the seeder before running it in production.
+2. **Permissions:**
+   - Dispatchers need `orders.view` and `orders.assign`.
+   - Grant `orders.force_assign` only to supervisors.
+   - Alerts go to admins with `orders.assign`.
+3. **Queue worker:** `php artisan queue:work --tries=3 --sleep=1`, supervised in production. It runs the expiry, next-driver, recovery, push and broadcast jobs.
+4. **Scheduler:** `php artisan schedule:work` locally, or a cron running `php artisan schedule:run` every minute in production. It runs `waffrli:dispatch-sweep` every 15 s. Check with `php artisan schedule:list`.
+5. **Reverb:** `php artisan reverb:start`, with `REVERB_ALLOW_ORIGINLESS_CLIENTS=true` for the mobile apps. The admin panel listens on `admin.orders`, drivers on `private-driver.{id}`.
+6. **Firebase:**
+   - `WAFFRLI_PUSH_ENABLED=true`, `WAFFRLI_PUSH_DRIVER=fcm` and the service-account credentials, outside the repository.
+   - **Register the driver Android app (`com.waffrli.driver`) in the Firebase project** and give the driver app its own `google-services.json`.
+7. **Driver app readiness:** the WAFFRLI Driver app must implement, at minimum:
+   - sign-in, availability and device-token registration;
+   - the offer screen (`GET /driver/offers/current`, accept, reject);
+   - Reverb `offer.*` events and FCM `driver.offer_created` handling;
+   - the active-delivery flow (pickup and deliver).
+
+   Until then, drivers cannot answer offers, and every order would end in the no-driver queue.
+8. **Settings review:** timeout, attempts, recovery and GPS freshness in Platform settings.
+9. **End-to-end test (local, with test drivers):**
+   - send an offer, then accept;
+   - reject leading to automatic reassignment;
+   - timeout leading to reassignment;
+   - every driver declining, ending in the no-driver queue with one alert, then recovery when a driver comes online;
+   - withdraw and restart;
+   - emergency assignment;
+   - order cancellation during an offer;
+   - the customer app showing "accepted" until a driver accepts, then "driver assigned".
+10. **Switch on:** set `WAFFRLI_DELIVERY_OFFERS_ENABLED=true`, run `php artisan config:clear`, then restart the API, the queue worker and the scheduler.
+11. **Rollback:** set the variable back to `false` and run `config:clear`.
+    - Pending offers stop being created.
+    - Existing pending offers can still be answered or expired by the sweep while it runs. Withdraw them first for a clean switch-off.
+    - The direct assignment returns.
+
 ## Next milestones
 
 | Milestone | Scope |
 |---|---|
 | B2 | **Done (2026-11-10):** driver API, resources, Reverb and FCM events. |
 | B3 | **Done (2026-11-10):** automatic redispatch, expiry job and sweep, the no-driver queue and its alerts, auto-recovery. |
-| B4 | Filament: send offer, dispatch panel and history, queue, override and restart, then enabling the switch. |
+| B4 | **Done (2026-11-10):** Filament send offer, dispatch panel and history, queue, withdraw, restart and emergency assignment, settings. The switch stays off until approved. |
 | B5 | Docs, OpenAPI and Bruno. |

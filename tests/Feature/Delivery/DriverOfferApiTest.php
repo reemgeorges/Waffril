@@ -213,7 +213,7 @@ class DriverOfferApiTest extends AdminPanelTestCase
         // An offer withdrawn by a direct admin assignment cannot be accepted either.
         $second = $this->offer($order, $this->newDriver());
         $chosen = $this->newDriver();
-        app(OrderAdminService::class)->assignDriver($order, $chosen, $this->admin);
+        app(OrderAdminService::class)->forceAssignDriver($order, $chosen, $this->admin, 'emergency override in test');
         $secondToken = $this->tokenFor($second->driver);
         $this->api($secondToken)->postJson("/api/v1/driver/offers/{$second->id}/accept")->assertStatus(409);
         $this->assertSame($chosen->id, (int) $order->fresh()->driver_id);
@@ -397,7 +397,7 @@ class DriverOfferApiTest extends AdminPanelTestCase
         app(DeliveryOfferService::class)->accept($this->offer($order, $driver), $driver);
         $this->assertNotNull($order->fresh()->assigned_via_offer_id);
 
-        app(OrderAdminService::class)->assignDriver($order, $this->newDriver(), $this->admin);
+        app(OrderAdminService::class)->forceAssignDriver($order, $this->newDriver(), $this->admin, 'emergency override in test');
         $this->assertNull($order->fresh()->assigned_via_offer_id);
         app(OrderAdminService::class)->unassignDriver($order, $this->admin);
         $this->assertNull($order->fresh()->assigned_via_offer_id);

@@ -29,6 +29,9 @@ class DeliveryOffer extends BasePlatformModel
 
     public const CANCEL_DRIVER_UNAVAILABLE = 'driver_unavailable';
 
+    /** B4: an admin withdrew the offer; the dispatch pauses. */
+    public const CANCEL_ADMIN_WITHDRAWN = 'admin_withdrawn';
+
     protected $fillable = [
         'order_id' => 'order_id',
         'driver_id' => 'driver_id',

@@ -33,7 +33,7 @@ final class AdminPermissions
             'drivers' => ['drivers.view', 'drivers.manage', 'drivers.track'],
             'catalog' => ['catalog.view', 'catalog.manage', 'ratings.moderate', 'offers.manage'],
             'orders' => [
-                'orders.view', 'orders.accept', 'orders.assign', 'orders.cancel',
+                'orders.view', 'orders.accept', 'orders.assign', 'orders.force_assign', 'orders.cancel',
                 'orders.cancel_after_pickup', 'orders.resolve_cancellation_requests', 'refunds.create',
             ],
             'finance' => ['payments.view', 'payment_methods.manage', 'settlements.manage'],

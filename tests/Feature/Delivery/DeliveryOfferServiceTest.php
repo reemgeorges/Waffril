@@ -307,7 +307,7 @@ class DeliveryOfferServiceTest extends AdminPanelTestCase
     {
         $order = $this->acceptedOrder();
         $busy = $this->newDriver();
-        app(OrderAdminService::class)->assignDriver($this->acceptedOrder(), $busy, $this->admin);
+        app(OrderAdminService::class)->forceAssignDriver($this->acceptedOrder(), $busy, $this->admin, 'emergency override in test');
 
         $cases = [
             'offline' => $this->newDriver(['availability' => Driver::AVAILABILITY_OFFLINE]),
@@ -371,7 +371,7 @@ class DeliveryOfferServiceTest extends AdminPanelTestCase
         $chosen = $this->newDriver();
         $offer = $this->service()->offerByAdmin($order, $offered, $this->admin);
 
-        app(OrderAdminService::class)->assignDriver($order, $chosen, $this->admin);
+        app(OrderAdminService::class)->forceAssignDriver($order, $chosen, $this->admin, 'emergency override in test');
 
         $this->assertSame(DeliveryOfferStatus::Cancelled, $offer->fresh()->status);
         $this->assertSame(DeliveryOffer::CANCEL_ADMIN_OVERRIDE, $offer->fresh()->cancel_reason);

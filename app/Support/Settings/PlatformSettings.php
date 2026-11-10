@@ -29,12 +29,16 @@ final class PlatformSettings
             'delivery.driver_recommendation_limit' => ['group' => 'delivery', 'type' => 'int', 'default' => 5],
             // Delivery offers (dispatch B1, 2026-11-10). No effect until
             // config('dispatch.offers_enabled') is on; bounds in config/dispatch.php.
-            'dispatch.offer_timeout_seconds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 90],
-            'dispatch.max_attempts_per_round' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10],
+            // B4: optional min/max are enforced by the form and by PlatformSettingsService.
+            'dispatch.offer_timeout_seconds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 90, 'min' => 30, 'max' => 300],
+            'dispatch.max_attempts_per_round' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10, 'min' => 1, 'max' => 50],
             'dispatch.auto_recovery' => ['group' => 'dispatch', 'type' => 'bool', 'default' => true],
             // B3: when a queued order may start a new automatic round.
-            'dispatch.recovery_round_cooldown_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 5],
-            'dispatch.max_auto_rounds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 2],
+            'dispatch.recovery_round_cooldown_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 5, 'min' => 1, 'max' => 1440],
+            'dispatch.max_auto_rounds' => ['group' => 'dispatch', 'type' => 'int', 'default' => 2, 'min' => 0, 'max' => 10],
+            // B4: driver ranking for automatic offers (fair rotation is the only strategy implemented).
+            'dispatch.rotation_strategy' => ['group' => 'dispatch', 'type' => 'select', 'default' => 'fair_rotation', 'options' => ['fair_rotation']],
+            'dispatch.location_fresh_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120],
             'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
             'plus.renewal_request_lead_days' => ['group' => 'plus', 'type' => 'int', 'default' => 3],
         ];

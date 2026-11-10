@@ -9,7 +9,10 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * WAFFRLI (2026-11-03) — something operations staff must react to (new
- * order, cancellation request, driver problem report, PLUS request).
+ * order, cancellation request, driver problem report, PLUS request), and
+ * (dispatch B4, 2026-11-10) `order.dispatch_updated`: a delivery offer was
+ * sent, answered, expired or withdrawn, or the order entered the no-driver
+ * queue. It only refreshes open admin screens (no bell alert).
  * Broadcast on `admin.orders` (admins with orders.view) with identifiers
  * only; the panel re-reads the record with the viewer's own permissions.
  */
@@ -17,7 +20,7 @@ class AdminOperationalEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
-    public const TYPES = ['order.placed', 'order.cancellation_requested', 'order.problem_reported', 'plus.request_submitted'];
+    public const TYPES = ['order.placed', 'order.cancellation_requested', 'order.problem_reported', 'plus.request_submitted', 'order.dispatch_updated'];
 
     public function __construct(
         public string $type,

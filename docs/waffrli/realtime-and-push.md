@@ -119,7 +119,7 @@ Revocation:
 |---|---|---|
 | `order.status_changed` | order, customer, current and previous driver, `admin.orders` | order id and number, from/to status, `driver_changed`, `tracking`, time |
 | `driver.location` | trackable `order.{id}` channels + `admin.drivers-map` | driver id, lat, lng, time (real reported position only; no history) |
-| `admin.operational` | `admin.orders` | type (`order.placed`, `order.cancellation_requested`, `order.problem_reported`, `plus.request_submitted`), id, reference |
+| `admin.operational` | `admin.orders` | type (`order.placed`, `order.cancellation_requested`, `order.problem_reported`, `plus.request_submitted`, and `order.dispatch_updated` for delivery-offer changes since B4, which only refreshes screens), id, reference |
 | `Illuminate\Notifications\Events\BroadcastNotificationCreated` | `user.{id}` / `driver.{id}` | the stored notification (event + identifiers + text) |
 | `database-notifications.sent` | `admin.{id}` | Filament bell refresh |
 | `offer.created`, `offer.accepted`, `offer.withdrawn` | `driver.{id}` of the offered driver only (B2, 2026-11-10) | `event`, `offer_id`, `order_id`, `status` (at the change), `reason` (reject or cancel reason), `at`, and `offer` (the same privacy-limited `DriverOfferResource` as `GET /api/v1/driver/offers/{id}`, in the driver's language) |

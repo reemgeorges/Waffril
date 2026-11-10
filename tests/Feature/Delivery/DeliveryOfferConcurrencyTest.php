@@ -230,4 +230,29 @@ class DeliveryOfferConcurrencyTest extends TestCase
         }
         $this->assertLessThanOrEqual(1, $this->assignedHistory($order));
     }
+
+    public function test_force_assignment_racing_driver_acceptance_assigns_from_accepted_only_once(): void
+    {
+        [$order, $driver, $offer] = $this->pendingOffer();
+        $other = $this->driver($order->city);
+
+        $results = $this->race(['accept', 'force', 'accept', 'force', 'accept', 'force'], $offer, $driver, microtime(true) + 3);
+
+        $offer->refresh();
+        $order->refresh();
+        $fromAccepted = OrderStatusHistory::where('order_id', $order->id)->where('from_status', 'accepted')->where('to_status', 'assigned')->count();
+        $this->assertSame(1, $fromAccepted, 'The order left `accepted` exactly once.');
+        $this->assertSame(OrderStatus::Assigned, $order->status);
+        $this->assertContains($offer->status, [DeliveryOfferStatus::Accepted, DeliveryOfferStatus::Cancelled]);
+        if ($offer->status === DeliveryOfferStatus::Cancelled) {
+            $this->assertSame(DeliveryOffer::CANCEL_ADMIN_OVERRIDE, $offer->cancel_reason);
+            $this->assertTrue(collect($results)->where('action', 'accept')->every(fn ($r) => ! $r['ok'] && $r['status'] === 409), 'A withdrawn offer is never accepted.');
+            $this->assertSame([$other->id, null], [(int) $order->driver_id, $order->assigned_via_offer_id]);
+        } else {
+            // Accepted first; later overrides may legitimately reassign, and then drop the offer link.
+            $this->assertTrue($order->assigned_via_offer_id === null || ((int) $order->assigned_via_offer_id === $offer->id && (int) $order->driver_id === $driver->id));
+        }
+        $this->assertSame(0, DeliveryOffer::query()->pending()->where('order_id', $order->id)->count());
+        $this->assertLessThan(collect($results)->min('finished'), collect($results)->max('started'), 'The workers did not overlap.');
+    }
 }

@@ -73,8 +73,11 @@ class PlatformSettingsService
             return $value->filter()->isEmpty() ? null : $value->all();
         }
 
+        $definition = PlatformSettings::definitions()[$key] ?? [];
+
         return match ($type) {
-            'int' => $this->int($key, $value),
+            'int' => $this->int($key, $value, (int) ($definition['min'] ?? 0), (int) ($definition['max'] ?? 100000)),
+            'select' => in_array((string) $value, $definition['options'] ?? [], true) ? (string) $value : $this->invalid($key),
             'bool' => (bool) $value,
             'rating' => $this->rating($key, $value),
             'phone' => preg_match('/^\+[1-9]\d{6,14}$/', (string) $value) ? (string) $value : $this->invalid($key),
@@ -83,9 +86,9 @@ class PlatformSettingsService
         };
     }
 
-    protected function int(string $key, mixed $value): int
+    protected function int(string $key, mixed $value, int $min = 0, int $max = 100000): int
     {
-        if (! is_numeric($value) || (int) $value < 0 || (int) $value > 100000) {
+        if (! is_numeric($value) || (int) $value < $min || (int) $value > $max) {
             $this->invalid($key);
         }
 

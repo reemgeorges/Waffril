@@ -4,6 +4,7 @@ namespace App\Services\Delivery;
 
 use App\Enums\DeliveryOfferStatus;
 use App\Enums\OrderStatus;
+use App\Events\Realtime\AdminOperationalEvent;
 use App\Events\Realtime\DeliveryOfferChanged;
 use App\Exceptions\BusinessRuleException;
 use App\Jobs\Delivery\AdvanceDeliveryDispatch;
@@ -13,6 +14,7 @@ use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Notifications\DriverDeliveryOfferCreated;
+use App\Services\Audit\AdminAudit;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Order\OrderStateMachine;
 use App\Services\Realtime\Notify;
@@ -76,11 +78,71 @@ class DeliveryOfferService
     /** The admin picks the first driver: starts a NEW dispatch round. */
     public function offerByAdmin(Order $order, Driver $driver, Admin $admin): DeliveryOffer
     {
+        $this->authorizeAdmin($admin);
+
+        return DB::transaction(function () use ($order, $driver, $admin) {
+            $offer = $this->createOffer($order, $driver, DeliveryOffer::SOURCE_ADMIN, $admin, true, []);
+            AdminAudit::log('order.offer_sent', $offer->order, ['offer_id' => $offer->id, 'driver_id' => $offer->driver_id, 'round' => $offer->round], $admin);
+
+            return $offer;
+        });
+    }
+
+    /**
+     * B4: the admin withdraws the pending offer. Withdrawal PAUSES the
+     * dispatch: no automatic next driver; the order stays `accepted` with
+     * no dispatch running until an admin sends a new offer (or assigns).
+     */
+    public function withdrawByAdmin(Order $order, Admin $admin): DeliveryOffer
+    {
+        $this->authorizeAdmin($admin);
+
+        return DB::transaction(function () use ($order, $admin) {
+            $offer = $this->cancelPendingForOrder($order, DeliveryOffer::CANCEL_ADMIN_WITHDRAWN);
+            if (! $offer) {
+                throw new BusinessRuleException(__('admin.errors.dispatch_no_pending_offer'), 409);
+            }
+            AdminAudit::log('order.offer_withdrawn', $offer->order, ['offer_id' => $offer->id, 'driver_id' => $offer->driver_id], $admin);
+
+            return $offer;
+        });
+    }
+
+    /**
+     * B4: the admin restarts the dispatch with a chosen driver: withdraws
+     * any pending offer (admin_restart) and starts a NEW round, all in one
+     * transaction. History is kept; automatic-round counting restarts.
+     */
+    public function restartByAdmin(Order $order, Driver $driver, Admin $admin): DeliveryOffer
+    {
+        $this->authorizeAdmin($admin);
+
+        return DB::transaction(function () use ($order, $driver, $admin) {
+            $withdrawn = $this->cancelPendingForOrder($order, DeliveryOffer::CANCEL_ADMIN_RESTART);
+            $offer = $this->createOffer($order, $driver, DeliveryOffer::SOURCE_ADMIN, $admin, true, []);
+            AdminAudit::log('order.dispatch_restarted', $offer->order, [
+                'offer_id' => $offer->id, 'driver_id' => $offer->driver_id, 'round' => $offer->round, 'withdrawn_offer_id' => $withdrawn?->id,
+            ], $admin);
+
+            return $offer;
+        });
+    }
+
+    protected function authorizeAdmin(Admin $admin): void
+    {
         if (! AdminPermissions::allows($admin, 'orders.assign')) {
             throw new BusinessRuleException(__('admin.errors.forbidden'), 403);
         }
+    }
 
-        return $this->createOffer($order, $driver, DeliveryOffer::SOURCE_ADMIN, $admin, true, []);
+    /**
+     * After commit: the driver's live event, and a refresh signal for open
+     * admin order screens (admin.orders, identifiers only, no bell alert).
+     */
+    protected static function announce(string $name, DeliveryOffer $offer): void
+    {
+        Realtime::publish(DeliveryOfferChanged::for($name, $offer));
+        Realtime::publish(new AdminOperationalEvent('order.dispatch_updated', (int) $offer->order_id));
     }
 
     /**
@@ -157,7 +219,7 @@ class DeliveryOfferService
 
                 // After commit: the live event, then one push per device, and the
                 // offer's own expiry at its deadline (B3).
-                Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::CREATED, $offer));
+                self::announce(DeliveryOfferChanged::CREATED, $offer);
                 Notify::send($driver, new DriverDeliveryOfferCreated($offer, $order));
                 ExpireDeliveryOffer::dispatch($offer->id)->delay($offer->expires_at)->afterCommit();
 
@@ -221,7 +283,7 @@ class DeliveryOfferService
                 'assigned_by_admin_id' => $roundAdminId,
                 'assigned_via_offer_id' => $offer->id,
             ], 'delivery offer accepted', $driver->id);
-            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::ACCEPTED, $offer));
+            self::announce(DeliveryOfferChanged::ACCEPTED, $offer);
 
             return ['order' => $order];
         });
@@ -340,6 +402,7 @@ class DeliveryOfferService
                 'no_driver_since' => now(),
                 'updated_at' => now(),
             ]);
+            Realtime::publish(new AdminOperationalEvent('order.dispatch_updated', (int) $order->id, (string) $order->order_number));
 
             return true;
         });
@@ -362,7 +425,7 @@ class DeliveryOfferService
                 'responded_at' => now(),
                 'cancel_reason' => $to === OrderStatus::Cancelled ? DeliveryOffer::CANCEL_ORDER_CANCELLED : DeliveryOffer::CANCEL_ADMIN_OVERRIDE,
             ])->save();
-            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::WITHDRAWN, $pending));
+            self::announce(DeliveryOfferChanged::WITHDRAWN, $pending);
         }
 
         return $order->dispatch_state !== null || $pending ? self::clearedDispatch() : [];
@@ -387,7 +450,7 @@ class DeliveryOfferService
         $offer->forceFill(['status' => $status, 'responded_at' => now()] + $attributes)->save();
         if ($status !== DeliveryOfferStatus::Accepted) {
             // Rejected, expired or cancelled: the driver's devices close the offer.
-            Realtime::publish(DeliveryOfferChanged::for(DeliveryOfferChanged::WITHDRAWN, $offer));
+            self::announce(DeliveryOfferChanged::WITHDRAWN, $offer);
         }
         // B3: the order moves on to the next driver. Not for admin overrides,
         // restarts or cancelled orders (an admin or the order decides there).

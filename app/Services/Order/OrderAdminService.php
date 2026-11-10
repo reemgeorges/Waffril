@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\BranchProduct;
+use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderCancellation;
@@ -16,6 +17,7 @@ use App\Notifications\CustomerOrderUpdate;
 use App\Notifications\DriverOrderUpdate;
 use App\Services\Audit\AdminAudit;
 use App\Services\Catalog\BranchHoursService;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Driver\DriverRecommendationService;
 use App\Services\Plus\PlusService;
 use App\Services\Realtime\Notify;
@@ -119,11 +121,44 @@ class OrderAdminService
         });
     }
 
+    /**
+     * Direct assignment (the workflow before delivery offers). While
+     * delivery offers are enabled it is refused: drivers must accept an
+     * offer; the only direct path is forceAssignDriver (emergencies).
+     */
     public function assignDriver(Order $order, Driver $driver, Admin $admin): Order
     {
         $this->authorize($admin, 'orders.assign');
+        if (DeliveryOfferService::enabled()) {
+            throw new BusinessRuleException(__('admin.errors.dispatch_direct_assignment_disabled'), 409);
+        }
 
-        return DB::transaction(function () use ($order, $driver, $admin) {
+        return $this->assignDirectly($order, $driver, $admin, 'order.driver_assigned', []);
+    }
+
+    /**
+     * Dispatch B4 (2026-11-10): emergency override while delivery offers are
+     * enabled. Requires `orders.force_assign` and a written reason; keeps the
+     * usual status and eligibility rules; any pending offer is withdrawn in
+     * the same transaction (OrderStateMachine hook, reason admin_override).
+     */
+    public function forceAssignDriver(Order $order, Driver $driver, Admin $admin, string $reason): Order
+    {
+        $this->authorize($admin, 'orders.force_assign');
+        $reason = trim($reason);
+        if (mb_strlen($reason) < 5) {
+            throw new BusinessRuleException(__('admin.errors.force_assign_reason_required'), 422);
+        }
+
+        return $this->assignDirectly($order, $driver, $admin, 'order.driver_force_assigned', [
+            'reason' => mb_substr($reason, 0, 500),
+            'pending_offer_id' => DeliveryOffer::query()->where('pending_order_marker', $order->getKey())->value('id'),
+        ]);
+    }
+
+    protected function assignDirectly(Order $order, Driver $driver, Admin $admin, string $auditAction, array $auditExtra): Order
+    {
+        return DB::transaction(function () use ($order, $driver, $admin, $auditAction, $auditExtra) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->getKey());
 
             if (! in_array($order->status, [OrderStatus::Accepted, OrderStatus::Assigned], true)) {
@@ -143,7 +178,7 @@ class OrderAdminService
                 'assigned_via_offer_id' => null,
             ], null, $driver->id);
 
-            AdminAudit::log('order.driver_assigned', $order, ['driver_id' => $driver->id], $admin);
+            AdminAudit::log($auditAction, $order, ['driver_id' => $driver->id] + array_filter($auditExtra, fn ($v) => $v !== null), $admin);
 
             // WAFFRLI driver API (2026-11-02): stored driver notifications.
             $driver->notify(new DriverOrderUpdate('assigned', $order));
