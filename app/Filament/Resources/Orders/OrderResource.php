@@ -112,7 +112,7 @@ class OrderResource extends AdminResource
                             ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
                         $money('subtotal'), $money('offer_discount_total'), $money('plus_discount_amount'),
                         $money('delivery_fee_original'), $money('delivery_fee'),
-                        IconEntry::make('free_delivery_applied')->label(__('admin.fields.free_delivery_applied'))->inlineLabel()->boolean(),
+                        IconEntry::make('free_delivery_applied')->label(__('admin.fields.free_delivery_applied'))->inlineLabel()->boolean()->falseIcon('heroicon-o-minus')->falseColor('gray'),
                         $money('total')->weight(FontWeight::Bold)->size(TextSize::Large),
                     ]),
                 ]),
@@ -132,7 +132,7 @@ class OrderResource extends AdminResource
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
                 IconColumn::make('urgent_at')->label(__('admin.orders.urgent'))->boolean()
-                    ->state(fn (Order $record) => $record->urgent_at !== null)->trueColor('danger'),
+                    ->state(fn (Order $record) => $record->urgent_at !== null)->trueColor('danger')->falseIcon('heroicon-o-minus')->falseColor('gray'),
                 TextColumn::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => __("admin.orders.type_{$state}")),
                 TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable(),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch')),
@@ -150,7 +150,7 @@ class OrderResource extends AdminResource
                 TextColumn::make('latestDeliveryOffer.status')->label(__('admin.dispatch.latest_offer'))->badge()->visible($waitingTab)
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state ? DispatchPanel::statusColor($state) : 'gray')->placeholder('—'),
                 IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
-                    ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle'),
+                    ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle')->falseIcon('heroicon-o-minus')->falseColor('gray'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),

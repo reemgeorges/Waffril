@@ -117,9 +117,16 @@
    own direction (no bidi scrambling of "+963 9…" or "WF20261103-…"). */
 .fi-ta-text-item,
 .fi-in-text-item,
-.fi-wi-stats-overview-stat-value,
 .wf-ltr {
     unicode-bidi: plaintext;
+}
+
+/* Stat values are numbers in the card's own direction: aligned with their
+   label (right in Arabic) and, in RTL, a pair like "6 / 10" reads right to
+   left in the label's order ("المتاجر / الفروع" → 6 stores, 10 branches). */
+.fi-wi-stats-overview-stat-value {
+    unicode-bidi: isolate;
+    text-align: start;
 }
 
 input[type='tel'],
@@ -385,6 +392,25 @@ input[id$='.phone'] {
 
 .fi-wi-stats-overview-stat .fi-icon {
     color: var(--wf-text-3);
+}
+
+/* Balanced rows: at most four cards per row, and the cards of the last row
+   grow to fill it (7 stats = 4 + 3 full-width rows, never a gap at the end).
+   Below ~14rem per card the row drops to 3, 2 or 1 cards. */
+.fi-wi-stats-overview .fi-section-content.fi-grid {
+    --wf-stat-gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wf-stat-gap);
+}
+
+.fi-wi-stats-overview .fi-section-content.fi-grid > .fi-grid-col {
+    flex: 1 1 max(14rem, calc((100% - 3 * var(--wf-stat-gap)) / 4));
+    min-width: 0;
+}
+
+.fi-wi-stats-overview .fi-grid-col > .fi-sc-component {
+    height: 100%;
 }
 
 /* Operational meaning as a small marker before the label (data-tone), so the

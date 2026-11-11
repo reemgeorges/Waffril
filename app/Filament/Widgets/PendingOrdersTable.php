@@ -37,7 +37,9 @@ class PendingOrdersTable extends TableWidget
                 ->orderByRaw('CASE WHEN urgent_at IS NULL THEN 1 ELSE 0 END')->orderBy('created_at'))
             ->columns([
                 TextColumn::make('order_number')->label(__('admin.fields.order_number')),
-                IconColumn::make('urgent_at')->label(__('admin.orders.urgent'))->boolean()->state(fn (Order $record) => $record->urgent_at !== null)->trueColor('danger'),
+                IconColumn::make('urgent_at')->label(__('admin.orders.urgent'))->boolean()->state(fn (Order $record) => $record->urgent_at !== null)->trueColor('danger')
+                    // Not urgent is the normal case: a quiet dash, never a red X.
+                    ->falseIcon('heroicon-o-minus')->falseColor('gray'),
                 TextColumn::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => __("admin.orders.type_{$state}")),
                 TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—'),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch')),

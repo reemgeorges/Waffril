@@ -54,24 +54,35 @@ class OrdersByStatusChart extends ChartWidget
                 'backgroundColor' => array_map(fn ($status) => $colours[$status], array_keys($counts)),
                 'borderWidth' => 0,
                 'borderRadius' => 4,
-                'maxBarThickness' => 32,
+                'maxBarThickness' => 22,
+                'barPercentage' => 0.8,
             ]],
             'labels' => array_map(fn ($status) => OrderStatus::from($status)->label(), array_keys($counts)),
         ];
     }
 
-    /** Quiet axes on the neutral card; the bars carry the meaning. */
+    /**
+     * Horizontal bars: the status names read straight on the side axis
+     * (no rotated labels) and the bars grow from the reading edge (right in
+     * Arabic, left in English). Quiet axes; the bars carry the meaning.
+     */
     protected function getOptions(): array
     {
         $grid = 'rgba(148, 163, 184, 0.12)';
-        $text = 'rgba(148, 163, 184, 0.9)';
+        $text = 'rgba(148, 163, 184, 0.95)';
+        $rtl = app()->getLocale() === 'ar';
+        $font = ['family' => "'IBM Plex Sans Arabic', system-ui, sans-serif", 'size' => 12];
 
         return [
+            'indexAxis' => 'y',
+            // Taller than Filament's default 2:1 so six bars breathe (capped by $maxHeight).
+            'aspectRatio' => 1.3,
             'plugins' => ['legend' => ['display' => false]],
             'scales' => [
-                'x' => ['grid' => ['display' => false], 'border' => ['display' => false], 'ticks' => ['color' => $text]],
-                'y' => ['beginAtZero' => true, 'grid' => ['color' => $grid], 'border' => ['display' => false],
-                    'ticks' => ['color' => $text, 'precision' => 0]],
+                'x' => ['beginAtZero' => true, 'reverse' => $rtl, 'grid' => ['color' => $grid], 'border' => ['display' => false],
+                    'ticks' => ['color' => $text, 'precision' => 0, 'font' => $font]],
+                'y' => ['position' => $rtl ? 'right' : 'left', 'grid' => ['display' => false], 'border' => ['display' => false],
+                    'ticks' => ['color' => $text, 'font' => $font + ['weight' => 500]]],
             ],
         ];
     }
