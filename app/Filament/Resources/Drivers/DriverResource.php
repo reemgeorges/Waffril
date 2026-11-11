@@ -47,7 +47,7 @@ class DriverResource extends AdminResource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->schema([
+            Section::make()->columnSpanFull()->schema([
                 Grid::make(2)->schema([
                     TextInput::make('name')->label(__('admin.fields.name'))->required()->maxLength(150),
                     Fields::phone('phone')->required()->unique(ignoreRecord: true),

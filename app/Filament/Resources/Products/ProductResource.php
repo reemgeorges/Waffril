@@ -51,7 +51,7 @@ class ProductResource extends AdminResource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->schema([
+            Section::make()->columnSpanFull()->schema([
                 Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->searchable()->preload()
                     ->disabled(fn (?Product $record) => $record !== null)->dehydrated(fn (?Product $record) => $record === null),

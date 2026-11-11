@@ -48,7 +48,7 @@ class StoreResource extends AdminResource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->schema([
+            Section::make()->columnSpanFull()->schema([
                 Fields::translatable('name'),
                 Grid::make(2)->schema([
                     TextInput::make('slug')->label(__('admin.fields.slug'))->required()->maxLength(120)->alphaDash()->unique(ignoreRecord: true),

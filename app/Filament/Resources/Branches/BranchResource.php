@@ -55,7 +55,7 @@ class BranchResource extends AdminResource
         $label = fn ($record) => $record->name;
 
         return $schema->components([
-            Section::make()->schema([
+            Section::make()->columnSpanFull()->schema([
                 Grid::make(2)->schema([
                     Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                         ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload()

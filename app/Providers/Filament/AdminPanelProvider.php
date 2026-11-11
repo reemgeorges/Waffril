@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Support\Brand;
 use App\Filament\Support\InitialsAvatarProvider;
+use App\Filament\Support\TableDefaults;
 use App\Http\Middleware\SetAdminPanelLocale;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\LocalFontProvider;
@@ -35,6 +36,12 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  */
 class AdminPanelProvider extends PanelProvider
 {
+    /** Shared table layout policy (alignment, compact widths, empty values). */
+    public function boot(): void
+    {
+        TableDefaults::register();
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel

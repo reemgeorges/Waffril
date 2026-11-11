@@ -45,7 +45,7 @@ class PlusPlanResource extends AdminResource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->schema([
+            Section::make()->columnSpanFull()->schema([
                 TextInput::make('code')->label(__('admin.fields.code'))->required()->maxLength(50)->alphaDash()->unique(ignoreRecord: true),
                 Fields::translatable('name'),
                 Fields::translatable('description', required: false, multiline: true),

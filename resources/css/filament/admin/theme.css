@@ -114,12 +114,29 @@
 }
 
 /* Numbers, phones, e-mails, codes and money inside Arabic text keep their
-   own direction (no bidi scrambling of "+963 9…" or "WF20261103-…"). */
+   own reading order (no bidi scrambling of "+963 9…" or "WF20261103-…"). */
 .fi-ta-text-item,
 .fi-in-text-item,
 .wf-ltr {
     unicode-bidi: plaintext;
 }
+
+/* …but a value is ALIGNED by the table's (page's) direction, never by its own
+   content: with `plaintext`, `start` would follow each value's first strong
+   character, so in Arabic a slug, a number or a lone badge (a neutral inline
+   box) became left-aligned and drifted away from its right-aligned header.
+   Physical alignment from the page direction keeps every value under its
+   header and honours Filament's column alignment (fi-align-center/end). */
+[dir='rtl'] :is(.fi-ta-text-item, .fi-in-text-item) { text-align: right; }
+[dir='ltr'] :is(.fi-ta-text-item, .fi-in-text-item) { text-align: left; }
+
+[dir='rtl'] :is(.fi-align-end, .fi-align-right):is(.fi-ta-text-item, .fi-in-text-item),
+[dir='rtl'] :is(.fi-align-end, .fi-align-right) :is(.fi-ta-text-item, .fi-in-text-item) { text-align: left; }
+[dir='ltr'] :is(.fi-align-end, .fi-align-right):is(.fi-ta-text-item, .fi-in-text-item),
+[dir='ltr'] :is(.fi-align-end, .fi-align-right) :is(.fi-ta-text-item, .fi-in-text-item) { text-align: right; }
+
+.fi-align-center:is(.fi-ta-text-item, .fi-in-text-item),
+.fi-align-center :is(.fi-ta-text-item, .fi-in-text-item) { text-align: center; }
 
 /* Stat values are numbers in the card's own direction: aligned with their
    label (right in Arabic) and, in RTL, a pair like "6 / 10" reads right to
@@ -444,8 +461,17 @@ input[id$='.phone'] {
     font-weight: 600;
 }
 
-.fi-ta-header-cell {
+/* The header ROW carries the tint, so every header cell (labelled, selection,
+   actions) has the same background; cells stay transparent. */
+.fi-ta-table > thead > tr {
     background-color: var(--wf-surface-2);
+}
+
+.fi-ta-table > thead > tr > th {
+    background-color: transparent;
+}
+
+.fi-ta-header-cell {
     padding-block: 0.625rem;
     font-size: 0.75rem;
     font-weight: 600;
@@ -496,6 +522,13 @@ input[id$='.phone'] {
 
 [dir='rtl'] .waffrli-row-no-driver > .fi-ta-cell:first-child {
     box-shadow: inset -3px 0 0 rgb(239 68 68 / 0.8);
+}
+
+/* An optional image that is missing shows the same neutral dash as empty
+   text, instead of a blank cell. */
+.fi-ta-image:not(:has(img))::after {
+    content: '—';
+    color: var(--wf-text-3);
 }
 
 .fi-ta-empty-state-icon-bg {

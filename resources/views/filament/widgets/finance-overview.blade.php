@@ -20,12 +20,12 @@
                     @forelse ($rows as $row)
                         <tr>
                             <td><span class="wf-ltr" style="font-weight:600">{{ $row['code'] }}</span></td>
-                            <td class="wf-end wf-ltr">{{ $row['wallet_balances'] }}</td>
-                            <td class="wf-end wf-ltr">{{ $row['wallets'] }}</td>
-                            <td class="wf-end wf-ltr">{{ $row['collected'] }}</td>
-                            <td class="wf-end wf-ltr">{{ $row['pending_cash'] }}</td>
-                            <td class="wf-end wf-ltr">{{ $row['refunded'] }}</td>
-                            <td class="wf-end wf-ltr">{{ $row['unsettled_cash'] }}</td>
+                            <td class="wf-end">{{ $row['wallet_balances'] }}</td>
+                            <td class="wf-end">{{ $row['wallets'] }}</td>
+                            <td class="wf-end">{{ $row['collected'] }}</td>
+                            <td class="wf-end">{{ $row['pending_cash'] }}</td>
+                            <td class="wf-end">{{ $row['refunded'] }}</td>
+                            <td class="wf-end">{{ $row['unsettled_cash'] }}</td>
                             <td>
                                 <x-filament::badge :color="$row['ledger_consistent'] ? 'success' : 'danger'">
                                     {{ $row['ledger_consistent'] ? __('admin.dashboard_stats.ledger_ok') : __('admin.dashboard_stats.ledger_mismatch') }}

@@ -47,7 +47,7 @@ class AdminResource extends BaseAdminResource
         $isSelf = fn (?Admin $record) => $record !== null && $record->id === auth('admin_web')->id();
 
         return $schema->components([
-            Section::make()->columns(2)->schema([
+            Section::make()->columnSpanFull()->columns(2)->schema([
                 TextInput::make('name')->label(__('admin.fields.name'))->required()->maxLength(255),
                 TextInput::make('email')->label(__('admin.fields.email'))->email()->required()->maxLength(255)->unique(ignoreRecord: true),
                 TextInput::make('password')->label(__('admin.fields.password'))->password()->revealable()
