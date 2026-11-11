@@ -23,9 +23,9 @@ class InitialsAvatarProvider implements AvatarProvider
         $initials = htmlspecialchars(mb_strtoupper($initials !== '' ? $initials : '·'), ENT_QUOTES | ENT_XML1, 'UTF-8');
 
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-            .'<rect width="64" height="64" rx="32" fill="'.Brand::PRIMARY[700].'"/>'
-            .'<circle cx="32" cy="32" r="30.5" fill="none" stroke="'.Brand::GOLD.'" stroke-width="2"/>'
-            .'<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="24" font-weight="700" fill="'.Brand::IVORY.'">'.$initials.'</text>'
+            // Neutral graphite disc with light initials (redesign 2026-11-11).
+            .'<rect width="64" height="64" rx="32" fill="'.Brand::GRAY[700].'"/>'
+            .'<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="24" font-weight="600" fill="'.Brand::GRAY[50].'">'.$initials.'</text>'
             .'</svg>';
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);

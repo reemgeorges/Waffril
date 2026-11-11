@@ -19,9 +19,10 @@ class PendingOrdersTable extends TableWidget
 {
     use \App\Filament\Concerns\RefreshesOnOrderEvents;
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 1;
 
-    protected int|string|array $columnSpan = 'full';
+    /** Two thirds of a wide dashboard, beside the status chart. */
+    protected int|string|array $columnSpan = ['default' => 'full', 'xl' => 2];
 
     public static function canView(): bool
     {

@@ -20,9 +20,13 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -59,44 +63,59 @@ class OrderResource extends AdminResource
 
     public static function infolist(Schema $schema): Schema
     {
-        $money = fn (string $field) => TextEntry::make($field)->label(__("admin.fields.{$field}"))
-            ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency));
+        // Display only (redesign 2026-11-11): stored values are untouched.
+        $money = fn (string $field) => TextEntry::make($field)->label(__("admin.fields.{$field}"))->inlineLabel()
+            ->alignEnd()->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency));
 
         return $schema->components([
             // Dispatch B4 (2026-11-10): live delivery-offer status.
-            Section::make(__('admin.dispatch.panel_title'))->icon('heroicon-o-paper-airplane')
+            Section::make(__('admin.dispatch.panel_title'))->icon('heroicon-o-paper-airplane')->columnSpanFull()
                 ->visible(fn (Order $record) => DispatchPanel::visible($record))
                 ->schema([
                     View::make('filament.orders.dispatch-panel')->viewData(fn (Order $record) => ['panel' => DispatchPanel::data($record)]),
                 ]),
-            Section::make(__('admin.orders.summary'))->columns(4)->schema([
-                TextEntry::make('order_number')->label(__('admin.fields.order_number')),
-                TextEntry::make('status')->label(__('admin.fields.status'))->badge()
-                    ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
-                TextEntry::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => __("admin.orders.type_{$state}")),
-                TextEntry::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—'),
-                TextEntry::make('urgent_at')->label(__('admin.orders.urgent'))->dateTime()->placeholder('—')->color('danger'),
-                TextEntry::make('user.phone')->label(__('admin.fields.customer'))
-                    ->formatStateUsing(fn ($state, Order $record) => $record->user?->fullName().' '.$state),
-                TextEntry::make('branch.name')->label(__('admin.fields.branch')),
-                TextEntry::make('city.name')->label(__('admin.fields.city')),
-                TextEntry::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
-                TextEntry::make('created_at')->label(__('admin.fields.created_at'))->dateTime(),
-                TextEntry::make('customer_notes')->label(__('admin.fields.customer_notes'))->placeholder('—')->columnSpan(2),
-            ]),
-            Section::make(__('admin.orders.amounts'))->columns(4)->schema([
-                TextEntry::make('currency.code')->label(__('admin.fields.currency')),
-                TextEntry::make('exchange_rate')->label(__('admin.fields.exchange_rate')),
-                $money('subtotal'), $money('offer_discount_total'), $money('plus_discount_amount'),
-                $money('delivery_fee_original'), $money('delivery_fee'), $money('total'),
-                IconEntry::make('free_delivery_applied')->label(__('admin.fields.free_delivery_applied'))->boolean(),
-            ]),
-            Section::make(__('admin.orders.delivery'))->columns(4)->schema([
-                TextEntry::make('delivery_distance_km')->label(__('admin.fields.delivery_distance_km')),
-                TextEntry::make('distance_method')->label(__('admin.fields.distance_method')),
-                TextEntry::make('deliveryArea.name')->label(__('admin.fields.delivery_area'))->placeholder('—'),
-                TextEntry::make('delivery_address')->label(__('admin.fields.address'))
-                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_UNESCAPED_UNICODE) : (string) $state),
+            // Main column: what the order is and where it goes; side column: the money.
+            Grid::make(['default' => 1, 'xl' => 3])->columnSpanFull()->schema([
+                Group::make()->columnSpan(['default' => 1, 'xl' => 2])->schema([
+                    Section::make(__('admin.orders.summary'))->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
+                        TextEntry::make('order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold),
+                        TextEntry::make('status')->label(__('admin.fields.status'))->badge()
+                            ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
+                        TextEntry::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => __("admin.orders.type_{$state}")),
+                        TextEntry::make('user.phone')->label(__('admin.fields.customer'))
+                            ->formatStateUsing(fn ($state, Order $record) => $record->user?->fullName().' '.$state),
+                        TextEntry::make('branch.name')->label(__('admin.fields.branch')),
+                        TextEntry::make('city.name')->label(__('admin.fields.city')),
+                        TextEntry::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
+                        TextEntry::make('created_at')->label(__('admin.fields.created_at'))->dateTime(),
+                        TextEntry::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—'),
+                        TextEntry::make('urgent_at')->label(__('admin.orders.urgent'))->dateTime()->placeholder('—')->color('danger'),
+                        TextEntry::make('customer_notes')->label(__('admin.fields.customer_notes'))->placeholder('—')->columnSpanFull(),
+                    ]),
+                    Section::make(__('admin.orders.delivery'))->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
+                        TextEntry::make('delivery_address')->label(__('admin.fields.address'))->columnSpanFull()
+                            ->formatStateUsing(fn ($state) => is_array($state)
+                                ? (collect([$state['label'] ?? null, $state['line'] ?? null, $state['details'] ?? null])
+                                    ->filter(fn ($part) => is_scalar($part) && trim((string) $part) !== '')->implode(' · ')
+                                    ?: json_encode($state, JSON_UNESCAPED_UNICODE))
+                                : (string) $state),
+                        TextEntry::make('deliveryArea.name')->label(__('admin.fields.delivery_area'))->placeholder('—'),
+                        TextEntry::make('delivery_distance_km')->label(__('admin.fields.delivery_distance_km'))
+                            ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
+                        TextEntry::make('distance_method')->label(__('admin.fields.distance_method')),
+                    ]),
+                ]),
+                Group::make()->columnSpan(['default' => 1, 'xl' => 1])->schema([
+                    Section::make(__('admin.orders.amounts'))->schema([
+                        TextEntry::make('currency.code')->label(__('admin.fields.currency'))->inlineLabel()->alignEnd(),
+                        TextEntry::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->inlineLabel()->alignEnd()
+                            ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
+                        $money('subtotal'), $money('offer_discount_total'), $money('plus_discount_amount'),
+                        $money('delivery_fee_original'), $money('delivery_fee'),
+                        IconEntry::make('free_delivery_applied')->label(__('admin.fields.free_delivery_applied'))->inlineLabel()->boolean(),
+                        $money('total')->weight(FontWeight::Bold)->size(TextSize::Large),
+                    ]),
+                ]),
             ]),
         ]);
     }
@@ -132,7 +151,7 @@ class OrderResource extends AdminResource
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state ? DispatchPanel::statusColor($state) : 'gray')->placeholder('—'),
                 IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
                     ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle'),
-                TextColumn::make('total')->label(__('admin.fields.total'))
+                TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
             ])

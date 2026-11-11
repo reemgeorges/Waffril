@@ -1,38 +1,39 @@
-{{-- WAFFRLI (2026-11-01): per-currency wallet and payment totals (database values). --}}
+{{-- WAFFRLI (2026-11-01): per-currency wallet and payment totals (database values).
+     Styled by the admin theme (.wf-data-table, redesign 2026-11-11). --}}
 <x-filament-widgets::widget>
     <x-filament::section :heading="__('admin.dashboard_stats.finance')">
-        <div style="overflow-x:auto">
-            <table style="width:100%;font-size:.875rem;border-collapse:collapse" data-testid="finance-overview">
+        <div class="wf-flush">
+            <table class="wf-data-table" data-testid="finance-overview">
                 <thead>
-                    <tr style="opacity:.8">
-                        <th style="text-align:start;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.currency') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.wallet_balances') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.wallets') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.collected') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.pending_cash') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.refunded') }}</th>
-                        <th style="text-align:end;padding:.5rem;white-space:nowrap">{{ __('admin.dashboard_stats.unsettled_cash') }}</th>
-                        <th style="text-align:start;padding:.5rem;white-space:nowrap"></th>
+                    <tr>
+                        <th>{{ __('admin.dashboard_stats.currency') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.wallet_balances') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.wallets') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.collected') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.pending_cash') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.refunded') }}</th>
+                        <th class="wf-end">{{ __('admin.dashboard_stats.unsettled_cash') }}</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($rows as $row)
-                        <tr style="border-top:1px solid rgba(127,127,127,.25)">
-                            <td style="padding:.5rem;font-weight:600">{{ $row['code'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['wallet_balances'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['wallets'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['collected'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['pending_cash'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['refunded'] }}</td>
-                            <td style="padding:.5rem;text-align:end;font-variant-numeric:tabular-nums">{{ $row['unsettled_cash'] }}</td>
-                            <td style="padding:.5rem">
+                        <tr>
+                            <td><span class="wf-ltr" style="font-weight:600">{{ $row['code'] }}</span></td>
+                            <td class="wf-end wf-ltr">{{ $row['wallet_balances'] }}</td>
+                            <td class="wf-end wf-ltr">{{ $row['wallets'] }}</td>
+                            <td class="wf-end wf-ltr">{{ $row['collected'] }}</td>
+                            <td class="wf-end wf-ltr">{{ $row['pending_cash'] }}</td>
+                            <td class="wf-end wf-ltr">{{ $row['refunded'] }}</td>
+                            <td class="wf-end wf-ltr">{{ $row['unsettled_cash'] }}</td>
+                            <td>
                                 <x-filament::badge :color="$row['ledger_consistent'] ? 'success' : 'danger'">
                                     {{ $row['ledger_consistent'] ? __('admin.dashboard_stats.ledger_ok') : __('admin.dashboard_stats.ledger_mismatch') }}
                                 </x-filament::badge>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="padding:.5rem;opacity:.7">—</td></tr>
+                        <tr><td colspan="8" style="color:var(--wf-text-3)">—</td></tr>
                     @endforelse
                 </tbody>
             </table>

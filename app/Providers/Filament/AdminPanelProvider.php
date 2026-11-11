@@ -15,6 +15,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -42,19 +43,24 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('admin_web')
-            // WAFFRLI (2026-11-04): official brand — logo assets from the supplied
-            // artwork (public/images/brand), palette sampled from it
-            // (App\Filament\Support\Brand), compiled custom theme
+            // WAFFRLI (2026-11-04, redesigned 2026-11-11): official brand logo
+            // (public/images/brand) on a neutral graphite panel with restrained
+            // brand green (App\Filament\Support\Brand), compiled custom theme
             // (resources/css/filament/admin/theme.css → public/css/filament/admin/theme.css),
             // self-hosted IBM Plex Sans Arabic, dark mode by default.
             ->brandName(fn () => __('admin.brand.name'))
             ->brandLogo(fn () => view('filament.brand.logo'))
-            ->brandLogoHeight('2.75rem')
+            ->brandLogoHeight('2.25rem')
             ->favicon(asset('images/brand/favicon-48.png'))
             ->colors(Brand::colors())
             ->font('IBM Plex Sans Arabic', url: asset('fonts/ibm-plex-sans-arabic/font.css'), provider: LocalFontProvider::class)
             ->theme(asset('css/filament/admin/theme.css'))
             ->defaultThemeMode(ThemeMode::Dark)
+            // Layout: wider working area for tables and the dashboard (1536px
+            // instead of 1280px), a slimmer sidebar that can collapse to icons.
+            ->maxContentWidth(Width::ScreenTwoExtraLarge)
+            ->sidebarWidth('17rem')
+            ->sidebarCollapsibleOnDesktop()
             ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand.head'))
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.brand.locale-switcher'))

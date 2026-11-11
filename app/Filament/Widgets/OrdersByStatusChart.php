@@ -14,9 +14,12 @@ class OrdersByStatusChart extends ChartWidget
 {
     use \App\Filament\Concerns\RefreshesOnOrderEvents;
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 2;
 
-    protected ?string $maxHeight = '260px';
+    /** One third of a wide dashboard, beside the pending queue. */
+    protected int|string|array $columnSpan = ['default' => 'full', 'xl' => 1];
+
+    protected ?string $maxHeight = '300px';
 
     public static function canView(): bool
     {
@@ -39,15 +42,37 @@ class OrdersByStatusChart extends ChartWidget
     protected function getData(): array
     {
         $counts = self::counts();
-        $colours = ['pending' => '#f59e0b', 'accepted' => '#0ea5e9', 'assigned' => '#d97706', 'picked_up' => '#2563eb', 'delivered' => '#16a34a', 'cancelled' => '#dc2626'];
+        // Same meaning as the status badges (OrderStatus::color()): waiting
+        // amber, confirmed blue, on the road indigo (light: assigned, deep:
+        // picked up; same as the driver map), done green, cancelled red.
+        $colours = ['pending' => '#f59e0b', 'accepted' => '#3b82f6', 'assigned' => '#a5b4fc', 'picked_up' => '#6366f1', 'delivered' => '#10b981', 'cancelled' => '#ef4444'];
 
         return [
             'datasets' => [[
                 'label' => __('admin.dashboard_stats.orders'),
                 'data' => array_values($counts),
                 'backgroundColor' => array_map(fn ($status) => $colours[$status], array_keys($counts)),
+                'borderWidth' => 0,
+                'borderRadius' => 4,
+                'maxBarThickness' => 32,
             ]],
             'labels' => array_map(fn ($status) => OrderStatus::from($status)->label(), array_keys($counts)),
+        ];
+    }
+
+    /** Quiet axes on the neutral card; the bars carry the meaning. */
+    protected function getOptions(): array
+    {
+        $grid = 'rgba(148, 163, 184, 0.12)';
+        $text = 'rgba(148, 163, 184, 0.9)';
+
+        return [
+            'plugins' => ['legend' => ['display' => false]],
+            'scales' => [
+                'x' => ['grid' => ['display' => false], 'border' => ['display' => false], 'ticks' => ['color' => $text]],
+                'y' => ['beginAtZero' => true, 'grid' => ['color' => $grid], 'border' => ['display' => false],
+                    'ticks' => ['color' => $text, 'precision' => 0]],
+            ],
         ];
     }
 

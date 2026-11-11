@@ -5,45 +5,50 @@ namespace App\Filament\Support;
 use Filament\Support\Colors\Color;
 
 /**
- * WAFFRLI (2026-11-04) — brand tokens sampled from the official logo
- * (public/images/brand, source: the supplied WAFFRLI | وفرلي artwork).
+ * WAFFRLI admin palette (redesign 2026-11-11). The official logo
+ * (public/images/brand, the supplied WAFFRLI | وفرلي artwork) gives the
+ * brand green and gold; the panel itself is neutral graphite so that green
+ * means "primary action / active item" and gold stays a rare brand detail.
  *
- *  forest   #071B12  page background in dark mode (logo card #01160D–#153725)
- *  emerald  #20A053  logo ribbon; primary actions use darker shades for
- *                    AA contrast with white text (600 #0E7A44 = 5.4:1)
- *  gold     #D9AD59  logo lettering; brand highlights only (never for
- *                    destructive or financial confirmation buttons)
- *  ivory    #F6EDD6  light accents / text on forest
+ *  ink      #0D1117  page background in dark mode (gray-950)
+ *  surface  #161C24  cards, tables, top bar (gray-900)
+ *  primary  #168A63  brand green for actions and the active state
+ *                    (white text 4.6:1); 400 #3FB383 on dark surfaces
+ *  gold     #C5A15B  muted logo gold: brand lockup details only
  *
- * The same values are mirrored as CSS custom properties in
- * resources/css/filament/admin/theme.css (--wf-*).
+ * The same values are mirrored as CSS custom properties (--wf-*) in
+ * resources/css/filament/admin/theme.css.
  */
 final class Brand
 {
-    public const FOREST = '#071B12';
+    /** Dark page background; also the browser theme colour. */
+    public const INK = '#0D1117';
 
-    public const EMERALD = '#20A053';
+    public const EMERALD = '#168A63';
 
-    public const GOLD = '#D9AD59';
+    public const GOLD = '#C5A15B';
 
-    public const IVORY = '#F6EDD6';
-
-    /** @var array<int, string> */
+    /** Brand green. @var array<int, string> */
     public const PRIMARY = [
-        50 => '#EEF8F1', 100 => '#D3EEDC', 200 => '#A8DDB8', 300 => '#73C68E', 400 => '#3BB463',
-        500 => '#157F47', 600 => '#0E7A44', 700 => '#0B6B3D', 800 => '#0A5533', 900 => '#0A452B', 950 => '#052817',
+        50 => '#EDF8F3', 100 => '#D3EFE2', 200 => '#A7DFC5', 300 => '#72C9A2', 400 => '#3FB383',
+        500 => '#22A875', 600 => '#168A63', 700 => '#127152', 800 => '#105A43', 900 => '#0E4A38', 950 => '#072A20',
     ];
 
-    /** @var array<int, string> */
+    /** Muted logo gold (brand details only, never a status). @var array<int, string> */
     public const GOLD_PALETTE = [
-        50 => '#FBF6EA', 100 => '#F6EBCF', 200 => '#EDD6A0', 300 => '#E3BE70', 400 => '#D9AD59',
-        500 => '#C9973F', 600 => '#A97A2E', 700 => '#87602A', 800 => '#6E4E27', 900 => '#5B4123', 950 => '#332311',
+        50 => '#FAF6EC', 100 => '#F2E9D2', 200 => '#E5D3A8', 300 => '#D6BA7E', 400 => '#C5A15B',
+        500 => '#AE8945', 600 => '#8E6F38', 700 => '#71582F', 800 => '#5A4628', 900 => '#4A3A23', 950 => '#2A2013',
     ];
 
-    /** Forest-tinted neutrals: warm ivory surfaces in light mode, forest in dark mode. @var array<int, string> */
+    /**
+     * Neutral graphite with a faint cool tint: the surfaces of the whole panel
+     * (light mode: 50 page, white cards; dark mode: 950 page, 900 cards).
+     *
+     * @var array<int, string>
+     */
     public const GRAY = [
-        50 => '#F7F5EE', 100 => '#EEEBE1', 200 => '#DCD9CD', 300 => '#C5CABF', 400 => '#9AA59B',
-        500 => '#61705F', 600 => '#4B5A50', 700 => '#34443A', 800 => '#1C3127', 900 => '#0F261B', 950 => '#071B12',
+        50 => '#F6F7F9', 100 => '#ECEEF1', 200 => '#DADEE4', 300 => '#BAC2CC', 400 => '#8F9AA7',
+        500 => '#6C7785', 600 => '#4F5967', 700 => '#353E4A', 800 => '#1F2731', 900 => '#161C24', 950 => '#0D1117',
     ];
 
     /** @return array<string, array<int, string>> Filament panel colors */
@@ -55,10 +60,14 @@ final class Brand
             'primary' => $oklch(self::PRIMARY),
             'gray' => $oklch(self::GRAY),
             'gold' => $oklch(self::GOLD_PALETTE),
-            'success' => $oklch(self::PRIMARY),
-            'danger' => Color::Red,
+            // Semantic states, distinct from the brand green so that "done"
+            // and "primary action" never look alike.
+            'success' => Color::Emerald,
             'warning' => Color::Amber,
-            'info' => Color::Sky,
+            'danger' => Color::Red,
+            'info' => Color::Blue,
+            // Work under way on the road (an order assigned or picked up).
+            'transit' => Color::Indigo,
         ];
     }
 }

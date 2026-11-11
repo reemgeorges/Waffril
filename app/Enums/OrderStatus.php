@@ -20,12 +20,13 @@ enum OrderStatus: string
         return __('admin.order_status.'.$this->value);
     }
 
+    /** Admin-panel badge colour (display only): waiting, confirmed, on the road, done, cancelled. */
     public function color(): string
     {
         return match ($this) {
             self::Pending => 'warning',
             self::Accepted => 'info',
-            self::Assigned, self::PickedUp => 'primary',
+            self::Assigned, self::PickedUp => 'transit',
             self::Delivered => 'success',
             self::Cancelled => 'danger',
         };

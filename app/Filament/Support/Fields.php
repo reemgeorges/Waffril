@@ -82,4 +82,29 @@ final class Fields
 
         return trim(($currency?->code ?? '').' '.(str_starts_with($value, '-') ? '−' : '').$text);
     }
+
+    /**
+     * Display a stored decimal without its storage padding: thousands
+     * separator, trailing fraction zeros removed, nothing rounded
+     * ("1.000000000000" → "1", "13000.500000000000" → "13,000.5",
+     * "7.140" → "7.14"). String-based, so no float precision is lost.
+     * Display only: stored values and calculations are untouched.
+     */
+    public static function formatDecimal(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+        $text = trim((string) $value);
+        if (! preg_match('/^-?\d+(\.\d+)?$/', $text)) {
+            return $text;
+        }
+        $negative = str_starts_with($text, '-');
+        [$int, $fraction] = array_pad(explode('.', ltrim($text, '-')), 2, '');
+        $int = ltrim($int, '0') === '' ? '0' : ltrim($int, '0');
+        $grouped = strrev(implode(',', str_split(strrev($int), 3)));
+        $fraction = rtrim($fraction, '0');
+
+        return ($negative && ($int !== '0' || $fraction !== '') ? '−' : '').$grouped.($fraction !== '' ? '.'.$fraction : '');
+    }
 }
