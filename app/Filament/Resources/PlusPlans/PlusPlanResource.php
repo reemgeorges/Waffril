@@ -51,7 +51,9 @@ class PlusPlanResource extends AdminResource
                 Fields::translatable('description', required: false, multiline: true),
                 Grid::make(3)->schema([
                     TextInput::make('default_duration_days')->label(__('admin.fields.default_duration_days'))->integer()->minValue(1)->maxValue(3650)->default(30)->required(),
-                    TextInput::make('free_deliveries_per_cycle')->label(__('admin.fields.free_deliveries_per_cycle'))->integer()->minValue(0)->maxValue(1000)->default(0)->required(),
+                    // 2026-11-12: new cycles use the platform setting (Settings → PLUS); kept read-only.
+                    TextInput::make('free_deliveries_per_cycle')->label(__('admin.fields.free_deliveries_per_cycle'))->integer()->default(0)
+                        ->disabled()->dehydrated(false)->helperText(__('admin.plus.free_deliveries_global_help')),
                     Fields::money('display_price', required: false)->helperText(__('admin.plus.display_price_help')),
                 ]),
                 Grid::make(2)->schema([

@@ -9,6 +9,8 @@ use App\Models\PlusMembership;
 use App\Models\PlusPlan;
 use App\Models\PlusRequest;
 use App\Services\Customer\CustomerCatalogService;
+use App\Services\Plus\PlusService;
+use App\Support\Settings\PlatformSettings;
 use App\Support\Localization\Label;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -24,9 +26,10 @@ class CustomerPlusController extends CustomerController
 {
     public function plans()
     {
-        return $this->respond(fn () => ['plans' => PlusPlan::query()->where('is_active', true)->with('storeDiscounts.store')->orderBy('sort_order')->get()->map(fn ($p) => [
+        return $this->respond(fn () => ['program' => self::program(), 'plans' => PlusPlan::query()->where('is_active', true)->with('storeDiscounts.store')->orderBy('sort_order')->get()->map(fn ($p) => [
             'id' => $p->id, 'code' => $p->code, 'name' => $p->name, 'description' => $p->description,
-            'duration_days' => $p->default_duration_days, 'free_deliveries_per_cycle' => $p->free_deliveries_per_cycle,
+            // What a newly confirmed cycle receives (platform setting since 2026-11-12).
+            'duration_days' => $p->default_duration_days, 'free_deliveries_per_cycle' => PlusService::freeDeliveriesLimit(),
             'display_price' => $p->display_price !== null ? (string) $p->display_price : null,
             'store_benefits' => $p->storeDiscounts->where('is_active', true)->map(fn ($d) => [
                 'store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type,
@@ -34,6 +37,31 @@ class CustomerPlusController extends CustomerController
                 'min_order' => $d->min_order_amount !== null ? (string) $d->min_order_amount : null,
             ])->values(),
         ])->values()]);
+    }
+
+    /**
+     * The PLUS offer as configured by the admins: benefits for new cycles and
+     * how to subscribe. Subscribing = messaging the admins on WhatsApp (paid
+     * off-platform); it never activates anything — an admin confirms the cycle.
+     *
+     * @return array<string, mixed>
+     */
+    public static function program(): array
+    {
+        $whatsapp = PlatformSettings::get('plus.subscription_whatsapp');
+        $message = (string) (PlatformSettings::get('plus.subscription_message') ?: PlatformSettings::definitions()['plus.subscription_message']['default']);
+        $number = is_string($whatsapp) && preg_match('/^\+[1-9]\d{6,14}$/', $whatsapp) ? $whatsapp : null;
+
+        return [
+            'free_deliveries_per_cycle' => PlusService::freeDeliveriesLimit(),
+            'delivery_discount_percent' => PlusService::deliveryDiscountPercent(),
+            'subscription' => [
+                'whatsapp_number' => $number,
+                'message' => $message,
+                // wa.me wants digits only; null when no number is configured.
+                'whatsapp_url' => $number ? 'https://wa.me/'.ltrim($number, '+').'?text='.rawurlencode($message) : null,
+            ],
+        ];
     }
 
     public function membership(Request $request)
@@ -51,6 +79,7 @@ class CustomerPlusController extends CustomerController
                 'starts_at' => $c->starts_at->toIso8601String(), 'ends_at' => $c->ends_at->toIso8601String(),
                 'free_deliveries_total' => $c->free_deliveries_total, 'free_deliveries_used' => $c->free_deliveries_used,
                 'free_deliveries_remaining' => max(0, $c->free_deliveries_total - $c->free_deliveries_used),
+                'delivery_discount_percent' => PlusService::cycleDeliveryDiscountPercent($c) + 0,
                 'store_discounts' => $c->discounts->map(fn ($d) => [
                     'store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type,
                     'discount_value' => (string) $d->snapshot_discount_value, 'max_discount' => $d->snapshot_max_discount_amount !== null ? (string) $d->snapshot_max_discount_amount : null,

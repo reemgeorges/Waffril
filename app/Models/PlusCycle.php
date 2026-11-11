@@ -37,6 +37,7 @@ class PlusCycle extends BasePlatformModel
         'snapshot_currency_id' => 'snapshot_currency_id',
         'free_deliveries_total' => 'free_deliveries_total',
         'free_deliveries_used' => 'free_deliveries_used',
+        'delivery_discount_percent' => 'delivery_discount_percent',
         'confirmed_by_admin_id' => 'confirmed_by_admin_id',
         'confirmed_at' => 'confirmed_at',
     ];
@@ -51,6 +52,7 @@ class PlusCycle extends BasePlatformModel
         'cycle_number' => 'integer',
         'free_deliveries_total' => 'integer',
         'free_deliveries_used' => 'integer',
+        'delivery_discount_percent' => 'decimal:2',
     ];
 
     protected static function booted(): void

@@ -110,10 +110,22 @@ class CartService
                 $preview = [
                     'currency' => $currency->code,
                     'subtotal' => $fmt($priced['subtotal']), 'offer_discount' => $fmt($priced['offer_discount_total']),
-                    'plus_discount' => $fmt($priced['plus_discount_amount']), 'delivery_fee' => $fmt($priced['delivery_fee']),
-                    'delivery_fee_original' => $fmt($priced['delivery_fee_original']), 'free_delivery_available' => $priced['free_delivery_available'],
+                    'plus_discount' => $fmt($priced['plus_discount_amount']), 'plus_discount_percent' => $priced['plus_discount_percent'],
+                    'delivery_fee' => $fmt($priced['delivery_fee']),
+                    'delivery_fee_original' => $fmt($priced['delivery_fee_original']),
+                    'plus_delivery_discount_percent' => $priced['plus_delivery_discount_percent'],
+                    'plus_delivery_discount' => $fmt($priced['plus_delivery_discount_amount']),
+                    'free_delivery_available' => $priced['free_delivery_available'],
+                    'free_deliveries_remaining' => $priced['free_deliveries_remaining'],
                     'delivery_covered' => $priced['delivery_covered'], 'meets_min_order' => $priced['meets_min_order'], 'total' => $fmt($priced['total']),
+                    // PLUS (2026-11-12): the server-priced variant when the
+                    // customer uses a free delivery at checkout (read-only).
+                    'with_free_delivery' => null,
                 ];
+                if ($priced['free_delivery_available'] && $priced['delivery_covered']) {
+                    $free = $this->pricing->price($user, $cart->branch, $lines, $currency, $address, true);
+                    $preview['with_free_delivery'] = ['delivery_fee' => $fmt($free['delivery_fee']), 'total' => $fmt($free['total'])];
+                }
             } catch (Throwable $e) {
                 $issue = $e->getMessage();
             }

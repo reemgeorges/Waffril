@@ -192,10 +192,16 @@ class CheckoutService
             'subtotal' => Money::toStorage($priced['subtotal']),
             'offer_discount_total' => Money::toStorage($priced['offer_discount_total']),
             'plus_discount_amount' => Money::toStorage($priced['plus_discount_amount']),
+            'plus_discount_percent' => $priced['plus_discount_percent'],
             'delivery_fee_original' => Money::toStorage($priced['delivery_fee_original']),
             'delivery_fee' => Money::toStorage($priced['delivery_fee']),
+            'plus_delivery_discount_percent' => $priced['plus_delivery_discount_percent'],
+            'plus_delivery_discount_amount' => Money::toStorage($priced['plus_delivery_discount_amount']),
             'total' => Money::toStorage($priced['total']),
-            'plus_cycle_id' => ($priced['free_delivery_applied'] || $priced['plus_cycle_discount']) ? $priced['plus_cycle']->id : null,
+            // The cycle that granted any PLUS benefit on this order.
+            'plus_cycle_id' => ($priced['free_delivery_applied'] || $priced['plus_cycle_discount']
+                || ! $priced['plus_discount_amount']->isZero() || ! $priced['plus_delivery_discount_amount']->isZero())
+                ? $priced['plus_cycle']->id : null,
             'plus_cycle_discount_id' => $priced['plus_cycle_discount']?->id,
             'free_delivery_applied' => $priced['free_delivery_applied'],
             'customer_notes' => $data['notes'] ?? null,

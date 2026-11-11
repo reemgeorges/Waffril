@@ -52,6 +52,10 @@ class PlusCycleResource extends AdminResource
                 TextEntry::make('snapshotCurrency.code')->label(__('admin.fields.currency')),
                 TextEntry::make('free_deliveries_total')->label(__('admin.fields.free_deliveries_total')),
                 TextEntry::make('free_deliveries_used')->label(__('admin.fields.free_deliveries_used')),
+                TextEntry::make('free_deliveries_remaining')->label(__('admin.plus.free_deliveries_remaining'))
+                    ->state(fn (PlusCycle $record) => max(0, $record->free_deliveries_total - $record->free_deliveries_used)),
+                TextEntry::make('delivery_discount_percent')->label(__('admin.plus.delivery_discount_after_allowance'))
+                    ->state(fn (PlusCycle $record) => \App\Services\Plus\PlusService::cycleDeliveryDiscountPercent($record) + 0)->suffix('%'),
                 TextEntry::make('orders_count')->label(__('admin.plus.orders_using_cycle'))->state(fn (PlusCycle $record) => $record->orders()->count()),
                 TextEntry::make('confirmedBy.name')->label(__('admin.fields.confirmed_by')),
                 TextEntry::make('confirmed_at')->label(__('admin.fields.confirmed_at'))->dateTime(),

@@ -11,10 +11,13 @@ use App\Models\Offer;
 use App\Models\Order;
 use App\Models\PlusCycle;
 use App\Models\PlusCycleDiscount;
+use App\Models\PlusStoreDiscount;
+use App\Models\Store;
 use App\Models\ProductOption;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\Functional\Delivery\DeliveryFeeResolver;
+use App\Services\Plus\PlusService;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -32,10 +35,16 @@ use Illuminate\Support\Collection;
  *  - Options must belong to the product, be active, available at the
  *    branch, and respect each group's min/max selection and the option's
  *    max quantity.
- *  - A PLUS store discount (from the member's active cycle SNAPSHOT) takes
- *    priority over public offers: when it applies, product offers are not
- *    applied to that order. Free delivery may combine with it.
- *  - Delivery fee: the platform-wide quote for branch → address.
+ *  - A PLUS store discount takes priority over public offers: when it
+ *    applies, product offers are not applied to that order. Source, in
+ *    order: the member's active cycle SNAPSHOT (plan rule or approved member
+ *    exception) for that store; otherwise the store's general
+ *    plus_discount_percent (live, snapshotted on the order), unless an
+ *    approved exception excludes the member. Merchandise only, never delivery.
+ *  - Delivery fee: the platform-wide quote for branch → address. PLUS: a
+ *    free delivery (when requested and the cycle has one left); once the
+ *    cycle's free deliveries are used up, the cycle's delivery discount %
+ *    (PlusService::cycleDeliveryDiscountPercent). Never both, never < 0.
  *  - Nothing submitted by a client (prices, totals) is trusted.
  */
 class OrderPricingService
@@ -109,6 +118,12 @@ class OrderPricingService
         $cycle = PlusCycle::query()->where('user_id', $user->id)->where('status', PlusCycle::STATUS_ACTIVE)
             ->where('starts_at', '<=', now())->where('ends_at', '>', now())->first();
         [$cycleDiscount, $plusDiscount] = $this->plusDiscount($cycle, $branch->store_id, $subtotal, $convert, $currency->decimals);
+        $plusPercent = $cycleDiscount && $cycleDiscount->discount_type === 'percent' ? (string) $cycleDiscount->op_discount_value : null;
+        // The store's general PLUS discount, only when the cycle snapshot has
+        // no rule for this store and the member is not excluded from it.
+        if ($cycle !== null && $plusDiscount->isZero() && ! $this->cycleHasStoreRule($cycle, $branch->store_id)) {
+            [$plusPercent, $plusDiscount] = $this->storePlusDiscount($cycle, $branch->store, $subtotal, $currency->decimals);
+        }
 
         // Public offers only when no PLUS discount applies (PLUS has priority).
         $offerTotal = BigDecimal::zero();
@@ -128,9 +143,26 @@ class OrderPricingService
         // Delivery.
         $quote = $address ? $this->fees->quote($branch->city_id, (float) $branch->lat, (float) $branch->lng, (float) $address->lat, (float) $address->lng) : null;
         $feeOriginal = $quote && $quote->covered ? $convert($quote->fee) : null;
-        $freeDeliveryAvailable = $cycle !== null && $cycle->free_deliveries_used < $cycle->free_deliveries_total;
+        $freeRemaining = $cycle !== null ? max(0, $cycle->free_deliveries_total - $cycle->free_deliveries_used) : 0;
+        $freeDeliveryAvailable = $freeRemaining > 0;
         $free = $wantFreeDelivery && $freeDeliveryAvailable && $feeOriginal !== null;
         $fee = $free ? BigDecimal::zero() : ($feeOriginal ?? BigDecimal::zero());
+
+        // PLUS delivery discount: only once the cycle's free deliveries are
+        // used up (free deliveries come first; never both on one fee).
+        $deliveryPercent = null;
+        $deliveryDiscount = BigDecimal::zero();
+        if ($cycle !== null && ! $free && ! $freeDeliveryAvailable && $fee->isPositive()) {
+            $deliveryPercent = PlusService::cycleDeliveryDiscountPercent($cycle);
+            $deliveryDiscount = Money::roundTo($fee->multipliedBy($deliveryPercent)->dividedBy(100, 8, RoundingMode::HALF_UP), $currency->decimals);
+            if ($deliveryDiscount->isGreaterThan($fee)) {
+                $deliveryDiscount = $fee;
+            }
+            $fee = $fee->minus($deliveryDiscount);
+            if ($deliveryDiscount->isZero()) {
+                $deliveryPercent = null;
+            }
+        }
 
         $total = $subtotal->minus($offerTotal)->minus($plusDiscount)->plus($fee);
         $minOrder = $branch->min_order_amount !== null ? $convert((string) $branch->min_order_amount) : null;
@@ -139,6 +171,9 @@ class OrderPricingService
             'currency' => $currency, 'default_currency' => $default, 'exchange_rate' => $rate,
             'items' => $items, 'subtotal' => $subtotal, 'offer_discount_total' => $offerTotal,
             'plus_cycle' => $cycle, 'plus_cycle_discount' => $cycleDiscount, 'plus_discount_amount' => $plusDiscount,
+            'plus_discount_percent' => $plusDiscount->isZero() ? null : $plusPercent,
+            'plus_delivery_discount_percent' => $deliveryPercent, 'plus_delivery_discount_amount' => $deliveryDiscount,
+            'free_deliveries_remaining' => $freeRemaining,
             'quote' => $quote, 'delivery_covered' => $quote?->covered ?? false,
             'delivery_fee_original' => $feeOriginal ?? BigDecimal::zero(), 'delivery_fee' => $fee,
             'free_delivery_available' => $freeDeliveryAvailable, 'free_delivery_applied' => $free,
@@ -203,6 +238,36 @@ class OrderPricingService
         }
 
         return $best;
+    }
+
+    /** Whether the cycle snapshot has its own rule (plan or member exception) for the store. */
+    protected function cycleHasStoreRule(PlusCycle $cycle, int $storeId): bool
+    {
+        return PlusCycleDiscount::query()->where('plus_cycle_id', $cycle->id)->where('store_id', $storeId)->exists();
+    }
+
+    /**
+     * The store's general PLUS percentage on the merchandise subtotal for an
+     * active member (0 when unset or when an approved exception excludes the
+     * member from this store).
+     *
+     * @return array{0: ?string, 1: BigDecimal} [percent, discount]
+     */
+    protected function storePlusDiscount(PlusCycle $cycle, ?Store $store, BigDecimal $base, int $decimals): array
+    {
+        $percent = $store ? BigDecimal::of((string) ($store->plus_discount_percent ?? '0')) : BigDecimal::zero();
+        if (! $percent->isPositive() || ! $base->isPositive()) {
+            return [null, BigDecimal::zero()];
+        }
+        $excluded = PlusStoreDiscount::query()->where('plus_membership_id', $cycle->plus_membership_id)
+            ->where('store_id', $store->id)->where('is_active', true)->where('is_excluded', true)->exists();
+        if ($excluded) {
+            return [null, BigDecimal::zero()];
+        }
+        $percent = $percent->isGreaterThan(100) ? BigDecimal::of(100) : $percent;
+        $discount = Money::roundTo($base->multipliedBy($percent)->dividedBy(100, 8, RoundingMode::HALF_UP), $decimals);
+
+        return [(string) $percent->stripTrailingZeros(), $discount->isGreaterThan($base) ? $base : $discount];
     }
 
     protected function plusDiscount(?PlusCycle $cycle, int $storeId, BigDecimal $base, callable $convert, int $decimals): array

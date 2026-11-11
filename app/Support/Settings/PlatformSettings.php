@@ -41,6 +41,16 @@ final class PlatformSettings
             'dispatch.location_fresh_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120],
             'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
             'plus.renewal_request_lead_days' => ['group' => 'plus', 'type' => 'int', 'default' => 3],
+            // PLUS benefits (2026-11-12). Applied to cycles confirmed from now on
+            // (each cycle snapshots them); a member's approved free-delivery
+            // override still wins over the global allowance.
+            'plus.free_deliveries_limit' => ['group' => 'plus', 'type' => 'int', 'default' => 10, 'min' => 0, 'max' => 100],
+            // % off the delivery fee once a cycle's free deliveries are used up.
+            'plus.delivery_discount_percentage' => ['group' => 'plus', 'type' => 'int', 'default' => 50, 'min' => 0, 'max' => 100],
+            // Subscribing = contacting the admins on WhatsApp (paid off-platform;
+            // an admin activates the membership). E.164; null = action disabled.
+            'plus.subscription_whatsapp' => ['group' => 'plus', 'type' => 'phone', 'default' => null],
+            'plus.subscription_message' => ['group' => 'plus', 'type' => 'string', 'default' => 'مرحبا ارغب في الاشتراك في وفرلي بلس'],
         ];
     }
 

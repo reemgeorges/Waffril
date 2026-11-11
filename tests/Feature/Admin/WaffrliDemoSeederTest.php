@@ -167,7 +167,8 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         }
         $member = User::query()->where('email', DemoContext::email('customer-01'))->firstOrFail();
         [$current, $next] = PlusCycle::query()->where('user_id', $member->id)->orderBy('cycle_number')->get()->all();
-        $this->assertSame(5, $current->free_deliveries_total);
+        // 2026-11-12: new cycles get the platform allowance (plus.free_deliveries_limit).
+        $this->assertSame(\App\Services\Plus\PlusService::freeDeliveriesLimit(), $current->free_deliveries_total);
         $this->assertSame(6, $next->free_deliveries_total, 'The override applies from the next cycle only.');
         $this->assertSame(3, PlusCycleDiscount::query()->where('plus_cycle_id', $current->id)->count());
         $this->assertSame(['exception', 'plan'], PlusCycleDiscount::query()->where('plus_cycle_id', $next->id)->orderBy('source')->pluck('source')->unique()->values()->all());

@@ -146,6 +146,7 @@ return [
         ],
     ],
     'fields' => [
+        'plus_discount_percent' => 'PLUS discount (%)',
         'account_status' => 'Account status',
         'action' => 'Action',
         'actor' => 'By',
@@ -447,6 +448,7 @@ return [
         'wrong_request_type' => 'Wrong request type for this action.',
     ],
     'help' => [
+        'plus_discount_percent' => 'Discount on the merchandise subtotal for ACTIVE WAFFRLI PLUS members only (never on delivery). 0 = none. Shown to customers as a PLUS benefit.',
         'boundary' => 'GeoJSON Polygon with one closed ring of [longitude, latitude] pairs, e.g. {"type":"Polygon","coordinates":[[[36.2,33.5],[36.3,33.5],[36.3,33.6],[36.2,33.5]]]}',
         'default_currency_amount' => 'Amount in the default currency.',
         'e164' => 'International format, e.g. +963912345678',
@@ -529,6 +531,9 @@ return [
         'status_reversed' => 'Reversed',
     ],
     'plus' => [
+        'free_deliveries_global_help' => 'New cycles use the platform setting "Free deliveries per cycle" (Settings → PLUS); confirmed cycles keep their snapshot.',
+        'free_deliveries_remaining' => 'Free deliveries remaining',
+        'delivery_discount_after_allowance' => 'Delivery discount after free deliveries',
         'add_exception' => 'Add / update exception',
         'approve_new_help' => 'Approving confirms the first cycle with a snapshot of the plan benefits. Payment and agreement happen outside the app.',
         'approve_renew_help' => 'Confirms the next cycle (starts when the current one ends).',
@@ -645,6 +650,10 @@ return [
             ],
             'plus' => [
                 'renewal_request_lead_days' => 'Raise renewal requests this many days before cycle end',
+                'free_deliveries_limit' => 'Free deliveries per cycle (new cycles)',
+                'delivery_discount_percentage' => 'Delivery-fee discount after free deliveries (%)',
+                'subscription_whatsapp' => 'Subscription WhatsApp number',
+                'subscription_message' => 'Prefilled subscription message',
             ],
         ],
     ],

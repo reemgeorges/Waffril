@@ -112,6 +112,8 @@ class CustomerCatalogService
             'lat' => (float) $branch->lat, 'lng' => (float) $branch->lng,
             'store' => [
                 'id' => $branch->store->id, 'name' => $branch->store->name, 'logo_url' => $this->url($branch->store->logo),
+                // PLUS members' discount at this store (null = none); a PLUS-only benefit.
+                'plus_discount_percent' => $branch->store->plusDiscountPercentText(),
                 'categories' => $branch->store->categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->values(),
             ],
             'is_open_now' => $this->hours->isOpenAt($branch, $now),

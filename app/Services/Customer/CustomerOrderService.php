@@ -115,7 +115,10 @@ class CustomerOrderService
             ])->values(),
             'amounts' => [
                 'subtotal' => $fmt($order->subtotal), 'offer_discount' => $fmt($order->offer_discount_total), 'plus_discount' => $fmt($order->plus_discount_amount),
+                'plus_discount_percent' => $order->plus_discount_percent !== null ? self::percent($order->plus_discount_percent) : null,
                 'delivery_fee_original' => $fmt($order->delivery_fee_original), 'delivery_fee' => $fmt($order->delivery_fee),
+                'plus_delivery_discount_percent' => $order->plus_delivery_discount_percent !== null ? self::percent($order->plus_delivery_discount_percent) : null,
+                'plus_delivery_discount' => $fmt($order->plus_delivery_discount_amount ?? '0'),
                 'free_delivery_applied' => (bool) $order->free_delivery_applied, 'total' => $fmt($order->total),
             ],
             'payments' => $order->payments->map(fn ($p) => [
@@ -134,5 +137,16 @@ class CustomerOrderService
             'cancellation' => $order->cancellation ? ['by' => $order->cancellation->cancelled_by, 'by_label' => Label::of('order_actor', $order->cancellation->cancelled_by), 'reason' => $order->cancellation->reason_code, 'reason_label' => Label::of('cancellation_reason', $order->cancellation->reason_code), 'at' => $order->cancellation->created_at?->toIso8601String()] : null,
             'cancellation_requests' => $order->cancellationRequests->map(fn ($r) => ['status' => $r->status, 'status_label' => Label::of('request_status', $r->status), 'note' => $r->customer_note, 'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String()])->values(),
         ];
+    }
+
+    /** "5.00" → "5", "2.50" → "2.5" (a stored percentage, display only). */
+    protected static function percent(mixed $value): string
+    {
+        $text = (string) $value;
+        if (str_contains($text, '.')) {
+            $text = rtrim(rtrim($text, '0'), '.');
+        }
+
+        return $text === '' ? '0' : $text;
     }
 }

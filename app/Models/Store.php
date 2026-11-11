@@ -20,13 +20,14 @@ class Store extends BaseModel
         'contact_whatsapp' => 'contact_whatsapp',
         'is_active' => 'is_active',
         'sort_order' => 'sort_order',
+        'plus_discount_percent' => 'plus_discount_percent',
     ];
 
     protected $translatable = ['name', 'description'];
 
     protected array $fileAttributes = ['logo' => 'single'];
 
-    protected $casts = ['is_active' => 'boolean', 'sort_order' => 'integer'];
+    protected $casts = ['is_active' => 'boolean', 'sort_order' => 'integer', 'plus_discount_percent' => 'decimal:2'];
 
     public function categories(): BelongsToMany
     {
@@ -51,5 +52,20 @@ class Store extends BaseModel
     public function plusStoreDiscounts(): HasMany
     {
         return $this->hasMany(PlusStoreDiscount::class);
+    }
+
+    /**
+     * The store's general PLUS discount for display ("5", "2.5"), or null
+     * when the store has none. Granted only to active PLUS members
+     * (OrderPricingService); the catalog shows it as a PLUS benefit.
+     */
+    public function plusDiscountPercentText(): ?string
+    {
+        $text = (string) ($this->plus_discount_percent ?? '0');
+        if (str_contains($text, '.')) {
+            $text = rtrim(rtrim($text, '0'), '.');
+        }
+
+        return $text === '' || (float) $text <= 0 ? null : $text;
     }
 }

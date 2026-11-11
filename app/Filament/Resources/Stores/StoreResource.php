@@ -64,6 +64,14 @@ class StoreResource extends AdminResource
                     TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0),
                     Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
                 ]),
+                // WAFFRLI PLUS (2026-11-12): discount on the merchandise subtotal for
+                // ACTIVE members only (never delivery). A plan rule or an approved
+                // member exception for this store takes precedence.
+                Grid::make(2)->schema([
+                    TextInput::make('plus_discount_percent')->label(__('admin.fields.plus_discount_percent'))
+                        ->numeric()->minValue(0)->maxValue(100)->step(0.01)->rule('decimal:0,2')->default(0)->suffix('%')->required()
+                        ->helperText(__('admin.help.plus_discount_percent')),
+                ]),
             ]),
         ]);
     }
@@ -77,6 +85,8 @@ class StoreResource extends AdminResource
                 TextColumn::make('categories.name')->label(__('admin.resources.store_category.plural'))->badge(),
                 TextColumn::make('branches_count')->counts('branches')->label(__('admin.resources.branch.plural')),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.product.plural')),
+                TextColumn::make('plus_discount_percent')->label(__('admin.fields.plus_discount_percent'))->alignCenter()->width('1%')
+                    ->formatStateUsing(fn ($state, $record) => $record->plusDiscountPercentText() !== null ? $record->plusDiscountPercentText().'%' : '—')->sortable(),
                 ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
                     ->disabled(fn ($record) => ! static::can('update', $record)),
             ])

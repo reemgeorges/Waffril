@@ -34,9 +34,13 @@ use Illuminate\Support\Facades\DB;
  * - custom: recorded and resolved manually by an admin (no automatic effect).
  *
  * Each cycle snapshots its benefits (plan discounts, then per-member
- * approved exceptions/exclusions; free-delivery allowance) — later plan or
- * exception changes never alter a confirmed cycle. Unused free deliveries
- * expire with the cycle.
+ * approved exceptions/exclusions; free-delivery allowance; post-allowance
+ * delivery discount) — later plan, exception or setting changes never alter
+ * a confirmed cycle. Unused free deliveries expire with the cycle.
+ *
+ * 2026-11-12: the free-delivery allowance and the delivery discount come
+ * from platform settings (plus.free_deliveries_limit, default 10;
+ * plus.delivery_discount_percentage, default 50).
  */
 class PlusService
 {
@@ -303,7 +307,10 @@ class PlusService
             'plan_name' => $plan->getTranslations('name'),
             'renewal_policy' => $membership->renewal_policy,
             'snapshot_currency_id' => $currency->id,
-            'free_deliveries_total' => $membership->free_deliveries_override ?? $plan->free_deliveries_per_cycle,
+            // 2026-11-12: the platform-wide allowance (admin setting, default 10)
+            // replaces the per-plan value; an approved member override still wins.
+            'free_deliveries_total' => $membership->free_deliveries_override ?? self::freeDeliveriesLimit(),
+            'delivery_discount_percent' => self::deliveryDiscountPercent(),
             'confirmed_by_admin_id' => $admin->id,
             'confirmed_at' => now(),
         ]);
@@ -327,6 +334,27 @@ class PlusService
         }
 
         return $cycle;
+    }
+
+    /** Free deliveries given to each newly confirmed cycle (admin setting). */
+    public static function freeDeliveriesLimit(): int
+    {
+        return max(0, min(100, (int) PlatformSettings::get('plus.free_deliveries_limit')));
+    }
+
+    /** % off the delivery fee once a cycle's free deliveries are used up (admin setting). */
+    public static function deliveryDiscountPercent(): int
+    {
+        return max(0, min(100, (int) PlatformSettings::get('plus.delivery_discount_percentage')));
+    }
+
+    /**
+     * The delivery discount of a cycle: its snapshot, or — for a cycle
+     * confirmed before this benefit existed — the current setting.
+     */
+    public static function cycleDeliveryDiscountPercent(PlusCycle $cycle): string
+    {
+        return $cycle->delivery_discount_percent !== null ? (string) $cycle->delivery_discount_percent : (string) self::deliveryDiscountPercent();
     }
 
     /** @return array<int, array{0: string, 1: PlusStoreDiscount}> store_id => [source, row] */

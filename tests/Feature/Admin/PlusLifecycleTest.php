@@ -10,6 +10,7 @@ use App\Models\PlusMembership;
 use App\Models\PlusPlan;
 use App\Models\PlusRequest;
 use App\Models\PlusStoreDiscount;
+use App\Models\Setting;
 use App\Services\Order\OrderAdminService;
 use App\Services\Plus\PlusService;
 use Illuminate\Database\QueryException;
@@ -25,9 +26,15 @@ class PlusLifecycleTest extends AdminPanelTestCase
 {
     use WaffrliFixtures;
 
+    /**
+     * A plan; since 2026-11-12 the free-delivery allowance of new cycles is
+     * the platform setting, so it is set to $free as well.
+     */
     protected function plan(int $free = 2): PlusPlan
     {
-        return PlusPlan::create(['code' => 'gold-'.$free, 'name' => ['en' => 'Gold', 'ar' => 'ذهبي'], 'free_deliveries_per_cycle' => $free]);
+        Setting::query()->updateOrCreate(['key' => 'plus.free_deliveries_limit'], ['value' => $free]);
+
+        return PlusPlan::create(['code' => 'gold-'.$free.'-'.uniqid(), 'name' => ['en' => 'Gold', 'ar' => 'ذهبي'], 'free_deliveries_per_cycle' => $free]);
     }
 
     protected function service(): PlusService
