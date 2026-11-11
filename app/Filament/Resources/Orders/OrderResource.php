@@ -125,18 +125,31 @@ class OrderResource extends AdminResource
         $waitingTab = fn ($livewire) => ($livewire->activeTab ?? null) === 'waiting_for_driver';
 
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch', 'city', 'driver', 'currency']))
             // Dispatch B4: orders without an available driver stand out.
             ->recordClasses(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER ? 'waffrli-row-no-driver' : null)
             ->columns([
-                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable(),
+                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable()->weight(FontWeight::SemiBold),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
-                IconColumn::make('urgent_at')->label(__('admin.orders.urgent'))->boolean()
-                    ->state(fn (Order $record) => $record->urgent_at !== null)->trueColor('danger')->falseIcon('heroicon-o-minus')->falseColor('gray'),
-                TextColumn::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => __("admin.orders.type_{$state}")),
+                // UX redesign (2026-11-11): type and urgency as one labelled badge
+                // (icon + words; colour is never the only signal).
+                TextColumn::make('type')->label(__('admin.fields.type'))->badge()
+                    ->state(fn (Order $record) => $record->urgent_at !== null && $record->status === OrderStatus::Pending ? 'urgent' : $record->type)
+                    ->formatStateUsing(fn (string $state) => $state === 'urgent' ? __('admin.orders.urgent') : __("admin.orders.type_{$state}"))
+                    ->icon(fn (string $state) => match ($state) {
+                        'urgent' => 'heroicon-m-exclamation-triangle',
+                        Order::TYPE_SCHEDULED => 'heroicon-m-calendar',
+                        default => 'heroicon-m-bolt',
+                    })
+                    ->color(fn (string $state) => match ($state) {
+                        'urgent' => 'danger',
+                        Order::TYPE_SCHEDULED => 'info',
+                        default => 'gray',
+                    }),
                 TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable(),
-                TextColumn::make('branch.name')->label(__('admin.fields.branch')),
-                TextColumn::make('city.name')->label(__('admin.fields.city'))->toggleable(),
+                TextColumn::make('branch.name')->label(__('admin.fields.branch'))
+                    ->description(fn (Order $record) => $record->city?->name),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
                 // Dispatch B4: "Waiting for driver" queue columns (that tab only).
                 TextColumn::make('branch.store.name')->label(__('admin.dispatch.restaurant'))->visible($waitingTab),
@@ -153,7 +166,8 @@ class OrderResource extends AdminResource
                     ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle')->falseIcon('heroicon-o-minus')->falseColor('gray'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()
+                    ->description(fn (Order $record) => $record->created_at?->diffForHumans()),
             ])
             ->filters([
                 SelectFilter::make('status')->label(__('admin.fields.status'))->options(OrderStatus::options())->multiple(),

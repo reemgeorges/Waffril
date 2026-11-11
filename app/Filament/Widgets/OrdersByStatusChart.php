@@ -3,32 +3,34 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\RefreshesOnOrderEvents;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
+use App\Services\Delivery\DeliveryOfferService;
 use App\Support\Auth\AdminPermissions;
-use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Widget;
 
 /**
- * WAFFRLI (2026-11-01) — number of orders in each status (database counts).
+ * WAFFRLI dashboard, "Order pipeline" (UX redesign 2026-11-11; status counts
+ * since 2026-11-01). Where today's open work stands, stage by stage (waiting
+ * for acceptance → accepted → driver assigned → on the way), each stage a
+ * link to its list. Closed orders (delivered, cancelled) are totals over all
+ * time and shown as a quiet footer, so they never dwarf the live stages.
  */
-class OrdersByStatusChart extends ChartWidget
+class OrdersByStatusChart extends Widget
 {
-    use \App\Filament\Concerns\RefreshesOnOrderEvents;
+    use RefreshesOnOrderEvents;
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
 
-    /** One third of a wide dashboard, beside the pending queue. */
+    /** One third of a wide dashboard, beside the 14-day trend. */
     protected int|string|array $columnSpan = ['default' => 'full', 'xl' => 1];
 
-    protected ?string $maxHeight = '300px';
+    protected string $view = 'filament.widgets.order-pipeline';
 
     public static function canView(): bool
     {
         return AdminPermissions::currentAllows('orders.view');
-    }
-
-    public function getHeading(): ?string
-    {
-        return __('admin.dashboard_stats.orders_by_status');
     }
 
     /** @return array<string, int> status value => count, every status present */
@@ -39,56 +41,25 @@ class OrdersByStatusChart extends ChartWidget
         return collect(OrderStatus::cases())->mapWithKeys(fn (OrderStatus $s) => [$s->value => (int) ($counts[$s->value] ?? 0)])->all();
     }
 
-    protected function getData(): array
+    protected function getViewData(): array
     {
         $counts = self::counts();
-        // Same meaning as the status badges (OrderStatus::color()): waiting
-        // amber, confirmed blue, on the road indigo (light: assigned, deep:
-        // picked up; same as the driver map), done green, cancelled red.
-        $colours = ['pending' => '#f59e0b', 'accepted' => '#3b82f6', 'assigned' => '#a5b4fc', 'picked_up' => '#6366f1', 'delivered' => '#10b981', 'cancelled' => '#ef4444'];
+        $tabs = ['pending' => 'pending', 'accepted' => DeliveryOfferService::enabled() ? 'waiting_for_driver' : 'needs_driver', 'assigned' => 'on_the_road', 'picked_up' => 'on_the_road'];
+        $open = ['pending', 'accepted', 'assigned', 'picked_up'];
+        $max = max(1, ...array_map(fn ($s) => $counts[$s], $open));
 
         return [
-            'datasets' => [[
-                'label' => __('admin.dashboard_stats.orders'),
-                'data' => array_values($counts),
-                'backgroundColor' => array_map(fn ($status) => $colours[$status], array_keys($counts)),
-                'borderWidth' => 0,
-                'borderRadius' => 4,
-                'maxBarThickness' => 22,
-                'barPercentage' => 0.8,
-            ]],
-            'labels' => array_map(fn ($status) => OrderStatus::from($status)->label(), array_keys($counts)),
+            'stages' => array_map(fn (string $status) => [
+                'status' => $status,
+                'label' => OrderStatus::from($status)->label(),
+                'count' => $counts[$status],
+                'share' => (int) round($counts[$status] / $max * 100),
+                'url' => OrderResource::getUrl('index', ['activeTab' => $tabs[$status]]),
+            ], $open),
+            'open' => array_sum(array_map(fn ($s) => $counts[$s], $open)),
+            'delivered' => $counts['delivered'],
+            'cancelled' => $counts['cancelled'],
+            'allUrl' => OrderResource::getUrl('index'),
         ];
-    }
-
-    /**
-     * Horizontal bars: the status names read straight on the side axis
-     * (no rotated labels) and the bars grow from the reading edge (right in
-     * Arabic, left in English). Quiet axes; the bars carry the meaning.
-     */
-    protected function getOptions(): array
-    {
-        $grid = 'rgba(148, 163, 184, 0.12)';
-        $text = 'rgba(148, 163, 184, 0.95)';
-        $rtl = app()->getLocale() === 'ar';
-        $font = ['family' => "'IBM Plex Sans Arabic', system-ui, sans-serif", 'size' => 12];
-
-        return [
-            'indexAxis' => 'y',
-            // Taller than Filament's default 2:1 so six bars breathe (capped by $maxHeight).
-            'aspectRatio' => 1.3,
-            'plugins' => ['legend' => ['display' => false]],
-            'scales' => [
-                'x' => ['beginAtZero' => true, 'reverse' => $rtl, 'grid' => ['color' => $grid], 'border' => ['display' => false],
-                    'ticks' => ['color' => $text, 'precision' => 0, 'font' => $font]],
-                'y' => ['position' => $rtl ? 'right' : 'left', 'grid' => ['display' => false], 'border' => ['display' => false],
-                    'ticks' => ['color' => $text, 'font' => $font + ['weight' => 500]]],
-            ],
-        ];
-    }
-
-    protected function getType(): string
-    {
-        return 'bar';
     }
 }

@@ -38,11 +38,11 @@ class DriverResource extends AdminResource
 
     protected static string $labelKey = 'driver';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'drivers';
+    protected static string|\UnitEnum|null $navigationGroup = 'people';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {

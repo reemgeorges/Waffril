@@ -31,7 +31,7 @@ class PaymentMethodResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 60;
 
     public static function form(Schema $schema): Schema
     {

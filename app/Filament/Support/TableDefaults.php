@@ -2,11 +2,13 @@
 
 namespace App\Filament\Support;
 
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Table;
 
 /**
  * WAFFRLI admin table layout policy (2026-11-11). Display only: alignment,
@@ -44,8 +46,28 @@ final class TableDefaults
     /** Shrinks a column to its content (works with the auto table layout). */
     public const COMPACT_WIDTH = '1%';
 
+    /**
+     * Dates without seconds, day first (UX redesign 2026-11-11):
+     * "11 نوفمبر 2026، 21:03" / "11 Nov 2026, 21:03". Display only.
+     */
+    public static function dateTimeFormat(): string
+    {
+        return app()->getLocale() === 'ar' ? 'j F Y، H:i' : 'j M Y, H:i';
+    }
+
+    public static function dateFormat(): string
+    {
+        return app()->getLocale() === 'ar' ? 'j F Y' : 'j M Y';
+    }
+
     public static function register(): void
     {
+        foreach ([Table::class, Schema::class] as $class) {
+            $class::configureUsing(fn ($component) => $component
+                ->defaultDateTimeDisplayFormat(fn () => self::dateTimeFormat())
+                ->defaultDateDisplayFormat(fn () => self::dateFormat()));
+        }
+
         TextColumn::configureUsing(function (TextColumn $column): void {
             $name = (string) $column->getName();
             $leaf = str_contains($name, '.') ? substr($name, strrpos($name, '.') + 1) : $name;

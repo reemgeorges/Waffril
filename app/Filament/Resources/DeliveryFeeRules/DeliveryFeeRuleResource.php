@@ -35,11 +35,11 @@ class DeliveryFeeRuleResource extends AdminResource
 
     protected static string $labelKey = 'delivery_fee_rule';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'platform';
+    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 30;
 
     public static function form(Schema $schema): Schema
     {

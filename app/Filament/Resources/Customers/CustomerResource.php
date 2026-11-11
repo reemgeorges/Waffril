@@ -34,7 +34,7 @@ class CustomerResource extends AdminResource
 
     protected static string $labelKey = 'customer';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'customers';
+    protected static string|\UnitEnum|null $navigationGroup = 'people';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 

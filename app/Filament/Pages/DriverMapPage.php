@@ -29,7 +29,7 @@ class DriverMapPage extends Page
 {
     public const STATUSES = [OrderStatus::Assigned, OrderStatus::PickedUp];
 
-    protected static string|\UnitEnum|null $navigationGroup = 'drivers';
+    protected static string|\UnitEnum|null $navigationGroup = 'operations';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map';
 

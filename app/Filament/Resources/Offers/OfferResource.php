@@ -41,7 +41,7 @@ class OfferResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
 
-    protected static ?int $navigationSort = 60;
+    protected static ?int $navigationSort = 40;
 
     public static function form(Schema $schema): Schema
     {

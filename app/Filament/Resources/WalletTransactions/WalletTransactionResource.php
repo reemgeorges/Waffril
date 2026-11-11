@@ -23,7 +23,7 @@ class WalletTransactionResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-queue-list';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 50;
 
     public static function table(Table $table): Table
     {

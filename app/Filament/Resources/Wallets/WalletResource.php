@@ -33,7 +33,7 @@ class WalletResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wallet';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 40;
 
     public static function infolist(Schema $schema): Schema
     {

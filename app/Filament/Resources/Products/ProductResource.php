@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products;
 
+use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
@@ -19,6 +20,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
@@ -46,22 +48,41 @@ class ProductResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shopping-bag';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 30;
 
+    /**
+     * UX redesign (2026-11-11): the product (main column) beside its picture
+     * and visibility (side column). Product categories are platform-wide (not
+     * per store); a missing one can be created here by staff allowed to.
+     * Opened from a store ("Add product"), the store is pre-selected.
+     * Branch prices and options are managed in the tabs below the form.
+     */
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->columnSpanFull()->schema([
-                Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->searchable()->preload()
-                    ->disabled(fn (?Product $record) => $record !== null)->dehydrated(fn (?Product $record) => $record === null),
-                Fields::translatable('name'),
-                Fields::translatable('description', required: false, multiline: true),
-                Select::make('categories')->label(__('admin.resources.category.plural'))
-                    ->relationship('categories', 'slug')->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
-                    ->multiple()->preload()->required(),
-                FileUpload::make('image')->label(__('admin.fields.image'))->image()->disk('public')->directory('products')->maxSize(3072),
-                Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
+            Grid::make(['default' => 1, 'lg' => 3])->columnSpanFull()->schema([
+                Section::make(__('admin.products.section_info'))->icon('heroicon-o-cube')->columnSpan(['default' => 1, 'lg' => 2])->schema([
+                    Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
+                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->searchable()->preload()
+                        ->default(fn () => request()->integer('store') ?: null)
+                        ->helperText(__('admin.help.product_store'))
+                        ->disabled(fn (?Product $record) => $record !== null)->dehydrated(fn (?Product $record) => $record === null),
+                    Fields::translatable('name'),
+                    Select::make('categories')->label(__('admin.resources.category.plural'))
+                        ->relationship('categories', 'slug')->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
+                        ->multiple()->preload()->required()
+                        ->helperText(__('admin.help.product_categories'))
+                        ->when(CategoryResource::canCreate(), fn (Select $select) => $select
+                            ->createOptionForm(CategoryResource::formFields())
+                            ->createOptionModalHeading(__('admin.products.new_category'))),
+                    Fields::translatable('description', required: false, multiline: true),
+                ]),
+                Section::make(__('admin.products.section_display'))->icon('heroicon-o-photo')->columnSpan(['default' => 1, 'lg' => 1])->schema([
+                    FileUpload::make('image')->label(__('admin.fields.image'))->image()->disk('public')->directory('products')->maxSize(3072)
+                        ->helperText(__('admin.help.product_image')),
+                    Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true)
+                        ->helperText(__('admin.help.product_active')),
+                ]),
             ]),
         ]);
     }

@@ -23,7 +23,7 @@ class OrderRefundResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-uturn-left';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 30;
 
     public static function table(Table $table): Table
     {

@@ -24,7 +24,7 @@ class SettingResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-circle-stack';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 40;
 
     public static function canCreate(): bool
     {

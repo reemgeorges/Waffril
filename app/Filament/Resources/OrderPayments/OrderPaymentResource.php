@@ -24,7 +24,7 @@ class OrderPaymentResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 20;
 
     public static function statusOptions(): array
     {

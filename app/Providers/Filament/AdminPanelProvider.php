@@ -91,15 +91,19 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('30s')
             // Keyed by the group id each resource/page declares, so Filament
             // matches items to these (translated, ordered) groups.
+            // UX redesign (2026-11-11): groups follow the daily work, most used
+            // first. Configuration groups start collapsed so they stay reachable
+            // without crowding the menu. Visibility stays permission-aware: a
+            // group appears only when its member can see at least one item.
             ->navigationGroups([
                 'operations' => NavigationGroup::make()->label(fn () => __('admin.nav.operations')),
-                'customers' => NavigationGroup::make()->label(fn () => __('admin.nav.customers')),
-                'drivers' => NavigationGroup::make()->label(fn () => __('admin.nav.drivers')),
                 'catalog' => NavigationGroup::make()->label(fn () => __('admin.nav.catalog')),
+                'people' => NavigationGroup::make()->label(fn () => __('admin.nav.people')),
                 'finance' => NavigationGroup::make()->label(fn () => __('admin.nav.finance')),
                 'plus' => NavigationGroup::make()->label(fn () => __('admin.nav.plus')),
-                'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform')),
-                'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system')),
+                'delivery' => NavigationGroup::make()->label(fn () => __('admin.nav.delivery'))->collapsed(),
+                'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform'))->collapsed(),
+                'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system'))->collapsed(),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

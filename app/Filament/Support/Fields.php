@@ -8,23 +8,60 @@ use Closure;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * WAFFRLI (2026-10-31) — shared admin form fields.
  */
 final class Fields
 {
-    /** Arabic + English inputs for a Spatie-translatable attribute ({ar, en}). */
-    public static function translatable(string $name, bool $required = true, bool $multiline = false, int $max = 150): Grid
+    /**
+     * Arabic + English inputs for a Spatie-translatable attribute ({ar, en}).
+     * With $fillsSlug, leaving the English name fills an empty "slug" field
+     * from it (UX redesign 2026-11-11), so nobody has to invent one.
+     */
+    public static function translatable(string $name, bool $required = true, bool $multiline = false, int $max = 150, bool $fillsSlug = false): Grid
     {
         $make = fn (string $locale) => ($multiline ? Textarea::make("{$name}.{$locale}")->rows(3) : TextInput::make("{$name}.{$locale}")->maxLength($max))
-            ->label(__("admin.fields.{$name}").' ('.strtoupper($locale).')')
+            ->label(__("admin.fields.{$name}").' ('.__("admin.languages.{$locale}").')')
             // Each language is typed in its own direction, whatever the panel language.
             ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale])
-            ->required($required);
+            ->required($required)
+            ->when($fillsSlug && $locale === 'en', fn ($input) => $input->live(onBlur: true)
+                ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
+                    if (blank($get('slug')) && filled($state)) {
+                        $set('slug', Str::slug($state));
+                    }
+                }));
 
         return Grid::make(2)->schema([$make('ar'), $make('en')]);
+    }
+
+    /**
+     * The URL name (slug): filled from the English name when left empty,
+     * kept in a collapsed "More settings" section because staff rarely need
+     * it. Validation is unchanged (required, unique, letters/digits/dashes).
+     */
+    public static function slug(string $table): TextInput
+    {
+        return TextInput::make('slug')->label(__('admin.fields.slug'))
+            ->required()->maxLength(120)->alphaDash()->unique($table, 'slug', ignoreRecord: true)
+            ->extraInputAttributes(['dir' => 'ltr'])
+            ->helperText(__('admin.help.slug'));
+    }
+
+    /** A collapsed section for rarely changed settings (progressive disclosure). */
+    public static function moreSettings(array $schema): Section
+    {
+        return Section::make(__('admin.forms.more_settings'))
+            ->description(__('admin.forms.more_settings_help'))
+            ->icon('heroicon-o-adjustments-horizontal')
+            ->collapsible()->collapsed(fn (?Model $record) => $record !== null)
+            ->schema($schema);
     }
 
     public static function phone(string $name): TextInput

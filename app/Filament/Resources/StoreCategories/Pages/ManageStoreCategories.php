@@ -5,6 +5,7 @@ namespace App\Filament\Resources\StoreCategories\Pages;
 use App\Filament\Resources\StoreCategories\StoreCategoryResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Support\Enums\Width;
 
 class ManageStoreCategories extends ManageRecords
 {
@@ -12,6 +13,6 @@ class ManageStoreCategories extends ManageRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()];
+        return [CreateAction::make()->icon('heroicon-m-plus')->modalWidth(Width::TwoExtraLarge)];
     }
 }

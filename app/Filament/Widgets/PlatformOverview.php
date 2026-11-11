@@ -18,7 +18,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class PlatformOverview extends StatsOverviewWidget
 {
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 6;
 
     protected int|array|null $columns = 4;
 

@@ -25,7 +25,7 @@ class CurrencyRedenominationResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
 
-    protected static ?int $navigationSort = 25;
+    protected static ?int $navigationSort = 30;
 
     public static function table(Table $table): Table
     {
