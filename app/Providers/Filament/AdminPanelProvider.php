@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Support\Brand;
 use App\Filament\Support\InitialsAvatarProvider;
+use App\Filament\Support\LocalizedNotification;
 use App\Filament\Support\TableDefaults;
 use App\Http\Middleware\SetAdminPanelLocale;
 use Filament\Enums\ThemeMode;
@@ -14,6 +15,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Notifications\Notification;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
@@ -36,6 +38,15 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  */
 class AdminPanelProvider extends PanelProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        // Admin alerts in the bell are rendered in the viewer's current panel
+        // language (Filament rebuilds notifications through this binding).
+        $this->app->bind(Notification::class, LocalizedNotification::class);
+    }
+
     /** Shared table layout policy (alignment, compact widths, empty values). */
     public function boot(): void
     {

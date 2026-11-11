@@ -19,8 +19,14 @@ use Throwable;
  * shared Reverb server, polled every 30 s otherwise).
  *
  * Each alert goes only to active admins holding the permission that lets
- * them act on it. Text is rendered in each admin's own language; links open the
- * record with the viewer's own permissions. Never fails the caller.
+ * them act on it; links open the record with the viewer's own permissions.
+ * Never fails the caller.
+ *
+ * Language (2026-11-11): an alert is stored once, the same for every
+ * recipient, as structured data (viewData.waffrli_alert + waffrli_params)
+ * with fallback text in the app's fallback language. The bell renders it in
+ * the viewer's CURRENT panel language (App\Filament\Support\LocalizedNotification),
+ * so switching AR/EN also re-translates existing alerts.
  */
 class AdminAlerts
 {
@@ -32,6 +38,12 @@ class AdminAlerts
         'order.no_driver_available' => ['orders.assign', 'heroicon-o-user-minus', 'warning'],
         'plus.request_submitted' => ['plus.approve', 'heroicon-o-star', 'info'],
     ];
+
+    /** Translation group of an alert type: admin.alerts.order_placed etc. */
+    public static function translationKey(string $type): string
+    {
+        return 'admin.alerts.'.str_replace('.', '_', $type);
+    }
 
     public static function send(string $type, ?int $orderId, ?string $reference): void
     {
@@ -55,19 +67,20 @@ class AdminAlerts
                     default => null,
                 };
 
-                // Each admin reads the alert in THEIR language (admins.locale).
-                foreach ($recipients->groupBy(fn (Admin $admin) => $admin->preferredLocale()) as $locale => $group) {
-                    $key = 'admin.alerts.'.str_replace('.', '_', $type);
-                    $notification = Notification::make()
-                        ->title(__($key.'.title', [], $locale))
-                        ->body(__($key.'.body', ['reference' => $reference ?? '—'], $locale))
-                        ->icon($icon)->iconColor($color)
-                        ->viewData(['waffrli_alert' => $type]);
-                    if ($url) {
-                        $notification->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)->markAsRead()]);
-                    }
-                    $notification->sendToDatabase($group, isEventDispatched: true);
+                // One structured alert for everyone; the text below is only a
+                // fallback, the bell re-translates it for the viewer.
+                $key = self::translationKey($type);
+                $locale = (string) config('app.fallback_locale', 'en');
+                $params = ['reference' => $reference ?? '—'];
+                $notification = Notification::make()
+                    ->title(__($key.'.title', [], $locale))
+                    ->body(__($key.'.body', $params, $locale))
+                    ->icon($icon)->iconColor($color)
+                    ->viewData(['waffrli_alert' => $type, 'waffrli_params' => $params]);
+                if ($url) {
+                    $notification->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)->markAsRead()]);
                 }
+                $notification->sendToDatabase($recipients, isEventDispatched: true);
             } catch (Throwable $e) {
                 Log::warning('admin_alert.failed', ['type' => $type, 'error' => $e->getMessage()]);
             }

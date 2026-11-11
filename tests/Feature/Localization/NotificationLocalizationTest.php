@@ -10,6 +10,7 @@ use App\Notifications\DriverOrderUpdate;
 use App\Services\Order\OrderAdminService;
 use App\Services\Push\DeviceTokenService;
 use App\Services\Push\FakePushTransport;
+use Filament\Notifications\Notification as FilamentNotification;
 use App\Support\Broadcasting\RecordingBroadcaster;
 use Database\Seeders\Demo\DemoPeopleSeeder;
 use Tests\Feature\Customer\CustomerTestCase;
@@ -90,9 +91,19 @@ class NotificationLocalizationTest extends CustomerTestCase
         $this->api($bearer)->withHeader('Accept-Language', 'en')
             ->postJson("/api/v1/driver/orders/{$order->id}/problems", ['type' => 'wrong_address'])->assertOk();
 
-        $title = fn (Admin $admin) => $admin->notifications()->where('type', 'Filament\\Notifications\\DatabaseNotification')->latest()->first()->data['title'];
-        $this->assertSame(__('admin.alerts.order_problem_reported.title', [], 'ar'), $title($arabic));
-        $this->assertSame(__('admin.alerts.order_problem_reported.title', [], 'en'), $title($english));
+        // 2026-11-11: one structured alert for every admin (type + reference),
+        // rendered in the viewer's CURRENT panel language by the bell.
+        $alert = fn (Admin $admin) => $admin->notifications()->where('type', 'Filament\\Notifications\\DatabaseNotification')->latest()->first();
+        foreach ([$arabic, $english] as $admin) {
+            $this->assertSame('order.problem_reported', $alert($admin)->data['viewData']['waffrli_alert']);
+            $this->assertSame(['reference' => $order->order_number], $alert($admin)->data['viewData']['waffrli_params']);
+        }
+        foreach (['ar', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $rendered = FilamentNotification::fromDatabase($alert($arabic));
+            $this->assertSame(__('admin.alerts.order_problem_reported.title', [], $locale), $rendered->getTitle());
+            $this->assertStringContainsString($order->order_number, (string) $rendered->getBody());
+        }
     }
 
     public function test_reverb_status_events_keep_machine_values_and_carry_both_labels(): void
