@@ -2,11 +2,16 @@
 
 namespace App\Filament\Support;
 
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Table;
 
 /**
  * WAFFRLI admin table layout policy (2026-11-11). Display only: alignment,
@@ -44,8 +49,28 @@ final class TableDefaults
     /** Shrinks a column to its content (works with the auto table layout). */
     public const COMPACT_WIDTH = '1%';
 
+    /**
+     * Dates without seconds, day first (UX redesign 2026-11-11):
+     * "11 نوفمبر 2026، 21:03" / "11 Nov 2026, 21:03". Display only.
+     */
+    public static function dateTimeFormat(): string
+    {
+        return app()->getLocale() === 'ar' ? 'j F Y، H:i' : 'j M Y, H:i';
+    }
+
+    public static function dateFormat(): string
+    {
+        return app()->getLocale() === 'ar' ? 'j F Y' : 'j M Y';
+    }
+
     public static function register(): void
     {
+        foreach ([Table::class, Schema::class] as $class) {
+            $class::configureUsing(fn ($component) => $component
+                ->defaultDateTimeDisplayFormat(fn () => self::dateTimeFormat())
+                ->defaultDateDisplayFormat(fn () => self::dateFormat()));
+        }
+
         TextColumn::configureUsing(function (TextColumn $column): void {
             $name = (string) $column->getName();
             $leaf = str_contains($name, '.') ? substr($name, strrpos($name, '.') + 1) : $name;
@@ -53,7 +78,9 @@ final class TableDefaults
             if (preg_match(self::COMPACT_NUMBER, $leaf)) {
                 $column->alignCenter()->width(self::COMPACT_WIDTH);
             } elseif (preg_match(self::MEASURE, $leaf)) {
-                $column->alignEnd();
+                // Display only: "0.2000" → "0.2", "13000.500000000000" → "13,000.5"
+                // (a resource's own formatter, set later, still wins).
+                $column->alignEnd()->formatStateUsing(fn ($state) => is_numeric($state) ? Fields::formatDecimal($state) : $state);
             } elseif (preg_match(self::COMPACT_TEXT, $leaf)) {
                 $column->width(self::COMPACT_WIDTH);
             } else {
@@ -67,7 +94,16 @@ final class TableDefaults
 
         ToggleColumn::configureUsing(fn (ToggleColumn $column) => $column->alignCenter()->width(self::COMPACT_WIDTH));
         CheckboxColumn::configureUsing(fn (CheckboxColumn $column) => $column->alignCenter()->width(self::COMPACT_WIDTH));
-        IconColumn::configureUsing(fn (IconColumn $column) => $column->alignCenter()->width(self::COMPACT_WIDTH));
+        // "No" is the normal case for most flags: a quiet grey dash, never a
+        // red cross (a resource can still set its own false icon/colour).
+        IconColumn::configureUsing(fn (IconColumn $column) => $column->alignCenter()->width(self::COMPACT_WIDTH)
+            ->falseIcon('heroicon-o-minus')->falseColor('gray'));
+
+        // Every "create" button carries a plus; deleting a row is an icon with
+        // its label as tooltip, so lists are not a column of red words.
+        CreateAction::configureUsing(fn (CreateAction $action) => $action->icon('heroicon-m-plus'));
+        DeleteAction::configureUsing(fn (DeleteAction $action) => $action->iconButton()->tooltip(fn (DeleteAction $action) => $action->getLabel()));
+        RestoreAction::configureUsing(fn (RestoreAction $action) => $action->iconButton()->tooltip(fn (RestoreAction $action) => $action->getLabel()));
         ImageColumn::configureUsing(fn (ImageColumn $column) => $column->width(self::COMPACT_WIDTH));
     }
 }

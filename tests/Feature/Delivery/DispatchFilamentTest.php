@@ -89,7 +89,7 @@ class DispatchFilamentTest extends AdminPanelTestCase
 
         $this->assertSame([OrderStatus::Assigned, $driver->id], [$order->fresh()->status, (int) $order->fresh()->driver_id]);
         $this->assertSame(0, DeliveryOffer::count());
-        $this->assertSame([], (new ListOrders)->getTabs(), 'No queue tab while offers are off and nothing waits.');
+        $this->assertArrayNotHasKey('waiting_for_driver', (new ListOrders)->getTabs(), 'No queue tab while offers are off and nothing waits.');
     }
 
     public function test_sending_an_offer_keeps_the_order_accepted_until_the_driver_accepts(): void
@@ -325,7 +325,9 @@ class DispatchFilamentTest extends AdminPanelTestCase
         $this->assertSame(Order::DISPATCH_NO_DRIVER, $stuck->fresh()->dispatch_state);
 
         $tabs = (new ListOrders)->getTabs();
-        $this->assertSame(['all', 'waiting_for_driver'], array_keys($tabs));
+        // The dispatch queue sits among the work tabs (UX redesign 2026-11-11).
+        $this->assertArrayHasKey('waiting_for_driver', $tabs);
+        $this->assertSame('all', array_key_first($tabs));
 
         Livewire::test(ListOrders::class)
             ->set('activeTab', 'waiting_for_driver')

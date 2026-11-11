@@ -18,7 +18,10 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class PlatformOverview extends StatsOverviewWidget
 {
-    protected static ?int $sort = 4;
+    /** Cheap queries: render with the page instead of on scroll. */
+    protected static bool $isLazy = false;
+
+    protected static ?int $sort = 6;
 
     protected int|array|null $columns = 4;
 

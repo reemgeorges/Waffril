@@ -30,11 +30,11 @@ class DeliveryAreaResource extends AdminResource
 
     protected static string $labelKey = 'delivery_area';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'platform';
+    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {
@@ -64,7 +64,7 @@ class DeliveryAreaResource extends AdminResource
             ->columns([
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
                 TextColumn::make('city.name')->label(__('admin.fields.city')),
-                TextColumn::make('min_lat')->label(__('admin.fields.bounding_box'))
+                TextColumn::make('min_lat')->label(__('admin.fields.bounding_box'))->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn (DeliveryArea $record) => "{$record->min_lat}, {$record->min_lng} → {$record->max_lat}, {$record->max_lng}"),
                 ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
                     ->disabled(fn (DeliveryArea $record) => ! static::can('update', $record)),

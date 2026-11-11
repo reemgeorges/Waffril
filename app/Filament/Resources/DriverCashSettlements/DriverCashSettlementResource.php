@@ -28,11 +28,11 @@ class DriverCashSettlementResource extends AdminResource
 
     protected static string $labelKey = 'driver_cash_settlement';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'drivers';
+    protected static string|\UnitEnum|null $navigationGroup = 'finance';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-scale';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 10;
 
     public static function table(Table $table): Table
     {

@@ -5,6 +5,8 @@ admin business services, and a Filament 5 admin panel. It adds **no**
 customer, driver or merchant APIs; the 62 existing `api/*` routes are
 unchanged.
 
+> **UX redesign (2026-11-11):** navigation groups, dashboard, order tabs, store/product workflows and wording were redesigned; see [admin-ux-redesign.md](admin-ux-redesign.md). Permissions and business rules below are unchanged.
+
 ## Panel access
 
 | Item | Value |

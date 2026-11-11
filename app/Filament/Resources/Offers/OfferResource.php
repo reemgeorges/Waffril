@@ -41,7 +41,7 @@ class OfferResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
 
-    protected static ?int $navigationSort = 60;
+    protected static ?int $navigationSort = 40;
 
     public static function form(Schema $schema): Schema
     {
@@ -77,7 +77,9 @@ class OfferResource extends AdminResource
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))->placeholder(__('admin.offers.all_branches')),
                 TextColumn::make('product.name')->label(__('admin.fields.product'))->placeholder(__('admin.offers.all_products')),
                 TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))
-                    ->formatStateUsing(fn ($state, Offer $record) => $record->discount_type === 'percent' ? $state.'%' : $state),
+                    ->formatStateUsing(fn ($state, Offer $record) => $record->discount_type === 'percent'
+                        ? Fields::formatDecimal($state).'%' : Fields::formatDecimal($state))
+                    ->badge()->color(fn (Offer $record) => $record->discount_type === 'percent' ? 'success' : 'info'),
                 TextColumn::make('starts_at')->label(__('admin.fields.starts_at'))->dateTime()->sortable(),
                 TextColumn::make('ends_at')->label(__('admin.fields.ends_at'))->dateTime()->placeholder('—'),
                 IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),

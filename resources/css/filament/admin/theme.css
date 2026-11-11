@@ -2,6 +2,12 @@
  * WAFFRLI admin theme (Filament 5) — redesign 2026-11-11.
  *
  * Direction: neutral graphite surfaces, restrained brand green, rare gold.
+ *  - Type (UX redesign 2026-11-11): IBM Plex Sans Arabic for all reading
+ *    text (body, tables, forms), Readex Pro (--wf-font-display) for page
+ *    titles, section headings and key figures. Both self-hosted.
+ *  - Rhythm: one 4px-based spacing scale (--wf-space-*); pages use 24px
+ *    between blocks instead of Filament's 32px, so the dashboard and lists
+ *    use the width and height they get.
  *  - Surfaces come from the neutral `gray` palette (App\Filament\Support\Brand):
  *    the page is gray-950, cards gray-900. Nothing large is green.
  *  - Green (primary) marks primary actions, the active navigation item and
@@ -65,6 +71,18 @@
     --wf-space-5: 1.25rem;
     --wf-space-6: 1.5rem;
     --wf-control-h: 2.375rem;
+
+    /* type */
+    --wf-font-body: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+    --wf-font-display: 'Readex Pro', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+
+    /* operational tones (dashboard tiles, markers); never the only signal */
+    --wf-tone-warning: var(--warning-500);
+    --wf-tone-danger: var(--danger-500);
+    --wf-tone-info: var(--info-500);
+    --wf-tone-success: var(--success-500);
+    --wf-tone-transit: var(--transit-500);
+    --wf-tone-gold: var(--gold-500);
 }
 
 .dark {
@@ -218,7 +236,9 @@ input[id$='.phone'] {
 
 /* ================================================================ topbar */
 .fi-topbar {
-    background-color: var(--wf-bg);
+    background-color: color-mix(in oklab, var(--wf-surface) 86%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    backdrop-filter: saturate(1.4) blur(10px);
     box-shadow: inset 0 -1px 0 var(--wf-border);
 }
 
@@ -226,110 +246,228 @@ input[id$='.phone'] {
     color: var(--wf-text-2);
 }
 
-/* ================================================================ sidebar */
+/* ================================================================ sidebar
+   UX redesign (2026-11-11): a deep brand-green panel in both themes, the
+   WAFFRLI identity at a glance. White text at 72–100% (contrast ≥ 7:1 on
+   #0B3B2D), gold marks the active item, quiet dividers between groups. */
+:root {
+    --wf-sb-bg: #0b3b2d;
+    --wf-sb-bg-2: #0d4535;
+    --wf-sb-text: rgb(255 255 255 / 0.78);
+    --wf-sb-text-strong: #ffffff;
+    --wf-sb-muted: rgb(255 255 255 / 0.5);
+    --wf-sb-hover: rgb(255 255 255 / 0.07);
+    --wf-sb-active: rgb(255 255 255 / 0.12);
+    --wf-sb-line: rgb(255 255 255 / 0.08);
+    --wf-sb-gold: #d9bc7c;
+}
+
+.dark {
+    --wf-sb-bg: #0a1f19;
+    --wf-sb-bg-2: #0c261f;
+    --wf-sb-hover: rgb(255 255 255 / 0.05);
+    --wf-sb-active: rgb(63 179 131 / 0.16);
+    --wf-sb-line: rgb(255 255 255 / 0.06);
+}
+
 .fi-sidebar {
-    background-color: var(--wf-sidebar);
-    border-inline-end: 1px solid var(--wf-border);
+    background-color: var(--wf-sb-bg);
+    background-image: linear-gradient(180deg, var(--wf-sb-bg-2) 0%, var(--wf-sb-bg) 38%);
+    border-inline-end: 0;
 }
 
 .fi-body-has-topbar .fi-sidebar-header {
-    background-color: var(--wf-sidebar);
-    box-shadow: inset 0 -1px 0 var(--wf-border);
+    background-color: var(--wf-sb-bg-2);
+    box-shadow: inset 0 -1px 0 var(--wf-sb-line);
+}
+
+.fi-sidebar .wf-brand__en,
+.fi-sidebar-header .wf-brand__en {
+    color: var(--wf-sb-text-strong);
 }
 
 .fi-sidebar-nav {
-    padding-block: var(--wf-space-6);
-    padding-inline: var(--wf-space-4);
-    row-gap: var(--wf-space-6);
+    padding-block: var(--wf-space-5);
+    padding-inline: var(--wf-space-3);
+    row-gap: var(--wf-space-4);
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
 }
 
 .fi-sidebar-nav-groups {
-    row-gap: var(--wf-space-5);
+    row-gap: var(--wf-space-2);
+}
+
+/* Each group is separated by a hairline, not by a large gap. */
+.fi-sidebar-group + .fi-sidebar-group {
+    padding-top: var(--wf-space-2);
+    border-top: 1px solid var(--wf-sb-line);
 }
 
 .fi-sidebar-group-btn {
-    padding-block: var(--wf-space-1);
+    padding-block: var(--wf-space-2);
+    padding-inline: 0.625rem;
 }
 
 .fi-sidebar-group-label {
     font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--wf-text-3);
+    color: var(--wf-sb-muted);
 }
 
 [dir='rtl'] .fi-sidebar-group-label {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     letter-spacing: 0;
 }
 
+.fi-sidebar-group-collapse-btn,
+.fi-sidebar-group-btn .fi-icon-btn {
+    color: var(--wf-sb-muted);
+}
+
+.fi-sidebar-group-collapse-btn:hover {
+    color: var(--wf-sb-text-strong);
+    background-color: var(--wf-sb-hover);
+}
+
 .fi-sidebar-item-btn {
-    min-height: 2.25rem;
-    padding-block: 0.375rem;
-    padding-inline: 0.625rem;
-    border-radius: var(--wf-radius-sm);
-    gap: 0.625rem;
+    position: relative;
+    min-height: 2.375rem;
+    padding-block: 0.4375rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--wf-radius);
+    gap: 0.75rem;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .fi-sidebar-item-btn > .fi-icon {
-    width: 1.125rem;
-    height: 1.125rem;
-    color: var(--wf-text-3);
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--wf-sb-muted);
 }
 
 .fi-sidebar-item-label {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 500;
-    color: var(--wf-text-2);
+    color: var(--wf-sb-text);
 }
 
-.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover {
-    background-color: var(--wf-row-hover);
-}
-
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
 .dark .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover {
-    background-color: rgb(255 255 255 / 0.04);
+    background-color: var(--wf-sb-hover);
 }
 
-.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-sidebar-item-label {
-    color: var(--wf-text);
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-sidebar-item-label,
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon {
+    color: var(--wf-sb-text-strong);
 }
 
-/* Active item: a soft green tint, green icon, bright label and a short
-   indicator on the inline-start edge (mirrors in RTL). */
+/* Active item: a lighter pill, white label, gold icon and a gold bar on
+   the inline-start edge (mirrors in RTL). */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    background-color: var(--wf-green-tint);
+    background-color: var(--wf-sb-active);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn::before {
     content: '';
     position: absolute;
     inset-block: 0.5rem;
-    inset-inline-start: -0.625rem;
+    inset-inline-start: 0.25rem;
     width: 3px;
     border-radius: 3px;
-    background-color: var(--wf-green-ui);
+    background-color: var(--wf-sb-gold);
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
-    color: var(--wf-green-ui);
+    color: var(--wf-sb-gold);
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
-    color: var(--wf-text);
+    color: var(--wf-sb-text-strong);
     font-weight: 600;
 }
 
+/* Counters in the menu: a gold pill (pending work), readable on green. */
 .fi-sidebar-item-badge-ctn .fi-badge {
-    min-width: 1.375rem;
+    min-width: 1.5rem;
     justify-content: center;
+    color: #1b1406;
+    background-color: var(--wf-sb-gold);
+    box-shadow: none;
+}
+
+/* Collapsed (icons only) sidebar keeps the same states. */
+.fi-sidebar .fi-sidebar-group-dropdown-trigger-btn .fi-icon {
+    color: var(--wf-sb-muted);
+}
+
+.wf-sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--wf-space-3);
+    margin: var(--wf-space-3);
+    padding: var(--wf-space-3);
+    border-radius: var(--wf-radius-lg);
+    background-color: rgb(255 255 255 / 0.05);
+    box-shadow: inset 0 0 0 1px var(--wf-sb-line);
+}
+
+.wf-sidebar-footer img {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--wf-radius-sm);
+}
+
+.wf-sidebar-footer__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+    min-width: 0;
+}
+
+.wf-sidebar-footer__title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wf-sb-text-strong);
+}
+
+.wf-sidebar-footer__sub {
+    font-size: 0.75rem;
+    color: var(--wf-sb-muted);
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .wf-sidebar-footer__text {
+    display: none;
+}
+
+/* ================================================================ page rhythm */
+.fi-page-header-main-ctn {
+    row-gap: var(--wf-space-6);
+    padding-block: var(--wf-space-6);
+}
+
+.fi-page-content {
+    row-gap: var(--wf-space-6);
+}
+
+/* ================================================================ display type */
+.fi-header-heading,
+.fi-section-header-heading,
+.fi-ta-header-heading,
+.fi-modal-heading,
+.fi-simple-header-heading,
+.fi-wi-stats-overview-stat-value,
+.wf-h2,
+.wf-display {
+    font-family: var(--wf-font-display);
 }
 
 /* ================================================================ page header */
 .fi-header-heading {
-    font-size: 1.5rem;
-    font-weight: 650;
+    font-size: 1.625rem;
+    font-weight: 600;
     letter-spacing: -0.015em;
     color: var(--wf-text);
 }
@@ -861,3 +999,1151 @@ input[id$='.phone'] {
     height: 0.75rem;
     border-radius: 9999px;
 }
+
+/* ================================================================ dashboard (UX redesign 2026-11-11) */
+.wf-h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--wf-text);
+}
+
+.wf-num {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Arrows that point "forward" are drawn for RTL and mirrored in LTR. */
+[dir='ltr'] .wf-flip-ltr {
+    transform: scaleX(-1);
+}
+
+.wf-link {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wf-green-ui);
+}
+
+.wf-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Tone helper: any element with data-tone gets --tone. */
+[data-tone='warning'] { --tone: var(--wf-tone-warning); }
+[data-tone='danger'] { --tone: var(--wf-tone-danger); }
+[data-tone='info'] { --tone: var(--wf-tone-info); }
+[data-tone='success'] { --tone: var(--wf-tone-success); }
+[data-tone='transit'] { --tone: var(--wf-tone-transit); }
+[data-tone='gold'] { --tone: var(--wf-tone-gold); }
+
+.wf-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-inline-end: 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--tone, var(--wf-text-3));
+    vertical-align: middle;
+}
+
+/* ---- "Needs your attention" */
+.wf-attention {
+    padding: var(--wf-space-5);
+    border-radius: var(--wf-radius-xl);
+    background-color: var(--wf-surface);
+    box-shadow: 0 0 0 1px var(--wf-border), var(--wf-shadow-card);
+}
+
+.wf-attention__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wf-space-3) var(--wf-space-6);
+    margin-bottom: var(--wf-space-4);
+}
+
+.wf-attention__summary {
+    margin: 0.125rem 0 0;
+    font-size: 0.875rem;
+    color: var(--wf-text-2);
+}
+
+.wf-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wf-space-2);
+    min-height: 2.25rem;
+    padding-inline: var(--wf-space-3);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--wf-text-2);
+    background-color: var(--wf-surface-2);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+    transition: color 120ms ease, box-shadow 120ms ease;
+}
+
+.wf-live-pill strong {
+    font-family: var(--wf-font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--wf-text);
+}
+
+.wf-live-pill:hover {
+    color: var(--wf-text);
+    box-shadow: inset 0 0 0 1px var(--wf-border-strong);
+}
+
+.wf-live-pill__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--wf-tone-transit);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--wf-tone-transit) 60%, transparent);
+    animation: wf-pulse 2s ease-out infinite;
+}
+
+@keyframes wf-pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--wf-tone-transit) 55%, transparent); }
+    70% { box-shadow: 0 0 0 0.5rem transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.wf-attention__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: var(--wf-space-3);
+}
+
+.wf-task {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--wf-space-3);
+    min-height: 5.25rem;
+    padding: var(--wf-space-4);
+    border-radius: var(--wf-radius-lg);
+    background-color: var(--wf-surface-2);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+    overflow: hidden;
+    transition: box-shadow 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+a.wf-task:hover {
+    box-shadow: inset 0 0 0 1px var(--wf-border-strong), var(--wf-shadow-pop);
+}
+
+.wf-task[data-state='open'] {
+    background-color: color-mix(in oklab, var(--tone) 3.5%, var(--wf-surface));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 26%, var(--wf-border));
+}
+
+.dark .wf-task[data-state='open'] {
+    background-color: color-mix(in oklab, var(--tone) 7%, var(--wf-surface));
+}
+
+/* The tone as an edge on the inline-start side (mirrors in RTL). */
+.wf-task[data-state='open']::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 4px;
+    background-color: var(--tone);
+}
+
+.wf-task__icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--wf-radius);
+    color: var(--wf-text-3);
+    background-color: var(--wf-surface);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+}
+
+.wf-task[data-state='open'] .wf-task__icon {
+    color: var(--tone);
+    background-color: color-mix(in oklab, var(--tone) 14%, transparent);
+    box-shadow: none;
+}
+
+.wf-task__svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.wf-task__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
+.wf-task__label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--wf-text);
+}
+
+.wf-task__hint {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--wf-text-3);
+}
+
+.wf-task__side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+    text-align: end;
+}
+
+.wf-task__count {
+    font-family: var(--wf-font-display);
+    font-size: 1.875rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--wf-text-3);
+}
+
+.wf-task[data-state='open'] .wf-task__count {
+    color: var(--wf-text);
+}
+
+.wf-task__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--wf-text-3);
+}
+
+.wf-task[data-state='open'] .wf-task__status {
+    color: color-mix(in oklab, var(--tone) 80%, var(--wf-text));
+}
+
+.wf-task__status-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* ---- "Today" band */
+.wf-today {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: var(--wf-space-4) var(--wf-space-6);
+    padding: var(--wf-space-4) var(--wf-space-5);
+    border-radius: var(--wf-radius-xl);
+    background-color: var(--wf-surface);
+    box-shadow: 0 0 0 1px var(--wf-border), var(--wf-shadow-card);
+}
+
+.wf-today__title {
+    display: flex;
+    align-items: center;
+    gap: var(--wf-space-2);
+    margin: 0;
+    padding-inline-end: var(--wf-space-6);
+    border-inline-end: 1px solid var(--wf-border);
+    font-family: var(--wf-font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--wf-text);
+}
+
+.wf-today__title-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--wf-green-ui);
+}
+
+.wf-today__metrics {
+    display: grid;
+    flex: 1 1 36rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+    gap: var(--wf-space-4);
+    margin: 0;
+}
+
+.wf-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.wf-metric--wide {
+    grid-column: span 2;
+}
+
+@media (max-width: 639px) {
+    .wf-today__title {
+        flex-basis: 100%;
+        border-inline-end: 0;
+        padding-inline-end: 0;
+    }
+
+    .wf-metric--wide {
+        grid-column: auto;
+    }
+}
+
+.wf-metric dt {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--wf-text-2);
+}
+
+.wf-metric[data-tone] dt::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--tone);
+}
+
+.wf-metric dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    font-family: var(--wf-font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--wf-text);
+}
+
+.wf-metric__unit {
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--wf-text-2);
+}
+
+.wf-metric__empty {
+    font-family: var(--wf-font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--wf-text-3);
+}
+
+.wf-money {
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ---- order pipeline */
+.wf-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wf-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wf-pipeline__row {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 40%) 1fr 2.5rem;
+    align-items: center;
+    gap: var(--wf-space-3);
+    min-height: 2.75rem;
+    padding-inline: var(--wf-space-2);
+    border-radius: var(--wf-radius-sm);
+}
+
+.wf-pipeline__row:hover {
+    background-color: var(--wf-row-hover);
+}
+
+.wf-pipeline__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--wf-text-2);
+}
+
+.wf-pipeline__track {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--wf-surface-2);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+    overflow: hidden;
+}
+
+.wf-pipeline__bar {
+    display: block;
+    height: 100%;
+    border-radius: 9999px;
+    background-color: var(--wf-text-3);
+}
+
+.wf-pipeline__row[data-status='pending'] .wf-pipeline__bar { background-color: var(--wf-tone-warning); }
+.wf-pipeline__row[data-status='accepted'] .wf-pipeline__bar { background-color: var(--wf-tone-info); }
+.wf-pipeline__row[data-status='assigned'] .wf-pipeline__bar { background-color: var(--transit-300); }
+.wf-pipeline__row[data-status='picked_up'] .wf-pipeline__bar { background-color: var(--wf-tone-transit); }
+
+.wf-pipeline__count {
+    font-family: var(--wf-font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-align: end;
+    color: var(--wf-text);
+}
+
+.wf-pipeline__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wf-space-2) var(--wf-space-5);
+    margin-top: var(--wf-space-4);
+    padding-top: var(--wf-space-4);
+    border-top: 1px solid var(--wf-border);
+    font-size: 0.8125rem;
+    color: var(--wf-text-2);
+}
+
+.wf-pipeline__footer strong {
+    color: var(--wf-text);
+}
+
+.wf-pipeline__footer .wf-link {
+    margin-inline-start: auto;
+}
+
+/* ---- finance table details */
+.wf-currency-code {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--wf-radius-xs);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    direction: ltr;
+    color: var(--wf-text);
+    background-color: var(--wf-surface-2);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+}
+
+.wf-data-table td[data-tone] {
+    color: color-mix(in oklab, var(--tone) 70%, var(--wf-text));
+    font-weight: 600;
+}
+
+.wf-cell-note {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--wf-text-3);
+}
+
+.wf-data-table td.wf-table-empty {
+    padding-block: var(--wf-space-6);
+    text-align: center;
+    color: var(--wf-text-3);
+}
+
+.wf-scroll-x {
+    overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wf-live-pill__dot {
+        animation: none;
+    }
+}
+
+/* ================================================================ brand column in the top bar
+   On desktop the logo area of the top bar continues the green sidebar, so
+   the brand reads as one column; it narrows with the collapsed sidebar. */
+@media (min-width: 1024px) {
+    .fi-topbar {
+        padding-inline-start: 0;
+    }
+
+    .fi-topbar-start {
+        align-self: stretch;
+        width: var(--sidebar-width);
+        margin-inline-end: var(--wf-space-6);
+        padding-inline: var(--wf-space-3) var(--wf-space-4);
+        background-color: var(--wf-sb-bg-2);
+        box-shadow: inset 0 -1px 0 var(--wf-sb-line);
+    }
+
+    .fi-topbar-start .fi-icon-btn {
+        color: var(--wf-sb-muted);
+    }
+
+    .fi-topbar-start .fi-icon-btn:hover {
+        color: #fff;
+        background-color: var(--wf-sb-hover);
+    }
+
+    .fi-topbar-start .wf-brand__en {
+        color: #fff;
+    }
+
+    .fi-topbar-start .wf-brand__ar {
+        color: var(--wf-sb-gold);
+    }
+
+    .fi-topbar-start:has(.fi-topbar-close-collapse-sidebar-btn[style*='display: none']) {
+        width: var(--collapsed-sidebar-width);
+    }
+
+    .fi-topbar-start:has(.fi-topbar-close-collapse-sidebar-btn[style*='display: none']) .fi-logo {
+        display: none;
+    }
+}
+
+/* ================================================================ tables, round 2 (2026-11-11)
+   One look for every list: a card with a tinted toolbar, a roomy search
+   field, quiet row actions (the label shows on hover/focus colour), a clear
+   selected/hover state and a footer that matches the header. */
+.fi-ta-ctn {
+    border-radius: var(--wf-radius-xl);
+}
+
+.fi-ta-header-ctn,
+.fi-ta-header-toolbar {
+    background-color: var(--wf-surface);
+}
+
+.fi-ta-header-toolbar {
+    gap: var(--wf-space-3);
+    padding-inline: var(--wf-space-4);
+}
+
+.fi-ta-search-field {
+    min-width: min(22rem, 100%);
+}
+
+.fi-ta-search-field .fi-input-wrp {
+    border-radius: 9999px;
+    background-color: var(--wf-surface-2);
+}
+
+.fi-ta-filters-trigger-action-ctn .fi-icon-btn,
+.fi-ta-col-toggle .fi-icon-btn {
+    border-radius: var(--wf-radius);
+    box-shadow: inset 0 0 0 1px var(--wf-border);
+    color: var(--wf-text-2);
+}
+
+.fi-ta-header-cell {
+    padding-block: 0.75rem;
+}
+
+.fi-ta-row > .fi-ta-cell:first-child {
+    padding-inline-start: var(--wf-space-2);
+}
+
+/* Row actions: neutral until pointed at, so a list of 20 rows is not a
+   column of green and red words. Danger stays red on hover. */
+.fi-ta-actions .fi-link,
+.fi-ta-actions .fi-icon-btn {
+    color: var(--wf-text-3);
+}
+
+.fi-ta-actions .fi-link .fi-icon,
+.fi-ta-actions .fi-icon-btn .fi-icon {
+    color: inherit;
+}
+
+.fi-ta-row:hover .fi-ta-actions .fi-link.fi-color-primary,
+.fi-ta-actions .fi-link.fi-color-primary:focus-visible {
+    color: var(--wf-green-ui);
+}
+
+.fi-ta-actions .fi-link.fi-color-danger:hover,
+.fi-ta-actions .fi-icon-btn.fi-color-danger:hover {
+    color: var(--danger-600);
+}
+
+.fi-ta-actions .fi-link:hover,
+.fi-ta-actions .fi-icon-btn:hover {
+    color: var(--wf-text);
+}
+
+.fi-pagination {
+    padding-inline: var(--wf-space-4);
+}
+
+/* Clickable rows show it. */
+.fi-ta-row.fi-clickable:hover > .fi-ta-cell,
+.fi-ta-row:has(> .fi-ta-cell a.fi-ta-col):hover > .fi-ta-cell {
+    background-color: color-mix(in oklab, var(--wf-green-ui) 4%, var(--wf-surface));
+}
+
+/* Empty states: a branded icon chip and calm text. */
+.fi-ta-empty-state {
+    padding-block: var(--wf-space-6);
+}
+
+.fi-ta-empty-state-icon-bg {
+    background-color: var(--wf-green-tint);
+}
+
+.fi-ta-empty-state-icon-bg .fi-icon {
+    color: var(--wf-green-ui);
+}
+
+.fi-ta-empty-state-heading {
+    font-family: var(--wf-font-display);
+}
+
+/* ================================================================ forms and sections, round 2 */
+.fi-section-header {
+    gap: var(--wf-space-3);
+}
+
+/* A section icon sits in a soft brand chip. */
+.fi-section-header > .fi-icon,
+.fi-section-header .fi-section-header-icon {
+    box-sizing: content-box;
+    padding: 0.375rem;
+    border-radius: var(--wf-radius);
+    color: var(--wf-green-ui);
+    background-color: var(--wf-green-tint);
+}
+
+.fi-fo-field-label-content {
+    font-weight: 600;
+}
+
+.fi-input-wrp:hover:not(.fi-disabled):not(:focus-within) {
+    --tw-ring-color: color-mix(in oklab, var(--wf-text) 22%, transparent);
+}
+
+.fi-fo-toggle .fi-fo-field-label-content,
+.fi-fo-field-wrp:has(.fi-toggle) .fi-fo-field-label-content {
+    font-weight: 500;
+}
+
+/* Form footer actions sit on a quiet bar. */
+.fi-form-actions,
+.fi-sc-actions.fi-sticky {
+    padding-top: var(--wf-space-2);
+}
+
+/* ================================================================ page header, round 2 */
+.fi-header {
+    gap: var(--wf-space-4);
+}
+
+.fi-header-heading {
+    line-height: 1.25;
+}
+
+/* A short gold rule under every page title: the brand signature. */
+.fi-header-heading::after {
+    content: '';
+    display: block;
+    width: 2.25rem;
+    height: 3px;
+    margin-top: var(--wf-space-2);
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--wf-gold), color-mix(in oklab, var(--wf-gold) 30%, transparent));
+}
+
+[dir='rtl'] .fi-header-heading::after {
+    background: linear-gradient(270deg, var(--wf-gold), color-mix(in oklab, var(--wf-gold) 30%, transparent));
+}
+
+.fi-header-actions-ctn .fi-btn {
+    box-shadow: var(--wf-shadow-card);
+}
+
+/* Primary buttons: brand green with a subtle depth. */
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent);
+    box-shadow: 0 1px 2px rgb(7 42 32 / 0.25), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+/* ================================================================ dashboard hero (round 2) */
+.wf-hero {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--wf-space-5) var(--wf-space-6);
+    padding: var(--wf-space-6) var(--wf-space-6) var(--wf-space-5);
+    border-radius: var(--wf-radius-xl);
+    overflow: hidden;
+    color: #fff;
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgb(217 188 124 / 0.18) 0%, transparent 42%),
+        radial-gradient(90% 120% at 0% 100%, rgb(63 179 131 / 0.28) 0%, transparent 55%),
+        linear-gradient(135deg, #0f5a43 0%, #0b3b2d 60%, #082b21 100%);
+    box-shadow: 0 18px 40px -24px rgb(7 42 32 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+[dir='rtl'] .wf-hero {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgb(217 188 124 / 0.18) 0%, transparent 42%),
+        radial-gradient(90% 120% at 100% 100%, rgb(63 179 131 / 0.28) 0%, transparent 55%),
+        linear-gradient(225deg, #0f5a43 0%, #0b3b2d 60%, #082b21 100%);
+}
+
+/* The official logo as a large, faint watermark on the inline-end side. */
+.wf-hero__mark {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: -2.5rem;
+    width: 15rem;
+    height: 15rem;
+    border-radius: 2.5rem;
+    opacity: 0.07;
+    filter: grayscale(1) brightness(2.2);
+    -webkit-mask-image: radial-gradient(circle at center, #000 30%, transparent 70%);
+    mask-image: radial-gradient(circle at center, #000 30%, transparent 70%);
+    transform: translateY(-50%) rotate(-8deg);
+    pointer-events: none;
+}
+
+.wf-hero__main,
+.wf-hero__actions {
+    position: relative;
+}
+
+.wf-hero__eyebrow {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #d9bc7c;
+}
+
+.wf-hero__title {
+    margin: 0.125rem 0 0;
+    font-family: var(--wf-font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.wf-hero__date {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: var(--wf-space-2) 0 0;
+    font-size: 0.875rem;
+    color: rgb(255 255 255 / 0.72);
+}
+
+.wf-hero__date-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.wf-hero__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wf-space-2);
+    margin-top: var(--wf-space-4);
+}
+
+.wf-hero__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.25rem;
+    padding-inline: 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    color: rgb(255 255 255 / 0.85);
+    background-color: rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+    transition: background-color 120ms ease;
+}
+
+.wf-hero__chip:hover {
+    background-color: rgb(255 255 255 / 0.16);
+}
+
+.wf-hero__chip strong {
+    font-family: var(--wf-font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.wf-hero__chip-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--tone);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--tone) 30%, transparent);
+}
+
+.wf-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wf-space-2);
+}
+
+.wf-hero__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+    border-radius: var(--wf-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+    transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.wf-hero__btn:hover {
+    background-color: rgb(255 255 255 / 0.16);
+}
+
+.wf-hero__btn--primary {
+    color: #0b3b2d;
+    background-color: #fff;
+    box-shadow: 0 6px 16px -8px rgb(0 0 0 / 0.45);
+}
+
+.wf-hero__btn--primary:hover {
+    background-color: #f2f7f4;
+}
+
+.wf-hero__btn-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.wf-hero :focus-visible {
+    outline-color: #d9bc7c;
+}
+
+@media (max-width: 639px) {
+    .wf-hero {
+        padding: var(--wf-space-5);
+    }
+
+    .wf-hero__title {
+        font-size: 1.625rem;
+    }
+}
+
+/* The dashboard's own header is the hero: keep the page rhythm. */
+.fi-page:has(.wf-hero) .fi-page-header-main-ctn {
+    padding-top: var(--wf-space-5);
+}
+
+/* ================================================================ KPI cards (round 2) */
+.wf-kpis__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--wf-space-1) var(--wf-space-3);
+    margin-bottom: var(--wf-space-3);
+}
+
+.wf-kpis__sub {
+    font-size: 0.8125rem;
+    color: var(--wf-text-3);
+}
+
+.wf-kpis__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+    gap: var(--wf-space-4);
+}
+
+.wf-kpi {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--wf-space-3);
+    min-height: 9.5rem;
+    padding: var(--wf-space-4) var(--wf-space-5);
+    border-radius: var(--wf-radius-xl);
+    background-color: var(--wf-surface);
+    box-shadow: 0 0 0 1px var(--wf-border), var(--wf-shadow-card);
+    overflow: hidden;
+}
+
+/* A thin tone line along the top edge of each card. */
+.wf-kpi::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tone), color-mix(in oklab, var(--tone) 20%, transparent));
+}
+
+.wf-kpi__top {
+    display: flex;
+    align-items: center;
+    gap: var(--wf-space-3);
+}
+
+.wf-kpi__icon {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    border-radius: var(--wf-radius);
+    color: var(--tone);
+    background-color: color-mix(in oklab, var(--tone) 13%, transparent);
+}
+
+.wf-kpi__svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.wf-kpi__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--wf-text-2);
+}
+
+.wf-kpi__value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    font-family: var(--wf-font-display);
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--wf-text);
+}
+
+.wf-kpi__unit {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--wf-text-2);
+}
+
+.wf-kpi__none {
+    color: var(--wf-text-3);
+}
+
+.wf-kpi__money {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-family: var(--wf-font-display);
+    font-weight: 600;
+    color: var(--wf-text);
+}
+
+.wf-kpi__money .wf-money {
+    font-size: 1.375rem;
+}
+
+.wf-kpi__money .wf-money:not(:first-child) {
+    font-size: 1rem;
+    color: var(--wf-text-2);
+}
+
+.wf-kpi__none-text {
+    font-family: var(--wf-font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--wf-text-3);
+}
+
+.wf-kpi__foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--wf-space-3);
+    margin-top: auto;
+}
+
+.wf-kpi__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--wf-text-3);
+}
+
+.wf-kpi__delta[data-good='yes'] { color: var(--success-600); }
+.wf-kpi__delta[data-good='no'] { color: var(--danger-600); }
+.dark .wf-kpi__delta[data-good='yes'] { color: var(--success-400); }
+.dark .wf-kpi__delta[data-good='no'] { color: var(--danger-400); }
+
+.wf-kpi__delta-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+[dir='rtl'] .wf-kpi__delta-icon {
+    transform: scaleX(-1);
+}
+
+.wf-kpi__spark {
+    width: 6.5rem;
+    height: 2rem;
+    flex: none;
+    overflow: visible;
+}
+
+[dir='rtl'] .wf-kpi__spark {
+    transform: scaleX(-1);
+}
+
+.wf-kpi__spark-line {
+    fill: none;
+    stroke: var(--tone);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.wf-kpi__spark-area {
+    fill: color-mix(in oklab, var(--tone) 14%, transparent);
+}
+
+/* ================================================================ platform size stats (round 2) */
+.fi-wi-stats-overview-stat {
+    position: relative;
+    overflow: hidden;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label-ctn > .fi-icon {
+    box-sizing: content-box;
+    padding: 0.4375rem;
+    border-radius: var(--wf-radius);
+    color: var(--wf-green-ui);
+    background-color: var(--wf-green-tint);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-size: 2rem;
+}
+
+/* ================================================================ order progress stepper (round 2) */
+.wf-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wf-space-2) 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wf-step {
+    position: relative;
+    display: flex;
+    flex: 1 1 9rem;
+    align-items: flex-start;
+    gap: 0;
+    padding-inline-end: var(--wf-space-4);
+}
+
+/* Connector line to the next step (inline direction, mirrors in RTL). */
+.wf-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 1rem;
+    inset-inline-start: 2rem;
+    inset-inline-end: 0;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--wf-border-strong);
+}
+
+.wf-step[data-state='done']:not(:last-child)::after {
+    background-color: var(--wf-green-ui);
+}
+
+.wf-step__dot {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border-radius: 9999px;
+    font-family: var(--wf-font-display);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wf-text-3);
+    background-color: var(--wf-surface);
+    box-shadow: inset 0 0 0 2px var(--wf-border-strong);
+}
+
+.wf-step[data-state='done'] .wf-step__dot {
+    color: #fff;
+    background-color: var(--wf-green-ui);
+    box-shadow: none;
+}
+
+.wf-step[data-state='current'] .wf-step__dot {
+    color: var(--wf-green-ui);
+    background-color: var(--wf-green-tint);
+    box-shadow: inset 0 0 0 2px var(--wf-green-ui), 0 0 0 4px var(--wf-green-tint);
+}
+
+.wf-step[data-state='cancelled'] .wf-step__dot {
+    color: #fff;
+    background-color: var(--danger-500);
+    box-shadow: none;
+}
+
+.wf-step__icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.wf-step__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding-top: 0.3rem;
+    min-width: 0;
+    background-color: var(--wf-surface);
+    padding-inline: var(--wf-space-3);
+    position: relative;
+    z-index: 1;
+}
+
+.wf-step__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--wf-text);
+}
+
+.wf-step[data-state='todo'] .wf-step__label {
+    color: var(--wf-text-3);
+    font-weight: 500;
+}
+
+.wf-step__time {
+    font-size: 0.75rem;
+    color: var(--wf-text-3);
+    font-variant-numeric: tabular-nums;
+}
+.wf-break { overflow-wrap: anywhere; }

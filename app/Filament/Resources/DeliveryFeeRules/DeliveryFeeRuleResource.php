@@ -35,11 +35,11 @@ class DeliveryFeeRuleResource extends AdminResource
 
     protected static string $labelKey = 'delivery_fee_rule';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'platform';
+    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 30;
 
     public static function form(Schema $schema): Schema
     {
@@ -72,8 +72,10 @@ class DeliveryFeeRuleResource extends AdminResource
                     ->state(fn (DeliveryFeeRule $record) => __('admin.delivery.scope_'.$record->scopeType()))->badge(),
                 TextColumn::make('city.name')->label(__('admin.fields.city'))->placeholder('—'),
                 TextColumn::make('deliveryArea.name')->label(__('admin.fields.delivery_area'))->placeholder('—'),
-                TextColumn::make('distance_from_km')->label(__('admin.fields.distance_from_km'))->sortable(),
-                TextColumn::make('distance_to_km')->label(__('admin.fields.distance_to_km')),
+                // One readable distance band instead of two raw columns.
+                TextColumn::make('distance_from_km')->label(__('admin.delivery.distance_band'))->sortable()
+                    ->state(fn ($record) => Fields::formatDecimal($record->distance_from_km).' – '
+                        .($record->distance_to_km !== null ? Fields::formatDecimal($record->distance_to_km) : '∞').' '.__('admin.delivery.km')),
                 TextColumn::make('base_fee')->label(__('admin.fields.base_fee')),
                 TextColumn::make('per_km_fee')->label(__('admin.fields.per_km_fee')),
                 IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),

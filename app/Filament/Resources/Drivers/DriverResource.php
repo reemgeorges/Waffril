@@ -20,6 +20,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -38,29 +39,35 @@ class DriverResource extends AdminResource
 
     protected static string $labelKey = 'driver';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'drivers';
+    protected static string|\UnitEnum|null $navigationGroup = 'people';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->columnSpanFull()->schema([
-                Grid::make(2)->schema([
+            // UX redesign round 2: who the driver is, how they sign in, where
+            // and with what they work. Same fields and rules as before.
+            Grid::make(['default' => 1, 'lg' => 3])->columnSpanFull()->schema([
+                Section::make(__('admin.drivers.section_person'))->icon('heroicon-o-identification')->columnSpan(['default' => 1, 'lg' => 2])->columns(2)->schema([
                     TextInput::make('name')->label(__('admin.fields.name'))->required()->maxLength(150),
                     Fields::phone('phone')->required()->unique(ignoreRecord: true),
+                    Select::make('language')->label(__('admin.fields.language'))->options(['ar' => 'العربية', 'en' => 'English'])->default('ar')->required()
+                        ->helperText(__('admin.help.driver_language')),
                     TextInput::make('password')->label(__('admin.fields.password'))->password()->revealable()
                         ->minLength(8)->maxLength(100)
                         ->required(fn (?Driver $record) => $record === null)
                         ->dehydrated(fn ($state) => filled($state))
-                        ->helperText(fn (?Driver $record) => $record ? __('admin.help.password_keep') : null),
+                        ->helperText(fn (?Driver $record) => $record ? __('admin.help.password_keep') : __('admin.help.driver_password')),
+                ]),
+                Section::make(__('admin.drivers.section_work'))->icon('heroicon-o-truck')->columnSpan(['default' => 1, 'lg' => 1])->schema([
                     Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
-                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->preload(),
+                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->preload()
+                        ->helperText(__('admin.help.driver_city')),
                     TextInput::make('vehicle_type')->label(__('admin.fields.vehicle_type'))->maxLength(30),
-                    TextInput::make('vehicle_plate')->label(__('admin.fields.vehicle_plate'))->maxLength(30),
-                    Select::make('language')->label(__('admin.fields.language'))->options(['ar' => 'العربية', 'en' => 'English'])->default('ar')->required(),
+                    TextInput::make('vehicle_plate')->label(__('admin.fields.vehicle_plate'))->maxLength(30)->extraInputAttributes(['dir' => 'ltr']),
                 ]),
             ]),
         ]);
@@ -70,10 +77,12 @@ class DriverResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => trim(($record->vehicle_type ?? '').' '.($record->vehicle_plate ?? '')) ?: null),
                 TextColumn::make('phone')->label(__('admin.fields.phone'))->searchable(),
                 TextColumn::make('city.name')->label(__('admin.fields.city')),
                 TextColumn::make('availability')->label(__('admin.fields.availability'))->badge()
+                    ->icon(fn ($state) => $state === 'available' ? 'heroicon-m-signal' : 'heroicon-m-moon')
                     ->color(fn ($state) => $state === Driver::AVAILABILITY_AVAILABLE ? 'success' : 'gray')
                     ->formatStateUsing(fn ($state) => __("admin.drivers.availability_{$state}")),
                 IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),

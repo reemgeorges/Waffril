@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Support\Fields;
 use App\Models\Currency;
 use App\Models\OrderPayment;
 use App\Models\OrderRefund;
@@ -18,7 +19,10 @@ use Filament\Widgets\Widget;
  */
 class FinanceOverview extends Widget
 {
-    protected static ?int $sort = 3;
+    /** Cheap queries: render with the page instead of on scroll. */
+    protected static bool $isLazy = false;
+
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
@@ -51,8 +55,25 @@ class FinanceOverview extends Widget
         })->filter(fn ($row) => $row['wallet_balances'] !== '0.0000' || $row['collected'] !== '0.0000' || $row['pending_cash'] !== '0.0000')->values()->all();
     }
 
+    /**
+     * Display only (UX redesign 2026-11-11): each amount at its currency's
+     * precision with thousands separators; rows() keeps the stored values.
+     */
     protected function getViewData(): array
     {
-        return ['rows' => self::rows()];
+        $currencies = Currency::query()->get()->keyBy('code');
+
+        return ['rows' => array_map(function (array $row) use ($currencies) {
+            $currency = $currencies[$row['code']] ?? null;
+            $row['display'] = collect(['wallet_balances', 'collected', 'pending_cash', 'refunded', 'unsettled_cash'])
+                ->mapWithKeys(function ($key) use ($row, $currency) {
+                    $text = Fields::formatMoney($row[$key], $currency);
+
+                    // The currency code is its own column.
+                    return [$key => $currency && str_starts_with($text, $currency->code.' ') ? substr($text, strlen($currency->code) + 1) : $text];
+                })->all();
+
+            return $row;
+        }, self::rows())];
     }
 }

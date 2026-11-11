@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -56,12 +57,13 @@ class CurrencyResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('code')->label(__('admin.fields.code'))->searchable()->sortable(),
-                TextColumn::make('name')->label(__('admin.fields.name')),
-                TextColumn::make('symbol')->label(__('admin.fields.symbol')),
+                TextColumn::make('code')->label(__('admin.fields.code'))->searchable()->sortable()->badge()->color('gray'),
+                TextColumn::make('name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => $record->symbol),
                 TextColumn::make('decimals')->label(__('admin.fields.decimals')),
-                TextColumn::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->sortable(),
-                IconColumn::make('is_default')->label(__('admin.fields.is_default'))->boolean(),
+                TextColumn::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->sortable()
+                    ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
+                IconColumn::make('is_default')->label(__('admin.fields.is_default'))->boolean()->trueIcon('heroicon-s-star')->trueColor('gold'),
                 IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
                 TextColumn::make('rate_updated_at')->label(__('admin.fields.rate_updated_at'))->dateTime()->sortable(),
             ])

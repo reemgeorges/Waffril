@@ -21,6 +21,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -48,32 +49,48 @@ class BranchResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 20;
 
+    /**
+     * UX redesign (2026-11-11): grouped by what the employee is doing (which
+     * store and city → where it is → how it takes orders). Opened from a
+     * store ("Add branch"), the store is pre-selected.
+     */
     public static function form(Schema $schema): Schema
     {
         $label = fn ($record) => $record->name;
 
         return $schema->components([
-            Section::make()->columnSpanFull()->schema([
-                Grid::make(2)->schema([
-                    Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
-                        ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload()
-                        ->disabled(fn (?Branch $record) => $record !== null)->dehydrated(fn (?Branch $record) => $record === null),
-                    Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
-                        ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload(),
+            Grid::make(['default' => 1, 'lg' => 3])->columnSpanFull()->schema([
+                Group::make()->columnSpan(['default' => 1, 'lg' => 2])->schema([
+                    Section::make(__('admin.branches.section_info'))->icon('heroicon-o-building-office-2')->schema([
+                        Grid::make(2)->schema([
+                            Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
+                                ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload()
+                                ->default(fn () => request()->integer('store') ?: null)
+                                ->disabled(fn (?Branch $record) => $record !== null)->dehydrated(fn (?Branch $record) => $record === null),
+                            Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
+                                ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload(),
+                        ]),
+                        Fields::translatable('name'),
+                        Fields::translatable('address', multiline: true),
+                    ]),
+                    Section::make(__('admin.branches.section_location'))->icon('heroicon-o-map-pin')
+                        ->description(__('admin.branches.section_location_help'))
+                        ->columns(3)->schema([
+                            TextInput::make('lat')->label(__('admin.fields.lat'))->required()->numeric()->minValue(-90)->maxValue(90)->extraInputAttributes(['dir' => 'ltr']),
+                            TextInput::make('lng')->label(__('admin.fields.lng'))->required()->numeric()->minValue(-180)->maxValue(180)->extraInputAttributes(['dir' => 'ltr']),
+                            Fields::phone('phone'),
+                        ]),
                 ]),
-                Fields::translatable('name'),
-                Fields::translatable('address', multiline: true),
-                Grid::make(3)->schema([
-                    TextInput::make('lat')->label(__('admin.fields.lat'))->required()->numeric()->minValue(-90)->maxValue(90),
-                    TextInput::make('lng')->label(__('admin.fields.lng'))->required()->numeric()->minValue(-180)->maxValue(180),
-                    Fields::phone('phone'),
-                ]),
-                Fields::money('min_order_amount', required: false)->helperText(__('admin.help.default_currency_amount')),
-                Grid::make(2)->schema([
-                    Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
-                    Toggle::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders'))->default(true),
+                Group::make()->columnSpan(['default' => 1, 'lg' => 1])->schema([
+                    Section::make(__('admin.branches.section_orders'))->icon('heroicon-o-shopping-bag')->schema([
+                        Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true)
+                            ->helperText(__('admin.help.branch_active')),
+                        Toggle::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders'))->default(true)
+                            ->helperText(__('admin.help.branch_accepting')),
+                        Fields::money('min_order_amount', required: false)->helperText(__('admin.help.default_currency_amount')),
+                    ]),
                 ]),
             ]),
         ]);

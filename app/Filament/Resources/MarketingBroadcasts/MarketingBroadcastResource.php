@@ -17,11 +17,11 @@ class MarketingBroadcastResource extends AdminResource
 {
     protected static ?string $model = MarketingBroadcast::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'system';
+    protected static string|\UnitEnum|null $navigationGroup = 'people';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 
-    protected static ?int $navigationSort = 45;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $slug = 'marketing-messages';
 

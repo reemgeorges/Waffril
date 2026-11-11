@@ -34,7 +34,7 @@ class PlusRequestResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 10;
 
     public static function getNavigationBadge(): ?string
     {
