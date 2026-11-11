@@ -269,7 +269,53 @@ class PlusBenefitsTest extends CustomerTestCase
         $this->assertSame($data['amounts'], $again);
     }
 
-    public function test_cart_preview_shows_the_free_delivery_variant_priced_by_the_server(): void
+    public function test_cart_preview_applies_the_free_delivery_by_default_without_consuming_it(): void
+    {
+        $user = $this->member();
+        $token = $this->loginCustomer($user);
+        $cycle = $this->cycle($user);
+        $cycle->forceFill(['free_deliveries_used' => 0])->save();
+        $branch = $this->branchWithoutCycleRule($user, $cycle);
+        $branch->store->forceFill(['plus_discount_percent' => 2])->save();
+        $bp = $this->line($branch);
+        $cart = $this->api($token)->postJson('/api/v1/customer/cart/items', ['branch_id' => $branch->id, 'product_id' => $bp->product_id, 'quantity' => 1])->assertOk()->json('data.cart');
+
+        // Opening the cart (twice) never consumes or reserves anything.
+        $this->api($token)->getJson('/api/v1/customer/carts')->assertOk();
+        $preview = $this->api($token)->getJson("/api/v1/customer/carts/{$cart['id']}")->assertOk()->json('data.cart.preview');
+        $this->assertSame(0, $cycle->fresh()->free_deliveries_used, 'A preview never consumes a free delivery.');
+
+        $this->assertTrue($preview['free_delivery_available']);
+        $this->assertTrue($preview['free_delivery_applied'], 'The cart shows the free delivery by default.');
+        $this->assertSame($cycle->free_deliveries_total, $preview['free_deliveries_remaining']);
+        $this->assertTrue(BigDecimal::of($preview['delivery_fee'])->isZero());
+        $this->assertTrue(BigDecimal::of($preview['delivery_fee_original'])->isPositive());
+        $this->assertSame('2', $preview['plus_discount_percent'], 'The store PLUS discount still applies.');
+        $this->assertSame(['delivery_fee' => $preview['delivery_fee'], 'total' => $preview['total']], $preview['with_free_delivery']);
+        // Total = products - discounts + 0 delivery.
+        $this->assertTrue(BigDecimal::of($preview['subtotal'])->minus($preview['plus_discount'])->minus($preview['offer_discount'])->isEqualTo($preview['total']));
+        // The server-priced variant for the checkout switch turned off.
+        $off = $preview['without_free_delivery'];
+        $this->assertSame($preview['delivery_fee_original'], $off['delivery_fee']);
+        $this->assertTrue(BigDecimal::of($off['total'])->minus($preview['total'])->isEqualTo($preview['delivery_fee_original']));
+
+        // Checkout with the default choice charges exactly the cart total and consumes one.
+        $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['use_free_delivery' => true])->assertOk()->json('data.order');
+        $this->assertSame($preview['total'], $order['amounts']['total'], 'Cart and checkout agree.');
+        $this->assertTrue($order['amounts']['free_delivery_applied']);
+        $this->assertSame(1, $cycle->fresh()->free_deliveries_used);
+
+        // The next quote is refreshed from the cycle.
+        $next = $this->api($token)->postJson('/api/v1/customer/cart/items', ['branch_id' => $branch->id, 'product_id' => $bp->product_id, 'quantity' => 1])->assertOk()->json('data.cart.preview');
+        $this->assertSame($cycle->free_deliveries_total - 1, $next['free_deliveries_remaining']);
+
+        // Cancelling the pending order gives the free delivery back.
+        $this->api($token)->postJson("/api/v1/customer/orders/{$order['id']}/cancel")->assertOk();
+        $this->assertSame(0, $cycle->fresh()->free_deliveries_used);
+    }
+
+    public function test_checkout_with_the_switch_off_charges_the_without_variant(): void
     {
         $user = $this->member();
         $token = $this->loginCustomer($user);
@@ -278,12 +324,40 @@ class PlusBenefitsTest extends CustomerTestCase
         $branch = $this->branchWithoutCycleRule($user, $cycle);
         $bp = $this->line($branch);
         $cart = $this->api($token)->postJson('/api/v1/customer/cart/items', ['branch_id' => $branch->id, 'product_id' => $bp->product_id, 'quantity' => 1])->assertOk()->json('data.cart');
+        $preview = $cart['preview'];
 
-        $preview = $this->api($token)->getJson("/api/v1/customer/carts/{$cart['id']}")->assertOk()->json('data.cart.preview');
-        $this->assertTrue($preview['free_delivery_available']);
-        $this->assertSame($cycle->free_deliveries_total, $preview['free_deliveries_remaining']);
-        $this->assertSame('0.00', Money::roundTo($preview['with_free_delivery']['delivery_fee'], 2)->__toString());
-        $this->assertSame(0, $cycle->fresh()->free_deliveries_used, 'A preview never consumes a free delivery.');
+        $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['use_free_delivery' => false])->assertOk()->json('data.order');
+        $this->assertSame($preview['without_free_delivery']['total'], $order['amounts']['total']);
+        $this->assertFalse($order['amounts']['free_delivery_applied']);
+        $this->assertSame(0, $cycle->fresh()->free_deliveries_used, 'The explicit choice is kept: nothing consumed.');
+    }
+
+    public function test_cart_preview_after_the_allowance_and_for_non_members(): void
+    {
+        $user = $this->member();
+        $token = $this->loginCustomer($user);
+        $cycle = $this->cycle($user);
+        $cycle->forceFill(['free_deliveries_used' => $cycle->free_deliveries_total])->save();
+        $this->setting('plus.delivery_discount_percentage', 50);
+        $branch = $this->branchWithoutCycleRule($user, $cycle);
+        $bp = $this->line($branch);
+        $preview = $this->api($token)->postJson('/api/v1/customer/cart/items', ['branch_id' => $branch->id, 'product_id' => $bp->product_id, 'quantity' => 1])->assertOk()->json('data.cart.preview');
+        $this->assertFalse($preview['free_delivery_applied']);
+        $this->assertNull($preview['without_free_delivery']);
+        $this->assertNotNull($preview['plus_delivery_discount_percent']);
+        $this->assertTrue(BigDecimal::of($preview['delivery_fee_original'])->minus($preview['plus_delivery_discount'])->isEqualTo($preview['delivery_fee']));
+
+        // Non-member: normal pricing, no PLUS benefit.
+        $other = $this->demoCustomer(10);
+        $otherToken = $this->loginCustomer($other);
+        $otherBranch = $this->branchWithoutCycleRule($other);
+        $plain = $this->api($otherToken)->postJson('/api/v1/customer/cart/items', ['branch_id' => $otherBranch->id, 'product_id' => $this->line($otherBranch)->product_id, 'quantity' => 1])->assertOk()->json('data.cart.preview');
+        $this->assertFalse($plain['free_delivery_available']);
+        $this->assertFalse($plain['free_delivery_applied']);
+        $this->assertNull($plain['plus_delivery_discount_percent']);
+        $this->assertSame($plain['delivery_fee_original'], $plain['delivery_fee']);
+        $this->assertTrue(BigDecimal::of($plain['plus_discount'])->isZero());
     }
 
     // ------------------------------------------------------------ subscription via WhatsApp

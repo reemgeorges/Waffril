@@ -119,7 +119,9 @@ class CheckoutService
         // Serialize everything that can be consumed: the member's active cycle.
         PlusCycle::query()->where('user_id', $user->id)->where('status', PlusCycle::STATUS_ACTIVE)->lockForUpdate()->get();
 
-        $priced = $this->pricing->price($user, $branch, $lines, $currency, $address, (bool) ($data['use_free_delivery'] ?? false));
+        // PLUS (2026-11-12): like the cart preview, a free delivery is used by
+        // default when one is available; an explicit false keeps it off.
+        $priced = $this->pricing->price($user, $branch, $lines, $currency, $address, (bool) ($data['use_free_delivery'] ?? true));
         if (! $priced['delivery_covered']) {
             throw new BusinessRuleException(__('messages.customer.delivery_not_covered'), 422);
         }

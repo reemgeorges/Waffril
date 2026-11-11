@@ -105,26 +105,38 @@ class CartService
             try {
                 $address = $user->addresses()->where('is_default', true)->first();
                 $currency = ($user->display_currency_id ? Currency::query()->whereKey($user->display_currency_id)->where('is_active', true)->first() : null) ?? Currency::query()->default()->firstOrFail();
-                $priced = $this->pricing->price($user, $cart->branch, $lines, $currency, $address, false); // free delivery is only applied when requested at checkout
+                // PLUS (2026-11-12): the cart shows what checkout charges by
+                // default, so a free delivery is applied here whenever one is
+                // available. Pricing is read-only: nothing is consumed or
+                // reserved; the cycle is locked and the delivery consumed only
+                // when the order is placed (CheckoutService).
+                $priced = $this->pricing->price($user, $cart->branch, $lines, $currency, $address, true);
                 $fmt = fn ($v) => (string) Money::roundTo($v, $currency->decimals);
+                $delivery = fn (array $p) => [
+                    'delivery_fee' => $fmt($p['delivery_fee']),
+                    'delivery_fee_original' => $fmt($p['delivery_fee_original']),
+                    'plus_delivery_discount_percent' => $p['plus_delivery_discount_percent'],
+                    'plus_delivery_discount' => $fmt($p['plus_delivery_discount_amount']),
+                    'total' => $fmt($p['total']),
+                ];
                 $preview = [
                     'currency' => $currency->code,
                     'subtotal' => $fmt($priced['subtotal']), 'offer_discount' => $fmt($priced['offer_discount_total']),
                     'plus_discount' => $fmt($priced['plus_discount_amount']), 'plus_discount_percent' => $priced['plus_discount_percent'],
-                    'delivery_fee' => $fmt($priced['delivery_fee']),
-                    'delivery_fee_original' => $fmt($priced['delivery_fee_original']),
-                    'plus_delivery_discount_percent' => $priced['plus_delivery_discount_percent'],
-                    'plus_delivery_discount' => $fmt($priced['plus_delivery_discount_amount']),
                     'free_delivery_available' => $priced['free_delivery_available'],
+                    'free_delivery_applied' => $priced['free_delivery_applied'],
                     'free_deliveries_remaining' => $priced['free_deliveries_remaining'],
-                    'delivery_covered' => $priced['delivery_covered'], 'meets_min_order' => $priced['meets_min_order'], 'total' => $fmt($priced['total']),
-                    // PLUS (2026-11-12): the server-priced variant when the
-                    // customer uses a free delivery at checkout (read-only).
+                    'delivery_covered' => $priced['delivery_covered'], 'meets_min_order' => $priced['meets_min_order'],
+                ] + $delivery($priced) + [
+                    // The same quote with the free delivery used (kept for
+                    // older apps) and without it (checkout switch turned
+                    // off); both priced by the server, read-only.
                     'with_free_delivery' => null,
+                    'without_free_delivery' => null,
                 ];
-                if ($priced['free_delivery_available'] && $priced['delivery_covered']) {
-                    $free = $this->pricing->price($user, $cart->branch, $lines, $currency, $address, true);
-                    $preview['with_free_delivery'] = ['delivery_fee' => $fmt($free['delivery_fee']), 'total' => $fmt($free['total'])];
+                if ($priced['free_delivery_applied']) {
+                    $preview['with_free_delivery'] = ['delivery_fee' => $fmt($priced['delivery_fee']), 'total' => $fmt($priced['total'])];
+                    $preview['without_free_delivery'] = $delivery($this->pricing->price($user, $cart->branch, $lines, $currency, $address, false));
                 }
             } catch (Throwable $e) {
                 $issue = $e->getMessage();
