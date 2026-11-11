@@ -39,6 +39,19 @@ class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
+    /** UX redesign round 2: "Order DEMO-0028" instead of a generic "View order". */
+    public function getTitle(): string
+    {
+        return __('admin.orders.title_number', ['number' => $this->getRecord()->order_number]);
+    }
+
+    public function getSubheading(): ?string
+    {
+        $record = $this->getRecord();
+
+        return collect([$record->status->label(), $record->branch?->store?->name, $record->branch?->name])->filter()->implode(' · ');
+    }
+
     protected function service(): OrderAdminService
     {
         return app(OrderAdminService::class);

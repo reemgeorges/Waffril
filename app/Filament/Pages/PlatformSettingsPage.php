@@ -17,6 +17,8 @@ use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 /**
@@ -66,19 +68,55 @@ class PlatformSettingsPage extends Page
         $this->form->fill($values);
     }
 
+    /**
+     * UX redesign round 2 (2026-11-11): the settings are grouped into tabs by
+     * topic, with the sections of a tab side by side on wide screens, instead
+     * of one long column. Fields, validation and saving are unchanged.
+     */
+    public const TABS = [
+        'general' => ['icon' => 'heroicon-o-cog-6-tooth', 'groups' => ['general', 'support', 'operations', 'maintenance']],
+        'orders' => ['icon' => 'heroicon-o-truck', 'groups' => ['scheduled_orders', 'orders', 'delivery', 'dispatch']],
+        'catalog_plus' => ['icon' => 'heroicon-o-star', 'groups' => ['catalog', 'plus']],
+    ];
+
+    private const GROUP_ICONS = [
+        'general' => 'heroicon-o-building-office', 'support' => 'heroicon-o-lifebuoy', 'operations' => 'heroicon-o-clock',
+        'maintenance' => 'heroicon-o-wrench-screwdriver', 'scheduled_orders' => 'heroicon-o-calendar-days', 'orders' => 'heroicon-o-calendar-days',
+        'delivery' => 'heroicon-o-map', 'dispatch' => 'heroicon-o-paper-airplane', 'catalog' => 'heroicon-o-cube', 'plus' => 'heroicon-o-star',
+    ];
+
     public function form(Schema $schema): Schema
     {
         $sections = [];
         foreach (collect(PlatformSettings::definitions())->groupBy('group', true) as $group => $definitions) {
-            $sections[] = Section::make(__("admin.settings.groups.{$group}"))->columns(2)
+            $sections[$group] = Section::make(__("admin.settings.groups.{$group}"))->columns(2)
+                ->icon(self::GROUP_ICONS[$group] ?? 'heroicon-o-adjustments-horizontal')
                 // Dispatch B4: say whether delivery offers are live (env flag, not editable here).
                 ->description($group === 'dispatch' ? (DeliveryOfferService::enabled() ? __('admin.settings.dispatch_enabled') : __('admin.settings.dispatch_disabled')) : null)
+                ->columnSpan(in_array($group, ['dispatch', 'plus', 'maintenance'], true) ? 'full' : 1)
                 ->schema(
                     $definitions->map(fn ($definition, $key) => $this->input($key, $definition))->values()->all()
                 );
         }
 
-        return $schema->components($sections)->statePath('data');
+        $tabs = [];
+        $placed = [];
+        foreach (self::TABS as $tab => $config) {
+            $members = array_values(array_intersect_key($sections, array_flip($config['groups'])));
+            $placed = array_merge($placed, $config['groups']);
+            if ($members !== []) {
+                $tabs[] = Tab::make(__("admin.settings.tabs.{$tab}"))->icon($config['icon'])
+                    ->schema([Grid::make(['default' => 1, 'xl' => 2])->schema($members)]);
+            }
+        }
+        // Any group not listed above still appears (in its own tab).
+        foreach (array_diff_key($sections, array_flip($placed)) as $group => $section) {
+            $tabs[] = Tab::make(__("admin.settings.groups.{$group}"))->schema([$section->columnSpanFull()]);
+        }
+
+        return $schema->components([
+            Tabs::make('settings')->tabs($tabs)->persistTabInQueryString()->columnSpanFull()->contained(false),
+        ])->statePath('data');
     }
 
     protected function input(string $key, array $definition)

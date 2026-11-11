@@ -2,13 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\Stores\StoreResource;
+use App\Models\Order;
 use App\Support\Settings\PlatformSettings;
-use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Illuminate\Contracts\View\View;
 
 /**
  * WAFFRLI (2026-10-31) — operational dashboard (widgets in
@@ -47,23 +48,34 @@ class Dashboard extends BaseDashboard
         return ['md' => 2, 'xl' => 3];
     }
 
-    protected function getHeaderActions(): array
+    /**
+     * UX redesign round 2 (2026-11-11): a branded hero replaces the plain page
+     * header: greeting and date, live status chips and the common shortcuts.
+     * Each shortcut and chip appears only when the admin may open its page.
+     */
+    public function getHeader(): ?View
     {
-        return [
-            Action::make('pendingOrders')->label(__('admin.dashboard.action_pending_orders'))
-                ->icon('heroicon-m-inbox-arrow-down')
-                ->url(fn () => OrderResource::getUrl('index', ['activeTab' => 'pending']))
-                ->visible(fn () => OrderResource::canViewAny()),
-            Action::make('driverMap')->label(__('admin.drivers.map'))->color('gray')
-                ->icon('heroicon-m-map')
-                ->url(fn () => DriverMapPage::getUrl())
-                ->visible(fn () => DriverMapPage::canAccess()),
-            ActionGroup::make([
-                Action::make('newStore')->label(__('admin.dashboard.action_new_store'))->icon('heroicon-m-building-storefront')
-                    ->url(fn () => StoreResource::getUrl('create'))->visible(fn () => StoreResource::canCreate()),
-                Action::make('newProduct')->label(__('admin.dashboard.action_new_product'))->icon('heroicon-m-cube')
-                    ->url(fn () => ProductResource::getUrl('create'))->visible(fn () => ProductResource::canCreate()),
-            ])->label(__('admin.dashboard.action_add'))->icon('heroicon-m-plus')->button()->color('gray'),
-        ];
+        $locale = app()->getLocale();
+        $now = now(PlatformSettings::timezone())->locale($locale);
+        $canOrders = OrderResource::canViewAny();
+
+        $shortcuts = array_values(array_filter([
+            $canOrders ? ['label' => __('admin.dashboard.action_pending_orders'), 'icon' => 'heroicon-m-inbox-arrow-down', 'url' => OrderResource::getUrl('index', ['activeTab' => 'pending']), 'primary' => true] : null,
+            DriverMapPage::canAccess() ? ['label' => __('admin.drivers.map'), 'icon' => 'heroicon-m-map', 'url' => DriverMapPage::getUrl()] : null,
+            StoreResource::canCreate() ? ['label' => __('admin.dashboard.action_new_store'), 'icon' => 'heroicon-m-building-storefront', 'url' => StoreResource::getUrl('create')] : null,
+            ProductResource::canCreate() ? ['label' => __('admin.dashboard.action_new_product'), 'icon' => 'heroicon-m-cube', 'url' => ProductResource::getUrl('create')] : null,
+        ]));
+
+        return view('filament.dashboard.hero', [
+            'title' => $this->getTitle(),
+            'greeting' => ($now->hour < 12 ? __('admin.dashboard.good_morning') : __('admin.dashboard.good_evening'))
+                .(auth()->user()?->name ? ($locale === 'ar' ? '، ' : ', ').auth()->user()->name : ''),
+            'date' => $now->isoFormat($locale === 'ar' ? 'dddd، D MMMM YYYY' : 'dddd, D MMMM YYYY'),
+            'chips' => $canOrders ? [
+                ['tone' => 'transit', 'label' => __('admin.dashboard.active_deliveries'), 'count' => Order::query()->whereIn('status', OrderStatus::active())->count(), 'url' => OrderResource::getUrl('index', ['activeTab' => 'on_the_road'])],
+                ['tone' => 'warning', 'label' => __('admin.dashboard.pending_orders'), 'count' => Order::query()->where('status', OrderStatus::Pending->value)->count(), 'url' => OrderResource::getUrl('index', ['activeTab' => 'pending'])],
+            ] : [],
+            'shortcuts' => $shortcuts,
+        ]);
     }
 }

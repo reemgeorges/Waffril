@@ -19,6 +19,9 @@ use Filament\Widgets\Widget;
  */
 class FinanceOverview extends Widget
 {
+    /** Cheap queries: render with the page instead of on scroll. */
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';

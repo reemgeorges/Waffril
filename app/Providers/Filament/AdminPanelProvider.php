@@ -82,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
             ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand.head'))
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.brand.locale-switcher'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.brand.sidebar-footer'))
             ->renderHook(PanelsRenderHook::SIMPLE_LAYOUT_START, fn () => view('filament.brand.locale-switcher', ['floating' => true]))
             ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn () => view('filament.brand.login-hero'))
             // WAFFRLI (2026-11-03): operational alerts in the bell. Live over the

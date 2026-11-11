@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Notifications;
 
 use App\Filament\Resources\Notifications\Pages\ListNotifications;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Readable;
 use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\User;
@@ -41,17 +42,18 @@ class NotificationResource extends AdminResource
             ->description(__('admin.notifications_page.notice'))
             ->columns([
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('type')->label(__('admin.fields.type'))->formatStateUsing(fn ($state) => class_basename($state)),
+                TextColumn::make('type')->label(__('admin.fields.type'))->badge()->color('gray')
+                    ->formatStateUsing(fn ($state) => Readable::notificationType($state)),
                 TextColumn::make('notifiable_type')->label(__('admin.fields.recipient'))
-                    ->formatStateUsing(fn ($state, $record) => class_basename($state).' #'.$record->notifiable_id),
+                    ->formatStateUsing(fn ($state, $record) => Readable::model($state, $record->notifiable_id)),
                 TextColumn::make('data')->label(__('admin.fields.details'))
-                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_UNESCAPED_UNICODE) : (string) $state)->limit(80),
+                    ->state(fn ($record) => Readable::notificationText($record->data))->limit(90)->wrap(),
                 IconColumn::make('read_at')->label(__('admin.fields.read'))->boolean()->state(fn ($record) => $record->read_at !== null),
             ])
             ->filters([
                 // e.g. driver.problem_reported isolates delivery problem reports.
                 SelectFilter::make('type')->label(__('admin.fields.type'))
-                    ->options(fn () => DatabaseNotification::query()->distinct()->orderBy('type')->pluck('type', 'type')->map(fn ($t) => class_basename($t))->all()),
+                    ->options(fn () => DatabaseNotification::query()->distinct()->orderBy('type')->pluck('type', 'type')->map(fn ($t) => Readable::notificationType($t))->all()),
                 SelectFilter::make('notifiable_type')->label(__('admin.fields.recipient'))->options([
                     User::class => __('admin.resources.customer.plural'),
                     Driver::class => __('admin.resources.driver.plural'),

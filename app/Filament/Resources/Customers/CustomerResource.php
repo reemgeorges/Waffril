@@ -13,6 +13,7 @@ use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -50,17 +51,18 @@ class CustomerResource extends AdminResource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make(__('admin.customers.profile'))->columns(3)->schema([
+            Section::make(__('admin.customers.profile'))->icon('heroicon-o-user-circle')->columns(3)->schema([
                 TextEntry::make('id')->label('#'),
                 TextEntry::make('full_name')->label(__('admin.fields.name'))->state(fn (User $record) => $record->fullName()),
                 TextEntry::make('phone')->label(__('admin.fields.phone'))->placeholder('—'),
-                TextEntry::make('email')->label(__('admin.fields.email'))->placeholder('—'),
+                TextEntry::make('email')->label(__('admin.fields.email'))->placeholder('—')->extraAttributes(['dir' => 'ltr', 'class' => 'wf-break']),
                 TextEntry::make('email_verified_at')->label(__('admin.fields.email_verified_at'))->dateTime()->placeholder('—'),
-                TextEntry::make('language')->label(__('admin.fields.language')),
+                TextEntry::make('language')->label(__('admin.fields.language'))
+                    ->formatStateUsing(fn ($state) => in_array($state, ['ar', 'en'], true) ? __("admin.languages.{$state}") : $state),
                 TextEntry::make('created_at')->label(__('admin.fields.created_at'))->dateTime(),
                 TextEntry::make('profile_completed_at')->label(__('admin.fields.profile_completed_at'))->dateTime()->placeholder('—'),
             ]),
-            Section::make(__('admin.customers.account_state'))->columns(3)->schema([
+            Section::make(__('admin.customers.account_state'))->icon('heroicon-o-shield-check')->columns(3)->schema([
                 TextEntry::make('account_status')->label(__('admin.fields.account_status'))->badge()
                     ->color(fn ($state) => $state === User::ACCOUNT_SUSPENDED ? 'danger' : 'success')
                     ->formatStateUsing(fn ($state) => __("admin.customers.status_{$state}")),
@@ -77,12 +79,13 @@ class CustomerResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('id')->label('#')->sortable(),
-                TextColumn::make('first_name')->label(__('admin.fields.name'))
+                TextColumn::make('id')->label('#')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('first_name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
+                    ->description(fn (User $record) => $record->email)
                     ->formatStateUsing(fn ($state, User $record) => $record->fullName())
                     ->searchable(['first_name', 'last_name', 'name']),
                 TextColumn::make('phone')->label(__('admin.fields.phone'))->searchable()->placeholder('—'),
-                TextColumn::make('email')->label(__('admin.fields.email'))->searchable()->toggleable(),
+                TextColumn::make('email')->label(__('admin.fields.email'))->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('account_status')->label(__('admin.fields.account_status'))->badge()
                     ->color(fn ($state) => $state === User::ACCOUNT_SUSPENDED ? 'danger' : 'success')
                     ->formatStateUsing(fn ($state) => __("admin.customers.status_{$state}")),

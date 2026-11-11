@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Settings;
 
 use App\Filament\Resources\Settings\Pages\ListSettings;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Readable;
 use App\Models\Setting;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -35,7 +36,9 @@ class SettingResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('key')->label(__('admin.fields.key'))->searchable()->sortable(),
+                TextColumn::make('key')->label(__('admin.fields.key'))->searchable()->sortable()
+                    ->formatStateUsing(fn ($state) => Readable::settingKey($state))
+                    ->description(fn ($record) => Readable::settingKey($record->key) !== $record->key ? $record->key : null)->wrap(),
                 TextColumn::make('value')->label(__('admin.fields.value'))
                     ->formatStateUsing(fn ($state) => is_scalar($state) ? (string) $state : json_encode($state, JSON_UNESCAPED_UNICODE))
                     ->limit(60),

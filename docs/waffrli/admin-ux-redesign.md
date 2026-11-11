@@ -6,6 +6,26 @@ Scope: the Filament panel's design system, dashboard, navigation, workflows and 
 
 Before/after screenshots are in `docs/waffrli/screenshots/ux-redesign/`.
 
+## 0. Round 2 — visual redesign of the whole panel
+
+Round 1 rebuilt the dashboard content, navigation, workflows and wording. Round 2 makes the redesign visible on every page.
+
+| Area | What changed | Where |
+|---|---|---|
+| Sidebar | Deep brand-green panel in light **and** dark mode. Readable group labels, hairline group separators, gold active marker and icon, gold counters, and a brand footer card. The logo area of the top bar continues the green column and narrows with the collapsed sidebar. | `theme.css` (sidebar / brand column), `brand/sidebar-footer.blade.php` |
+| Top bar | Translucent surface with blur | `theme.css` |
+| Page headers | Display-font titles with a short gold signature rule. View/edit pages are titled with the record ("الطلب DEMO-0028", "تعديل مشاوي الشامي", "Lina Haddad") instead of "عرض طلب". | `AdminResource::getRecordTitle()` |
+| Dashboard hero | A branded green header: greeting, date, live chips (deliveries in progress, orders awaiting acceptance) and shortcut buttons, each permission-aware. The logo is a soft watermark. | `Pages/Dashboard::getHeader()`, `dashboard/hero.blade.php` |
+| KPI cards | Today's received / delivered / cancelled / average delivery time, each with an icon chip, a 14-day **sparkline from real data** (inline SVG, no JS) and the change since yesterday written in words. A value card per currency. | `TodayOverview::series()/sparkline()` |
+| Platform cards | Icon chips, display-font values; they render with the page (not lazily) | `theme.css`, `PlatformOverview` |
+| Order page | A progress stepper (accepted → driver → on the way → delivered, each with its time; cancelled orders shown in red). Section icons, the status and store in the subheading, and a readable distance method. | `orders/progress.blade.php`, `OrderResource::infolist()` |
+| Tables (all) | Rounded card, pill search field, framed filter/column buttons, quiet row actions (green or red only on hover), clickable-row tint, branded empty states. Deleting is an icon with a tooltip. Every "create" button has a plus. A "no" flag is a grey dash, never a red cross. Amounts and rates have no storage padding (`0.2000` → `0.2`). | `TableDefaults`, `theme.css` |
+| Forms (all) | Section icons in a soft brand chip, stronger field labels, hover state on inputs | `theme.css` |
+| Readable values | Activity log: actions ("إسناد سائق لطلب"), records ("طلب #35") and details as "Label: value" instead of keys/JSON. Notification log: type names and the actual message. Advanced settings: setting names with the key underneath. The raw key stays as a tooltip. | `Support/Readable.php`, `admin.audit_actions`, `admin.notification_types` |
+| Platform settings | Tabs (General and support / Orders and delivery / Catalog and PLUS), with sections side by side and section icons, instead of one long column | `PlatformSettingsPage::form()` |
+| Drivers | The form is split into "Driver and sign-in" and "Work area and vehicle", with help texts. The list shows the vehicle under the name and an availability badge with an icon. | `DriverResource` |
+| Customers, currencies, offers, fee rules, delivery areas | Name with e-mail underneath (id hidden); currency code badges, readable rates and a star for the default; discount badges; one readable "0 – 5 km" distance band; the raw coordinates box hidden by default | respective resources |
+
 ## 1. Design system
 
 | Area | Decision |

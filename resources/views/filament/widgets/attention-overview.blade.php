@@ -13,16 +13,13 @@
                     @else
                         {{ __('admin.dashboard.attention_clear') }}
                     @endif
+                    @if ($active !== null)
+                        <span aria-hidden="true">·</span>
+                        <a href="{{ $activeUrl }}" class="wf-link" data-testid="active-deliveries"><span class="wf-num">{{ $active }}</span> {{ __('admin.dashboard.active_deliveries') }}</a>
+                    @endif
                 </p>
             </div>
 
-            @if ($active !== null)
-                <a href="{{ $activeUrl }}" class="wf-live-pill" data-testid="active-deliveries">
-                    <span class="wf-live-pill__dot" aria-hidden="true"></span>
-                    <span>{{ __('admin.dashboard.active_deliveries') }}</span>
-                    <strong class="wf-num">{{ $active }}</strong>
-                </a>
-            @endif
         </header>
 
         <div class="wf-attention__grid">

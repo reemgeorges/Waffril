@@ -74,10 +74,14 @@ class OrderResource extends AdminResource
                 ->schema([
                     View::make('filament.orders.dispatch-panel')->viewData(fn (Order $record) => ['panel' => DispatchPanel::data($record)]),
                 ]),
+            // UX redesign round 2: where the order stands, at a glance.
+            Section::make()->columnSpanFull()->schema([
+                View::make('filament.orders.progress')->viewData(fn (Order $record) => ['record' => $record]),
+            ])->extraAttributes(['class' => 'wf-steps-section']),
             // Main column: what the order is and where it goes; side column: the money.
             Grid::make(['default' => 1, 'xl' => 3])->columnSpanFull()->schema([
                 Group::make()->columnSpan(['default' => 1, 'xl' => 2])->schema([
-                    Section::make(__('admin.orders.summary'))->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
+                    Section::make(__('admin.orders.summary'))->icon('heroicon-o-clipboard-document-list')->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
                         TextEntry::make('order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold),
                         TextEntry::make('status')->label(__('admin.fields.status'))->badge()
                             ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
@@ -92,7 +96,7 @@ class OrderResource extends AdminResource
                         TextEntry::make('urgent_at')->label(__('admin.orders.urgent'))->dateTime()->placeholder('—')->color('danger'),
                         TextEntry::make('customer_notes')->label(__('admin.fields.customer_notes'))->placeholder('—')->columnSpanFull(),
                     ]),
-                    Section::make(__('admin.orders.delivery'))->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
+                    Section::make(__('admin.orders.delivery'))->icon('heroicon-o-map-pin')->columns(['default' => 1, 'sm' => 2, 'lg' => 3])->schema([
                         TextEntry::make('delivery_address')->label(__('admin.fields.address'))->columnSpanFull()
                             ->formatStateUsing(fn ($state) => is_array($state)
                                 ? (collect([$state['label'] ?? null, $state['line'] ?? null, $state['details'] ?? null])
@@ -102,11 +106,12 @@ class OrderResource extends AdminResource
                         TextEntry::make('deliveryArea.name')->label(__('admin.fields.delivery_area'))->placeholder('—'),
                         TextEntry::make('delivery_distance_km')->label(__('admin.fields.delivery_distance_km'))
                             ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
-                        TextEntry::make('distance_method')->label(__('admin.fields.distance_method')),
+                        TextEntry::make('distance_method')->label(__('admin.fields.distance_method'))
+                            ->formatStateUsing(fn ($state) => __('admin.orders.distance_methods.'.$state) !== 'admin.orders.distance_methods.'.$state ? __('admin.orders.distance_methods.'.$state) : $state),
                     ]),
                 ]),
                 Group::make()->columnSpan(['default' => 1, 'xl' => 1])->schema([
-                    Section::make(__('admin.orders.amounts'))->schema([
+                    Section::make(__('admin.orders.amounts'))->icon('heroicon-o-banknotes')->schema([
                         TextEntry::make('currency.code')->label(__('admin.fields.currency'))->inlineLabel()->alignEnd(),
                         TextEntry::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->inlineLabel()->alignEnd()
                             ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
