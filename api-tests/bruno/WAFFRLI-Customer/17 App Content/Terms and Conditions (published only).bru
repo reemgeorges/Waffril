@@ -1,0 +1,28 @@
+meta {
+  name: Terms and Conditions (published only)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/content/terms
+  body: none
+  auth: none
+}
+
+tests {
+  test("published terms, or 404 while none is published", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 404]);
+    if (res.getStatus() === 200) { expect(res.getBody().data.page).to.include.all.keys("key", "title", "body", "version", "published_at"); }
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+}
+
+docs {
+  Public: the registration screen shows the terms. Reading them records nothing (no automatic consent). Drafts are never returned. Send Accept-Language: ar or en.
+}

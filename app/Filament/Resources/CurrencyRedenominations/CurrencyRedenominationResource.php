@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CurrencyRedenominations;
 
+use App\Filament\Resources\Currencies\CurrencyResource;
 use App\Filament\Resources\CurrencyRedenominations\Pages\ListCurrencyRedenominations;
 use App\Filament\Support\AdminResource;
 use App\Models\CurrencyRedenomination;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 class CurrencyRedenominationResource extends AdminResource
 {
     protected static ?string $model = CurrencyRedenomination::class;
+
+    protected static ?string $navParent = CurrencyResource::class;
 
     protected static string $labelKey = 'currency_redenomination';
 

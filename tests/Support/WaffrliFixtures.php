@@ -263,6 +263,9 @@ trait WaffrliFixtures
         DB::table('settings')->insert(['key' => 'general.platform_name', 'value' => '"Waffrli"']);
         DB::table('otps')->insert(['verifiable_type' => User::class, 'verifiable_id' => $user->id, 'purpose' => 'login', 'channel' => 'sms', 'code_hash' => 'x', 'max_attempts' => 5, 'expires_at' => now()->addMinutes(5)]);
         DB::table('marketing_broadcasts')->insert(['admin_id' => $admin->id, 'title' => '{"ar":"مرحبا","en":"Hi"}', 'body' => '{"ar":"أخبار","en":"News"}', 'status' => 'sent', 'recipients_count' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        // App content (2026-11-12).
+        DB::table('content_pages')->insert(['key' => 'terms', 'title' => '{"ar":"الشروط","en":"Terms"}', 'body' => '{"ar":"نص","en":"Text"}', 'is_published' => true, 'published_at' => now(), 'version' => 1, 'updated_by_admin_id' => $admin->id, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('faqs')->insert(['question' => '{"ar":"سؤال","en":"Question"}', 'answer' => '{"ar":"جواب","en":"Answer"}', 'sort_order' => 1, 'is_published' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return compact('admin', 'usd', 'syp', 'city', 'store', 'branch', 'product', 'user', 'group', 'option', 'plan', 'areaId');
     }

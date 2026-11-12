@@ -78,7 +78,8 @@ class PlusMembershipResource extends AdminResource
                     'active' => self::statusLabel('active'), 'cancelled' => self::statusLabel('cancelled'), 'ended' => self::statusLabel('ended'),
                 ]),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Drivers\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -10,6 +11,10 @@ use Filament\Tables\Table;
 /** Cash this driver actually collected (read-only). */
 class CashCollectionsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'cash_collection';
+
     protected static string $relationship = 'collectedPayments';
 
     public static function getTitle($ownerRecord, string $pageClass): string

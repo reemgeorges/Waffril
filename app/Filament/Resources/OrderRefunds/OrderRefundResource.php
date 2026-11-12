@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderRefunds;
 
+use App\Filament\Resources\OrderPayments\OrderPaymentResource;
 use App\Filament\Resources\OrderRefunds\Pages\ListOrderRefunds;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 class OrderRefundResource extends AdminResource
 {
     protected static ?string $model = OrderRefund::class;
+
+    protected static ?string $navParent = OrderPaymentResource::class;
 
     protected static string $labelKey = 'order_refund';
 

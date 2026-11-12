@@ -98,7 +98,8 @@ class RoleResource extends AdminResource
                         return self::syncPermissions($record, $data);
                     }),
                 DeleteAction::make()->after(fn () => app(PermissionRegistrar::class)->forgetCachedPermissions()),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getPages(): array

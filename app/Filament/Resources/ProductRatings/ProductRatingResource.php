@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductRatings;
 
 use App\Filament\Resources\ProductRatings\Pages\ListProductRatings;
+use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\ProductRating;
@@ -24,6 +25,13 @@ use Filament\Tables\Table;
 class ProductRatingResource extends AdminResource
 {
     protected static ?string $model = ProductRating::class;
+
+    protected static ?string $navParent = StoreResource::class;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.nav_items.all_ratings');
+    }
 
     protected static string $labelKey = 'product_rating';
 

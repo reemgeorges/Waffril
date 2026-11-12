@@ -193,6 +193,7 @@ return [
         'device_removed' => 'تمت إزالة الجهاز.',
         'notification_marked_read' => 'تم تعليم الإشعار كمقروء.',
         'notifications_marked_read' => 'تم تعليم :count إشعارات كمقروءة.',
+        'content_not_published' => 'لم تُنشر هذه الصفحة بعد.',
     ],
     // WAFFRLI (2026-11-03): realtime (Reverb).
     'realtime' => [

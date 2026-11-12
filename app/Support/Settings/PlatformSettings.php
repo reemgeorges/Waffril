@@ -40,6 +40,10 @@ final class PlatformSettings
             'dispatch.rotation_strategy' => ['group' => 'dispatch', 'type' => 'select', 'default' => 'fair_rotation', 'options' => ['fair_rotation']],
             'dispatch.location_fresh_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120],
             'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
+            // UX overhaul (2026-11-12): the category offered first when a
+            // category is deleted and its stores/products need another one.
+            'catalog.fallback_store_category_id' => ['group' => 'catalog', 'type' => 'store_category', 'default' => null],
+            'catalog.fallback_product_category_id' => ['group' => 'catalog', 'type' => 'product_category', 'default' => null],
             'plus.renewal_request_lead_days' => ['group' => 'plus', 'type' => 'int', 'default' => 3],
             // PLUS benefits (2026-11-12). Applied to cycles confirmed from now on
             // (each cycle snapshots them); a member's approved free-delivery

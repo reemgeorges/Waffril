@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WalletTransactions;
 
+use App\Filament\Resources\Wallets\WalletResource;
 use App\Filament\Resources\WalletTransactions\Pages\ListWalletTransactions;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
@@ -17,6 +18,8 @@ class WalletTransactionResource extends AdminResource
 {
     protected static ?string $model = WalletTransaction::class;
 
+    protected static ?string $navParent = WalletResource::class;
+
     protected static string $labelKey = 'wallet_transaction';
 
     protected static string|\UnitEnum|null $navigationGroup = 'finance';
@@ -31,14 +34,17 @@ class WalletTransactionResource extends AdminResource
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('wallet.user.phone')->label(__('admin.fields.customer'))->placeholder('—'),
+                TextColumn::make('wallet.user.phone')->label(__('admin.fields.customer'))->placeholder('—')
+                    ->formatStateUsing(fn ($state, $record) => $record->wallet?->user?->fullName() ?? $state)->description(fn ($record) => $record->wallet?->user?->phone)
+                    ->searchable(query: Fields::searchCustomer('wallet.user')),
                 TextColumn::make('wallet.currency.code')->label(__('admin.fields.currency')),
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()->formatStateUsing(fn ($state) => __("admin.wallets.type_{$state}")),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))
                     ->formatStateUsing(fn ($state, WalletTransaction $record) => ($record->direction === 'debit' ? '−' : '+').Fields::formatMoney($state, $record->wallet?->currency))
                     ->color(fn (WalletTransaction $record) => $record->direction === 'debit' ? 'danger' : 'success'),
                 TextColumn::make('balance_after')->label(__('admin.fields.balance_after')),
-                TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->placeholder('—'),
+                TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->placeholder('—')
+                    ->searchable(query: fn ($query, string $search) => $query->whereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$search}%"))),
             ])
             ->filters([
                 SelectFilter::make('type')->label(__('admin.fields.type'))->options([

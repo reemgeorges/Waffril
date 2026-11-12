@@ -39,6 +39,8 @@ final class AdminPermissions
             'finance' => ['payments.view', 'payment_methods.manage', 'settlements.manage'],
             'plus' => ['plus.view', 'plus.manage', 'plus.approve'],
             'system' => ['notifications.view', 'notifications.marketing', 'admins.manage', 'roles.manage', 'audit.view'],
+            // 2026-11-12: Terms & Conditions and FAQ.
+            'content' => ['content.manage'],
         ];
     }
 

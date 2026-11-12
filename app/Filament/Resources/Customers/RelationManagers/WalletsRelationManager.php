@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Wallets\WalletResource;
 use App\Filament\Support\Fields;
 use Filament\Actions\Action;
@@ -12,6 +13,10 @@ use Filament\Tables\Table;
 /** Read-only wallet balances per currency (never editable). */
 class WalletsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'wallet';
+
     protected static string $relationship = 'wallets';
 
     public static function getTitle($ownerRecord, string $pageClass): string

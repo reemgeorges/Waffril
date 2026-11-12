@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -18,6 +19,10 @@ use Filament\Tables\Table;
  */
 class OpeningHoursRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'opening_hour';
+
     protected static string $relationship = 'openingHours';
 
     public static function getTitle($ownerRecord, string $pageClass): string

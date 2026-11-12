@@ -5,11 +5,15 @@ use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Customer\CustomerCartController;
 use App\Http\Controllers\Customer\CustomerCatalogController;
+use App\Http\Controllers\Customer\CustomerContentController;
 use App\Http\Controllers\Customer\CustomerEngagementController;
+use App\Http\Controllers\Customer\CustomerNotificationController;
 use App\Http\Controllers\Customer\CustomerOrderController;
 use App\Http\Controllers\Customer\CustomerPlusController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\Customer\CustomerWalletController;
+use App\Http\Controllers\Push\DeviceTokenController;
+use App\Http\Controllers\Realtime\BroadcastAuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,9 +36,16 @@ Route::prefix('customer')->group(function () {
         Route::post('auth/recovery/verify', [CustomerAuthController::class, 'recover']);
     });
 
+    // Published app content (2026-11-12): read-only, public so registration can
+    // show the terms, throttled per IP. Drafts are never exposed.
+    Route::middleware('throttle:customer-content')->group(function () {
+        Route::get('content/terms', [CustomerContentController::class, 'terms']);
+        Route::get('content/faqs', [CustomerContentController::class, 'faqs']);
+    });
+
     Route::middleware(['auth:user', 'guard.identity:user', 'customer.active', 'throttle:customer-api'])->group(function () {
         Route::post('auth/logout', [CustomerAuthController::class, 'logout']);
-        Route::post('broadcasting/auth', \App\Http\Controllers\Realtime\BroadcastAuthController::class);
+        Route::post('broadcasting/auth', BroadcastAuthController::class);
 
         Route::get('me', [CustomerProfileController::class, 'show']);
         Route::patch('me', [CustomerProfileController::class, 'update']);
@@ -99,14 +110,14 @@ Route::prefix('customer')->group(function () {
         Route::get('plus/requests', [CustomerPlusController::class, 'requests']);
         Route::post('plus/requests', [CustomerPlusController::class, 'submit'])->middleware('throttle:10,1');
 
-        Route::get('notifications', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'index']);
-        Route::get('notifications/unread-count', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'unreadCount']);
-        Route::post('notifications/read', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markAllRead']);
-        Route::post('notifications/{notification}/read', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markRead'])->whereUuid('notification');
+        Route::get('notifications', [CustomerNotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [CustomerNotificationController::class, 'unreadCount']);
+        Route::post('notifications/read', [CustomerNotificationController::class, 'markAllRead']);
+        Route::post('notifications/{notification}/read', [CustomerNotificationController::class, 'markRead'])->whereUuid('notification');
 
-        Route::get('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'index']);
-        Route::post('device-tokens', [\App\Http\Controllers\Push\DeviceTokenController::class, 'store']);
-        Route::patch('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'update'])->whereNumber('deviceToken');
-        Route::delete('device-tokens/{deviceToken}', [\App\Http\Controllers\Push\DeviceTokenController::class, 'destroy'])->whereNumber('deviceToken');
+        Route::get('device-tokens', [DeviceTokenController::class, 'index']);
+        Route::post('device-tokens', [DeviceTokenController::class, 'store']);
+        Route::patch('device-tokens/{deviceToken}', [DeviceTokenController::class, 'update'])->whereNumber('deviceToken');
+        Route::delete('device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy'])->whereNumber('deviceToken');
     });
 });

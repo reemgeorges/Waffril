@@ -17,6 +17,7 @@ return [
         // Kept for compatibility (earlier group keys).
         'customers' => 'العملاء',
         'drivers' => 'السائقون',
+        'content' => 'محتوى التطبيق والتواصل',
     ],
     'resources' => [
         'currency' => [
@@ -146,6 +147,14 @@ return [
         'notification' => [
             'singular' => 'إشعار',
             'plural' => 'سجل الإشعارات',
+        ],
+        'content_page' => [
+            'singular' => 'صفحة محتوى',
+            'plural' => 'الشروط والأحكام',
+        ],
+        'faq' => [
+            'singular' => 'سؤال شائع',
+            'plural' => 'الأسئلة الشائعة',
         ],
     ],
     'fields' => [
@@ -312,6 +321,8 @@ return [
         'subtotal' => 'المجموع الفرعي',
         'delivery_fee' => 'رسوم التوصيل',
         'delivery_fee_original' => 'رسوم التوصيل قبل مزايا بلس',
+        'question' => 'السؤال',
+        'answer' => 'الجواب',
     ],
     'actions' => [
         'activate' => 'تفعيل',
@@ -320,6 +331,7 @@ return [
         'mark_unavailable' => 'تعيين كغير متوفر',
         'open' => 'فتح',
         'save' => 'حفظ',
+        'close' => 'إغلاق',
     ],
     'audit' => [
         'system' => 'النظام',
@@ -527,6 +539,7 @@ return [
         'driver_language' => 'لغة الإشعارات التي تصل إلى تطبيق السائق.',
         'driver_password' => '8 أحرف على الأقل. يسجّل بها السائق دخوله مع رقم هاتفه.',
         'driver_city' => 'يستلم السائق طلبات هذه المدينة فقط.',
+        'fallback_category' => 'يُقترح تلقائياً عند حذف تصنيف تستخدمه متاجر أو منتجات.',
     ],
     'notifications' => [
         'done' => 'تم',
@@ -652,6 +665,19 @@ return [
         'source_system' => 'النظام (تذكير تجديد)',
         'discount_source_plan' => 'الخطة',
         'discount_source_exception' => 'استثناء',
+        'requested_at' => 'تاريخ الطلب',
+        'current_plan' => 'الخطة الحالية: :plan',
+        'reviewed_by' => 'راجعه',
+        'review_note' => 'ملاحظة المراجعة',
+        'details' => 'التفاصيل',
+        'request_heading' => 'طلب بلس — :customer',
+        'no_requests' => 'لا توجد طلبات هنا',
+        'all_requests' => 'كل الطلبات',
+        'history' => 'سجل طلبات بلس',
+        'current_cycle' => 'الدورة الحالية',
+        'pending_requests' => 'طلبات بانتظار المراجعة',
+        'membership_page' => 'صفحة الاشتراك',
+        'until' => 'حتى :date',
     ],
     'products' => [
         'branch_option_prices' => 'أسعار الخيارات في الفروع',
@@ -669,6 +695,8 @@ return [
     'ratings' => [
         'hide' => 'إخفاء',
         'unhide' => 'إظهار مجدداً',
+        'none_by_customer' => 'لم يكتب هذا العميل أي تقييم',
+        'none_for_order' => 'لا توجد تقييمات لمنتجات هذا الطلب',
     ],
     'requests' => [
         'approve' => 'موافقة',
@@ -735,6 +763,8 @@ return [
             ],
             'catalog' => [
                 'placeholder_rating' => 'تقييم افتراضي للمنتجات غير المقيّمة (1–5)',
+                'fallback_store_category_id' => 'التصنيف الاحتياطي للمتاجر',
+                'fallback_product_category_id' => 'التصنيف الاحتياطي للمنتجات',
             ],
             'plus' => [
                 'renewal_request_lead_days' => 'إنشاء طلبات التجديد قبل نهاية الدورة بعدد أيام',
@@ -744,6 +774,7 @@ return [
                 'subscription_message' => 'نص رسالة الاشتراك الجاهزة',
             ],
         ],
+        'no_fallback' => 'بدون (يُختار عند الحذف)',
     ],
     'settlements' => [
         'note_required_on_difference' => 'اكتب ملاحظة إذا اختلف المبلغ المستلم عن المتوقع.',
@@ -782,6 +813,7 @@ return [
         'finance' => 'المالية',
         'plus' => 'بلس',
         'system' => 'النظام',
+        'content' => 'محتوى التطبيق',
     ],
     'permissions' => [
         'settings' => [
@@ -855,6 +887,9 @@ return [
         ],
         'audit' => [
             'view' => 'عرض سجل التدقيق',
+        ],
+        'content' => [
+            'manage' => 'إدارة الشروط والأحكام والأسئلة الشائعة',
         ],
     ],
     'driver_map' => [
@@ -1061,9 +1096,35 @@ return [
         'plus_short' => 'خصم بلس',
         'add_branch' => 'إضافة فرع لهذا المتجر',
         'add_product' => 'إضافة منتج لهذا المتجر',
+        'priced_products' => 'منتجات مسعّرة',
+        'priced_products_help' => 'عدد منتجات المتجر التي لها سعر في هذا الفرع',
+        'add_branch_short' => 'إضافة فرع',
+        'manage_branch' => 'الأسعار والتوفر',
+        'no_branches' => 'لا توجد فروع لهذا المتجر بعد',
+        'no_branches_help' => 'أضف فرعاً لتحديد موقعه وأسعار منتجاته فيه.',
+        'sold_in_branches' => 'متوفر في فروع',
+        'sold_in_branches_help' => 'عدد فروع المتجر التي حدّدت سعراً لهذا المنتج',
+        'add_product_short' => 'إضافة منتج',
+        'manage_product' => 'الأسعار والخيارات',
+        'no_products' => 'لا توجد منتجات لهذا المتجر بعد',
+        'no_products_help' => 'أضف منتجات المتجر هنا، ثم حدّد سعرها وتوفرها في كل فرع.',
+        'back_to_store' => 'العودة إلى المتجر',
     ],
     'categories' => [
         'no_parent' => 'بدون (تصنيف رئيسي)',
+        'delete_heading' => 'حذف التصنيف «:name»',
+        'delete_in_use_store' => 'يستخدم :count متجراً هذا التصنيف. لن يُحذف أي متجر: سيُنقل كل منها إلى التصنيف الذي تختاره أدناه. يمكن استعادة التصنيف لاحقاً.',
+        'delete_in_use_product' => 'يستخدم :count منتجاً هذا التصنيف. لن يُحذف أي منتج: سيُنقل كل منها إلى التصنيف الذي تختاره أدناه. يمكن استعادة التصنيف لاحقاً.',
+        'delete_unused' => 'لا يستخدم أي متجر أو منتج هذا التصنيف. يمكن استعادته لاحقاً.',
+        'move_store_to' => 'انقل المتاجر إلى التصنيف',
+        'move_product_to' => 'انقل المنتجات إلى التصنيف',
+        'move_help' => 'يُقترح التصنيف الاحتياطي المحدد في إعدادات المنصة إن وُجد.',
+        'confirm_move_store' => 'أؤكد نقل :count متجراً إلى التصنيف المختار',
+        'confirm_move_product' => 'أؤكد نقل :count منتجاً إلى التصنيف المختار',
+        'delete_and_move' => 'حذف التصنيف',
+        'replacement_required' => 'اختر تصنيفاً بديلاً لـ :count عنصراً يستخدم هذا التصنيف.',
+        'replacement_invalid' => 'اختر تصنيفاً بديلاً آخر غير محذوف.',
+        'has_children' => 'لهذا التصنيف تصنيفات فرعية. انقلها أو احذفها أولاً.',
     ],
     // UX redesign round 2 (2026-11-11): readable activity and notification names.
     'audit_actions' => [
@@ -1111,6 +1172,13 @@ return [
         'settlement__prepared' => 'تجهيز تسوية يوم',
         'settlement__recorded' => 'تسجيل مبلغ مستلم من سائق',
         'settlement__dispute_resolved' => 'معالجة فرق في تسوية',
+        'catalog__store_category_deleted' => 'حذف تصنيف متاجر ونقل متاجره',
+        'catalog__category_deleted' => 'حذف تصنيف منتجات ونقل منتجاته',
+        'content__page_created' => 'إضافة صفحة محتوى',
+        'content__page_updated' => 'تعديل صفحة محتوى',
+        'content__faq_created' => 'إضافة سؤال شائع',
+        'content__faq_updated' => 'تعديل سؤال شائع',
+        'content__faq_deleted' => 'حذف سؤال شائع',
     ],
     'notification_types' => [
         'order_accepted' => 'قُبل الطلب',
@@ -1134,5 +1202,70 @@ return [
     'common' => [
         'yes' => 'نعم',
         'no' => 'لا',
+    ],
+    'nav_items' => [
+        'all_branches' => 'كل الفروع',
+        'all_products' => 'كل المنتجات',
+        'all_ratings' => 'كل التقييمات',
+    ],
+    'plus_status' => [
+        'active' => 'مشترك فعّال',
+        'ending' => 'فعّال حتى نهاية الدورة (لن يتجدد)',
+        'scheduled' => 'اشتراك بدورة قادمة',
+        'pending' => 'طلب بانتظار المراجعة',
+        'none' => 'غير مشترك',
+    ],
+    'content' => [
+        'title' => 'العنوان',
+        'body' => 'النص',
+        'body_help' => 'اكتب النص النهائي المعتمد. اترك سطراً فارغاً بين الفقرات.',
+        'publication' => 'النشر',
+        'page' => 'الصفحة',
+        'published' => 'منشور في التطبيق',
+        'draft' => 'مسودة',
+        'published_help' => 'المسودة لا تظهر للعملاء. عند تعديل نص منشور يرتفع رقم الإصدار تلقائياً.',
+        'faq_published_help' => 'يظهر السؤال في التطبيق فقط عند نشره.',
+        'version' => 'الإصدار',
+        'published_at' => 'تاريخ النشر',
+        'updated_by' => 'آخر تعديل بواسطة',
+        'no_pages' => 'لم تُضف الشروط والأحكام بعد',
+        'no_pages_help' => 'أضف نص الشروط والأحكام المعتمد بالعربية والإنجليزية ثم انشره.',
+        'no_faqs' => 'لا توجد أسئلة شائعة بعد',
+        'no_faqs_help' => 'أضف الأسئلة التي يسألها العملاء كثيراً مع أجوبتها.',
+        'publish' => 'نشر',
+        'unpublish' => 'إلغاء النشر',
+        'unknown_page' => 'صفحة غير معروفة.',
+        'both_languages_required' => 'اكتب النص بالعربية والإنجليزية.',
+        'keys' => [
+            'terms' => 'الشروط والأحكام',
+        ],
+    ],
+    // UX overhaul (2026-11-12): names used by related-list buttons and dialogs.
+    'relation_labels' => [
+        'cycle_discount' => ['singular' => 'خصم دورة', 'plural' => 'خصومات الدورة'],
+        'plus_exception' => ['singular' => 'استثناء خصم', 'plural' => 'استثناءات الخصم'],
+        'order' => ['singular' => 'طلب', 'plural' => 'الطلبات'],
+        'wallet' => ['singular' => 'محفظة', 'plural' => 'المحافظ'],
+        'address' => ['singular' => 'عنوان', 'plural' => 'العناوين'],
+        'order_item' => ['singular' => 'منتج في الطلب', 'plural' => 'منتجات الطلب'],
+        'delivery_offer' => ['singular' => 'عرض توصيل', 'plural' => 'عروض التوصيل'],
+        'status_change' => ['singular' => 'تغيير حالة', 'plural' => 'سجل الحالات'],
+        'branch_option_price' => ['singular' => 'سعر خيار في فرع', 'plural' => 'أسعار الخيارات في الفروع'],
+        'branch_price' => ['singular' => 'سعر في فرع', 'plural' => 'أسعار الفروع'],
+        'option' => ['singular' => 'خيار', 'plural' => 'الخيارات'],
+        'option_group' => ['singular' => 'مجموعة خيارات', 'plural' => 'مجموعات الخيارات'],
+        'hour_exception' => ['singular' => 'ساعات خاصة أو إغلاق', 'plural' => 'ساعات خاصة وإغلاقات'],
+        'opening_hour' => ['singular' => 'فترة دوام', 'plural' => 'ساعات العمل الأسبوعية'],
+        'branch_product' => ['singular' => 'منتج وسعره في الفرع', 'plural' => 'المنتجات والأسعار'],
+        'cash_collection' => ['singular' => 'مبلغ نقدي محصّل', 'plural' => 'المبالغ النقدية المحصّلة'],
+        'product' => ['singular' => 'منتج', 'plural' => 'المنتجات'],
+        'branch' => ['singular' => 'فرع', 'plural' => 'الفروع'],
+        'store_discount' => ['singular' => 'خصم متجر', 'plural' => 'خصومات المتاجر'],
+        'settlement' => ['singular' => 'تسوية نقدية', 'plural' => 'التسويات النقدية'],
+        'wallet_transaction' => ['singular' => 'حركة محفظة', 'plural' => 'حركات المحفظة'],
+        'plus_cycle' => ['singular' => 'دورة اشتراك', 'plural' => 'دورات الاشتراك'],
+        'payment' => ['singular' => 'دفعة', 'plural' => 'المدفوعات'],
+        'refund' => ['singular' => 'مبلغ مسترد', 'plural' => 'المبالغ المستردة'],
+        'cancellation_request' => ['singular' => 'طلب إلغاء', 'plural' => 'طلبات الإلغاء'],
     ],
 ];

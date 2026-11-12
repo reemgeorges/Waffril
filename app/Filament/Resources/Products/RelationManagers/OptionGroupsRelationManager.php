@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use App\Models\ProductOptionGroup;
 use Filament\Actions\CreateAction;
@@ -30,6 +31,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
  */
 class OptionGroupsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'option_group';
+
     protected static string $relationship = 'optionGroups';
 
     public static function getTitle($ownerRecord, string $pageClass): string

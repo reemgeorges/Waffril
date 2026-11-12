@@ -108,7 +108,8 @@ class DriverResource extends AdminResource
                 Action::make('forceOffline')->label(__('admin.drivers.force_offline'))->icon('heroicon-o-signal-slash')
                     ->visible(fn (Driver $record) => $record->availability === Driver::AVAILABILITY_AVAILABLE && static::can('update', $record))->requiresConfirmation()
                     ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->forceOffline($record, $admin))),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getRelations(): array

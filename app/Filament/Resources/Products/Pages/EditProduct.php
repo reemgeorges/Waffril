@@ -3,12 +3,25 @@
 namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Concerns\CombinesRelationTabs;
+use App\Filament\Concerns\InStoreContext;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Support\TranslatableRecord;
 use Filament\Resources\Pages\EditRecord;
 
 class EditProduct extends EditRecord
 {
+    use InStoreContext;
+
+    protected static function storeTab(): string
+    {
+        return 'products';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [$this->backToStoreAction()];
+    }
+
     use CombinesRelationTabs;
     use TranslatableRecord;
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
 use App\Models\DeliveryOffer;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -16,6 +17,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DeliveryOffersRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'delivery_offer';
+
     protected static string $relationship = 'deliveryOffers';
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string

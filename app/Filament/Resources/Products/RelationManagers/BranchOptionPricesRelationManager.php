@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\Fields;
 use App\Models\BranchProduct;
@@ -28,6 +29,10 @@ use Illuminate\Validation\Rule;
  */
 class BranchOptionPricesRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'branch_option_price';
+
     protected static string $relationship = 'branchOptionPrices';
 
     public static function getTitle($ownerRecord, string $pageClass): string

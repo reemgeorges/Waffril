@@ -4,7 +4,9 @@ namespace App\Services\Platform;
 
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
+use App\Models\Category;
 use App\Models\Setting;
+use App\Models\StoreCategory;
 use App\Services\Audit\AdminAudit;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Settings\PlatformSettings;
@@ -82,6 +84,8 @@ class PlatformSettingsService
             'rating' => $this->rating($key, $value),
             'phone' => preg_match('/^\+[1-9]\d{6,14}$/', (string) $value) ? (string) $value : $this->invalid($key),
             'timezone' => in_array($value, timezone_identifiers_list(), true) ? $value : $this->invalid($key),
+            'store_category' => StoreCategory::query()->whereKey($value)->exists() ? (int) $value : $this->invalid($key),
+            'product_category' => Category::query()->whereKey($value)->exists() ? (int) $value : $this->invalid($key),
             default => mb_substr((string) $value, 0, 500),
         };
     }

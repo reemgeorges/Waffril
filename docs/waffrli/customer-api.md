@@ -47,6 +47,18 @@ The legacy email/password user routes (`routes/api/v1/user.php`) are **off** unl
 - **PLUS:** plans, membership, cycles, remaining free deliveries, eligible discounts, and requests (new / renew / change / cancel / custom) with their history.
 - **Notifications:** list, unread count, mark one or all read. **Device tokens:** register, rotate, remove, own rows only.
 
+## App content (2026-11-12)
+
+| Method | Path | Auth | Returns |
+|---|---|---|---|
+| GET | `/api/v1/customer/content/terms` | **public**, `throttle:customer-content` (60/min per IP) | `{page: {key, title, body, version, published_at}}` in the request language. 404 while no published terms exist. |
+| GET | `/api/v1/customer/content/faqs` | **public**, `throttle:customer-content` | `{faqs: [{id, question, answer}]}`: published only, in display order |
+
+- **Public on purpose:** registration shows the terms before sign-in.
+- **Read-only:** drafts are never returned, and nothing is recorded when the terms are read (no automatic consent).
+- **`version`:** increases whenever a published text is edited.
+- **Editing:** the admin panel (App content), permission `content.manage`.
+
 ## Endpoint inventory
 
 Generated from `php artisan route:list --path=api/v1/customer` (63 routes). "token" = `auth:user` + `guard.identity:user` + `customer.active` + `throttle:customer-api`.

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Contracts\Delivery\DistanceCalculator;
 use App\Contracts\Messaging\TextMessageGateway;
+use App\Contracts\Push\PushTransport;
 use App\Exceptions\Handler;
+use App\Listeners\RealtimeDomainSubscriber;
 use App\Policies\NotificationPolicy;
 use App\Policies\RolePolicy;
 use App\Services\Functional\AdminAuthService;
@@ -18,15 +20,20 @@ use App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService;
 use App\Services\Model\Setting\SettingManagementService;
 use App\Services\Model\Test\TestService;
 use App\Services\Model\User\UserService;
+use App\Services\Push\FakePushTransport;
+use App\Services\Push\FcmHttpV1Transport;
+use App\Support\Broadcasting\RecordingBroadcaster;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Permission\Models\Role;
+use Spatie\Translatable\Facades\Translatable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -71,9 +78,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TextMessageGateway::class, fn () => TextMessenger::gatewayFor((string) config('waffrli.messaging.driver', 'fake')));
 
         // WAFFRLI (2026-11-03): push transport (fcm | fake), resolved per job.
-        $this->app->bind(\App\Contracts\Push\PushTransport::class, fn () => config('waffrli.push.driver') === 'fcm'
-            ? new \App\Services\Push\FcmHttpV1Transport
-            : new \App\Services\Push\FakePushTransport);
+        $this->app->bind(PushTransport::class, fn () => config('waffrli.push.driver') === 'fcm'
+            ? new FcmHttpV1Transport
+            : new FakePushTransport);
 
         // WAFFRLI P0 (2026-10-30): replaceable delivery-distance strategy,
         // chosen by config('delivery.distance_strategy'). Haversine is a
@@ -100,13 +107,13 @@ class AppServiceProvider extends ServiceProvider
         // WAFFRLI (2026-11-04): database translations (spatie/laravel-translatable).
         // A missing translation falls back to APP_FALLBACK_LOCALE, then to any
         // language that exists, so an Arabic-only value never renders empty.
-        \Spatie\Translatable\Facades\Translatable::fallback(fallbackAny: true);
+        Translatable::fallback(fallbackAny: true);
 
         // WAFFRLI (2026-11-03): domain events → realtime operations alerts.
-        \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\RealtimeDomainSubscriber::class);
+        Event::subscribe(RealtimeDomainSubscriber::class);
 
         // WAFFRLI (2026-11-03): in-memory broadcaster used by automated tests.
-        Broadcast::extend('recording', fn ($app, array $config) => new \App\Support\Broadcasting\RecordingBroadcaster(
+        Broadcast::extend('recording', fn ($app, array $config) => new RecordingBroadcaster(
             Broadcast::pusher($config)
         ));
 
@@ -151,6 +158,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('customer-otp-verify', function (Request $request) {
             return Limit::perMinute(20)->by('customer-otp-verify-ip:'.$request->ip());
         });
+
+        // Public, read-only app content (terms, FAQ).
+        RateLimiter::for('customer-content', fn (Request $request) => Limit::perMinute(60)->by('customer-content:'.$request->ip()));
 
         RateLimiter::for('customer-api', function (Request $request) {
             return Limit::perMinute(180)->by('customer:'.($request->user('user')?->getKey() ?? $request->ip()));

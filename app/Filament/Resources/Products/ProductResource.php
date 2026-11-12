@@ -11,6 +11,7 @@ use App\Filament\Resources\Products\RelationManagers\BranchPricesRelationManager
 use App\Filament\Resources\Products\RelationManagers\OptionGroupsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager;
+use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
 use App\Models\Product;
@@ -20,6 +21,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -41,6 +43,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ProductResource extends AdminResource
 {
     protected static ?string $model = Product::class;
+
+    protected static ?string $navParent = StoreResource::class;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.nav_items.all_products');
+    }
 
     protected static string $labelKey = 'product';
 
@@ -65,6 +74,8 @@ class ProductResource extends AdminResource
                     Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                         ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->searchable()->preload()
                         ->default(fn () => request()->integer('store') ?: null)
+                                // Inside Store → Branches/Products the store is the owner record.
+                        ->hidden(fn ($livewire) => $livewire instanceof RelationManager)
                         ->helperText(__('admin.help.product_store'))
                         ->disabled(fn (?Product $record) => $record !== null)->dehydrated(fn (?Product $record) => $record === null),
                     Fields::translatable('name'),
@@ -110,7 +121,8 @@ class ProductResource extends AdminResource
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder

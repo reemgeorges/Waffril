@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -52,6 +53,20 @@ final class Fields
             ->required()->maxLength(120)->alphaDash()->unique($table, 'slug', ignoreRecord: true)
             ->extraInputAttributes(['dir' => 'ltr'])
             ->helperText(__('admin.help.slug'));
+    }
+
+    /**
+     * Table search on a related customer (UX overhaul 2026-11-12): phone,
+     * first or last name, e-mail. $relation is the path to the User, e.g.
+     * "user", "order.user", "wallet.user".
+     */
+    public static function searchCustomer(string $relation): Closure
+    {
+        return fn (Builder $query, string $search) => $query->whereHas($relation, fn ($user) => $user
+            ->where('phone', 'like', "%{$search}%")
+            ->orWhere('first_name', 'like', "%{$search}%")
+            ->orWhere('last_name', 'like', "%{$search}%")
+            ->orWhere('email', 'like', "%{$search}%"));
     }
 
     /** A collapsed section for rarely changed settings (progressive disclosure). */

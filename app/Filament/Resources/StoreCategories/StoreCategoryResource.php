@@ -6,9 +6,9 @@ use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\SafeCategoryDelete;
 use App\Models\StoreCategory;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
@@ -90,7 +90,7 @@ class StoreCategoryResource extends AdminResource
             ->filters([TrashedFilter::make()])
             ->recordActions([
                 EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())->modalWidth(Width::TwoExtraLarge),
-                ActionGroup::make([DeleteAction::make(), RestoreAction::make()]),
+                ActionGroup::make([SafeCategoryDelete::make('store'), RestoreAction::make()]),
             ])
             ->emptyStateDescription(__('admin.empty.store_categories'))
             ->defaultSort('sort_order');

@@ -150,7 +150,8 @@ class StoreResource extends AdminResource
 
     public static function getRelations(): array
     {
-        return [BranchesRelationManager::class, ProductsRelationManager::class];
+        // Keyed so links can open a tab directly (?relation=branches|products).
+        return ['branches' => BranchesRelationManager::class, 'products' => ProductsRelationManager::class];
     }
 
     public static function getPages(): array

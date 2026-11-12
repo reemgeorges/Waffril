@@ -9,6 +9,7 @@ use App\Filament\Resources\Orders\RelationManagers\CancellationRequestsRelationM
 use App\Filament\Resources\Orders\RelationManagers\DeliveryOffersRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\RatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
@@ -208,6 +209,7 @@ class OrderResource extends AdminResource
             CancellationRequestsRelationManager::class,
             RefundsRelationManager::class,
             DeliveryOffersRelationManager::class,
+            RatingsRelationManager::class,
         ];
     }
 

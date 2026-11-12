@@ -102,6 +102,7 @@ class AdminPanelProvider extends PanelProvider
                 'people' => NavigationGroup::make()->label(fn () => __('admin.nav.people')),
                 'finance' => NavigationGroup::make()->label(fn () => __('admin.nav.finance')),
                 'plus' => NavigationGroup::make()->label(fn () => __('admin.nav.plus')),
+                'content' => NavigationGroup::make()->label(fn () => __('admin.nav.content'))->collapsed(),
                 'delivery' => NavigationGroup::make()->label(fn () => __('admin.nav.delivery'))->collapsed(),
                 'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform'))->collapsed(),
                 'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system'))->collapsed(),

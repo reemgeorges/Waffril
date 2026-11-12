@@ -3,10 +3,11 @@
 namespace App\Filament\Resources\Categories;
 
 use App\Filament\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Resources\StoreCategories\StoreCategoryResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\SafeCategoryDelete;
 use App\Models\Category;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
@@ -31,6 +32,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class CategoryResource extends AdminResource
 {
     protected static ?string $model = Category::class;
+
+    protected static ?string $navParent = StoreCategoryResource::class;
 
     protected static string $labelKey = 'category';
 
@@ -91,7 +94,7 @@ class CategoryResource extends AdminResource
                     ->options(fn () => Category::all()->mapWithKeys(fn ($c) => [$c->id => $c->name])),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), DeleteAction::make(), RestoreAction::make()])
+            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), SafeCategoryDelete::make('product'), RestoreAction::make()])
             ->defaultSort('sort_order');
     }
 

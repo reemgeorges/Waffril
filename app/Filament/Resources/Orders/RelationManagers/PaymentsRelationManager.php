@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\OrderPayments\OrderPaymentResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
@@ -9,6 +10,10 @@ use Filament\Tables\Table;
 /** Payments of this order (read-only). */
 class PaymentsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'payment';
+
     protected static string $relationship = 'payments';
 
     public static function getTitle($ownerRecord, string $pageClass): string

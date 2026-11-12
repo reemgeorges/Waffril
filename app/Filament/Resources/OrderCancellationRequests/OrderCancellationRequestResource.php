@@ -12,6 +12,7 @@ use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -50,7 +51,10 @@ class OrderCancellationRequestResource extends AdminResource
         return $table
             ->columns([
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))
+                TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => $record->order?->user?->fullName())
+                    ->searchable(query: fn ($query, string $search) => $query->whereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$search}%"))
+                        ->orWhereHas('order.user', fn ($u) => $u->where('phone', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")))
                     ->url(fn (OrderCancellationRequest $record) => OrderResource::getUrl('view', ['record' => $record->order_id])),
                 TextColumn::make('order.status')->label(__('admin.fields.order_status'))->badge()
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state?->color()),

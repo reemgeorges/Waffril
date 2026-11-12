@@ -76,7 +76,8 @@ class AdminResource extends BaseAdminResource
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
             ])
             ->filters([TrashedFilter::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->defaultSort('name');
     }
 
     public static function getEloquentQuery(): Builder

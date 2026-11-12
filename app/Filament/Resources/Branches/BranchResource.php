@@ -8,6 +8,7 @@ use App\Filament\Resources\Branches\Pages\ListBranches;
 use App\Filament\Resources\Branches\RelationManagers\BranchProductsRelationManager;
 use App\Filament\Resources\Branches\RelationManagers\HourExceptionsRelationManager;
 use App\Filament\Resources\Branches\RelationManagers\OpeningHoursRelationManager;
+use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\Fields;
@@ -20,6 +21,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -42,6 +44,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class BranchResource extends AdminResource
 {
     protected static ?string $model = Branch::class;
+
+    protected static ?string $navParent = StoreResource::class;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.nav_items.all_branches');
+    }
 
     protected static string $labelKey = 'branch';
 
@@ -68,6 +77,8 @@ class BranchResource extends AdminResource
                             Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                                 ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload()
                                 ->default(fn () => request()->integer('store') ?: null)
+                                // Inside Store → Branches/Products the store is the owner record.
+                                ->hidden(fn ($livewire) => $livewire instanceof RelationManager)
                                 ->disabled(fn (?Branch $record) => $record !== null)->dehydrated(fn (?Branch $record) => $record === null),
                             Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
                                 ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload(),
@@ -124,7 +135,8 @@ class BranchResource extends AdminResource
                         fn ($admin) => app(CatalogAdminService::class)->setBranchAcceptingOrders($record, ! $record->is_accepting_orders, $admin)
                     )),
                 EditAction::make(), DeleteAction::make(), RestoreAction::make(),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder
