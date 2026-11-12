@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PlusMemberships\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\PlusPlans\RelationManagers\StoreDiscountsRelationManager;
 use App\Filament\Support\BusinessAction;
 use App\Models\Store;
@@ -26,6 +27,10 @@ use Filament\Tables\Table;
  */
 class ExceptionsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'plus_exception';
+
     protected static string $relationship = 'exceptions';
 
     public static function getTitle($ownerRecord, string $pageClass): string

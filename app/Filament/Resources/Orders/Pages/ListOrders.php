@@ -22,7 +22,7 @@ class ListOrders extends ListRecords
      * an employee takes (accept → find a driver → follow the delivery), each
      * tab with its live count. Tabs only filter the query; the order rules
      * stay in the services. The dashboard links straight to these tabs
-     * (?activeTab=pending, …).
+     * (?tab=pending, …).
      *
      * Dispatch B4 (2026-11-10): the "Waiting for driver" queue (offers out or
      * no driver available, orders needing attention first) is shown while

@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Categories;
 use App\Filament\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\SafeCategoryDelete;
 use App\Models\Category;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
@@ -31,6 +31,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class CategoryResource extends AdminResource
 {
     protected static ?string $model = Category::class;
+
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'category';
 
@@ -91,7 +98,7 @@ class CategoryResource extends AdminResource
                     ->options(fn () => Category::all()->mapWithKeys(fn ($c) => [$c->id => $c->name])),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), DeleteAction::make(), RestoreAction::make()])
+            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), SafeCategoryDelete::make('product'), RestoreAction::make()])
             ->defaultSort('sort_order');
     }
 

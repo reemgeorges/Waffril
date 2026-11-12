@@ -27,11 +27,11 @@ class PaymentMethodResource extends AdminResource
 
     protected static string $labelKey = 'payment_method';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'finance';
+    protected static string|\UnitEnum|null $navigationGroup = 'platform';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?int $navigationSort = 60;
+    protected static ?int $navigationSort = 40;
 
     public static function form(Schema $schema): Schema
     {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\Pages;
 
+use App\Filament\Concerns\CombinesRelationTabs;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\User;
@@ -13,7 +14,13 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewCustomer extends ViewRecord
 {
+    use CombinesRelationTabs;
+
     protected static string $resource = CustomerResource::class;
+
+    protected static string $contentTabLabelKey = 'admin.customers.profile';
+
+    protected static ?string $contentTabIcon = 'heroicon-o-user-circle';
 
     protected function getHeaderActions(): array
     {

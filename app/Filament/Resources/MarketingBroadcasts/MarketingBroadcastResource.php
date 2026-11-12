@@ -5,6 +5,7 @@ namespace App\Filament\Resources\MarketingBroadcasts;
 use App\Filament\Resources\MarketingBroadcasts\Pages\ListMarketingBroadcasts;
 use App\Filament\Support\AdminResource;
 use App\Models\MarketingBroadcast;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -17,7 +18,7 @@ class MarketingBroadcastResource extends AdminResource
 {
     protected static ?string $model = MarketingBroadcast::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'people';
+    protected static string|\UnitEnum|null $navigationGroup = 'content';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 
@@ -41,7 +42,7 @@ class MarketingBroadcastResource extends AdminResource
             ->description(__('admin.marketing.notice'))
             ->columns([
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('title')->label(__('admin.fields.name'))->limit(40),
+                TextColumn::make('title')->label(__('admin.fields.name'))->limit(40)->searchable()->weight(FontWeight::SemiBold),
                 TextColumn::make('audience')->label(__('admin.marketing.audience'))
                     ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.'.$state).($record->city ? ' — '.$record->city->name : '')),
                 TextColumn::make('status')->label(__('admin.marketing.status'))->badge()

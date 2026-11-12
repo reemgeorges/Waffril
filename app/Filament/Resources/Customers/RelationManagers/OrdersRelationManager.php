@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\Fields;
 use Filament\Actions\Action;
@@ -12,6 +13,10 @@ use Filament\Tables\Table;
 /** Read-only order history of a customer or driver. */
 class OrdersRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'order';
+
     protected static string $relationship = 'orders';
 
     public static function getTitle($ownerRecord, string $pageClass): string

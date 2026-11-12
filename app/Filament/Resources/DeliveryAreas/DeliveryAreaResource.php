@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryAreas;
 
+use App\Filament\Resources\Cities\CityResource;
 use App\Filament\Resources\DeliveryAreas\Pages\ManageDeliveryAreas;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
@@ -28,13 +29,15 @@ class DeliveryAreaResource extends AdminResource
 {
     protected static ?string $model = DeliveryArea::class;
 
+    protected static ?string $navParent = CityResource::class;
+
     protected static string $labelKey = 'delivery_area';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
+    protected static string|\UnitEnum|null $navigationGroup = 'platform';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 21;
 
     public static function form(Schema $schema): Schema
     {

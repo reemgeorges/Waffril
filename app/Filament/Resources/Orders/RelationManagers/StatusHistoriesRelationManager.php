@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\RelationManagers;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\TranslatedRelationLabels;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -10,6 +11,10 @@ use Filament\Tables\Table;
 /** Append-only status trail (read-only). */
 class StatusHistoriesRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'status_change';
+
     protected static string $relationship = 'statusHistories';
 
     public static function getTitle($ownerRecord, string $pageClass): string

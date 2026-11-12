@@ -5,8 +5,11 @@ namespace App\Filament\Resources\PlusCycles;
 use App\Filament\Resources\PlusCycles\Pages\ListPlusCycles;
 use App\Filament\Resources\PlusCycles\Pages\ViewPlusCycle;
 use App\Filament\Resources\PlusCycles\RelationManagers\DiscountsRelationManager;
+use App\Filament\Resources\PlusMemberships\PlusMembershipResource;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Fields;
 use App\Models\PlusCycle;
+use App\Services\Plus\PlusService;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -23,6 +26,8 @@ use Filament\Tables\Table;
 class PlusCycleResource extends AdminResource
 {
     protected static ?string $model = PlusCycle::class;
+
+    protected static ?string $navParent = PlusMembershipResource::class;
 
     protected static string $labelKey = 'plus_cycle';
 
@@ -55,7 +60,7 @@ class PlusCycleResource extends AdminResource
                 TextEntry::make('free_deliveries_remaining')->label(__('admin.plus.free_deliveries_remaining'))
                     ->state(fn (PlusCycle $record) => max(0, $record->free_deliveries_total - $record->free_deliveries_used)),
                 TextEntry::make('delivery_discount_percent')->label(__('admin.plus.delivery_discount_after_allowance'))
-                    ->state(fn (PlusCycle $record) => \App\Services\Plus\PlusService::cycleDeliveryDiscountPercent($record) + 0)->suffix('%'),
+                    ->state(fn (PlusCycle $record) => PlusService::cycleDeliveryDiscountPercent($record) + 0)->suffix('%'),
                 TextEntry::make('orders_count')->label(__('admin.plus.orders_using_cycle'))->state(fn (PlusCycle $record) => $record->orders()->count()),
                 TextEntry::make('confirmedBy.name')->label(__('admin.fields.confirmed_by')),
                 TextEntry::make('confirmed_at')->label(__('admin.fields.confirmed_at'))->dateTime(),
@@ -67,7 +72,7 @@ class PlusCycleResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('user.phone')->label(__('admin.fields.customer'))
+                TextColumn::make('user.phone')->label(__('admin.fields.customer'))->searchable(query: Fields::searchCustomer('user'))
                     ->formatStateUsing(fn ($state, PlusCycle $record) => $record->user?->fullName().' '.$state),
                 TextColumn::make('cycle_number')->label(__('admin.fields.cycle_number')),
                 TextColumn::make('plan_name')->label(__('admin.fields.plan'))->formatStateUsing(fn ($state) => self::planName($state)),

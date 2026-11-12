@@ -1,0 +1,33 @@
+meta {
+  name: Frequently asked questions (published only)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/content/faqs
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("status flag is true", function () {
+    expect(res.getBody().status).to.equal(true);
+  });
+
+  test("standard envelope", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.statusCode).to.equal(res.getStatus());
+  });
+  test("a list of questions", function () {
+    expect(res.getBody().data.faqs).to.be.an("array");
+  });
+}
+
+docs {
+  Public: published questions in display order, in the request language.
+}

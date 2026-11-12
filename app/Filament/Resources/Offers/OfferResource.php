@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Offers;
 
 use App\Filament\Resources\Offers\Pages\ManageOffers;
+use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
 use App\Models\Branch;
@@ -34,6 +35,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class OfferResource extends AdminResource
 {
     protected static ?string $model = Offer::class;
+
+    protected static ?string $navParent = StoreResource::class;
 
     protected static string $labelKey = 'offer';
 

@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Support\BusinessAction;
+use App\Models\Category;
+use App\Models\StoreCategory;
 use App\Services\Delivery\DeliveryOfferService;
 use App\Services\Platform\PlatformSettingsService;
 use App\Support\Auth\AdminPermissions;
@@ -131,6 +133,12 @@ class PlatformSettingsPage extends Page
                 ->options(collect($definition['options'] ?? [])->mapWithKeys(fn ($option) => [$option => __("admin.settings.options.{$option}")])),
             'rating' => TextInput::make($name)->label($label)->numeric()->minValue(1)->maxValue(5)->helperText(__('admin.help.placeholder_rating')),
             'phone' => TextInput::make($name)->label($label)->tel()->regex('/^\+[1-9]\d{6,14}$/')->helperText(__('admin.help.e164')),
+            'store_category' => Select::make($name)->label($label)->searchable()->placeholder(__('admin.settings.no_fallback'))
+                ->options(fn () => StoreCategory::query()->orderBy('sort_order')->get()->mapWithKeys(fn ($c) => [$c->id => $c->name]))
+                ->helperText(__('admin.help.fallback_category')),
+            'product_category' => Select::make($name)->label($label)->searchable()->placeholder(__('admin.settings.no_fallback'))
+                ->options(fn () => Category::query()->orderBy('sort_order')->get()->mapWithKeys(fn ($c) => [$c->id => $c->name]))
+                ->helperText(__('admin.help.fallback_category')),
             'timezone' => Select::make($name)->label($label)->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))->searchable()->required(),
             'translated' => Grid::make(2)->columnSpanFull()->schema([
                 TextInput::make("{$name}.ar")->label($label.' (AR)')->maxLength(500)->extraInputAttributes(['dir' => 'rtl']),

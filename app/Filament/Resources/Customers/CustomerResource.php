@@ -7,7 +7,11 @@ use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Filament\Resources\Customers\RelationManagers\AddressesRelationManager;
 use App\Filament\Resources\Customers\RelationManagers\OrdersRelationManager;
 use App\Filament\Resources\Customers\RelationManagers\WalletsRelationManager;
+use App\Filament\Resources\PlusMemberships\PlusMembershipResource;
+use App\Filament\Resources\PlusRequests\PlusRequestResource;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\PlusStatus;
+use App\Filament\Support\TableDefaults;
 use App\Models\User;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
@@ -72,6 +76,30 @@ class CustomerResource extends AdminResource
                 TextEntry::make('recovery_until')->label(__('admin.fields.recovery_until'))->dateTime()->placeholder('—'),
                 TextEntry::make('anonymized_at')->label(__('admin.fields.anonymized_at'))->dateTime()->placeholder('—'),
             ]),
+            // UX overhaul (2026-11-12): the customer's real PLUS situation.
+            Section::make(__('admin.nav.plus'))->icon('heroicon-o-star')->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+                TextEntry::make('plus_state')->label(__('admin.fields.status'))->badge()
+                    ->state(fn (User $record) => PlusStatus::for($record)['label'])
+                    ->color(fn (User $record) => PlusStatus::for($record)['color'])
+                    ->icon(fn (User $record) => PlusStatus::for($record)['icon']),
+                TextEntry::make('plus_plan')->label(__('admin.fields.plan'))->placeholder('—')
+                    ->state(fn (User $record) => PlusStatus::for($record)['plan']),
+                TextEntry::make('plus_cycle')->label(__('admin.plus.current_cycle'))->placeholder('—')
+                    ->state(fn (User $record) => ($c = PlusStatus::for($record)['cycle'])
+                        ? $c->starts_at?->translatedFormat(TableDefaults::dateFormat()).' – '.$c->ends_at?->translatedFormat(TableDefaults::dateFormat()) : null),
+                TextEntry::make('plus_free')->label(__('admin.plus.free_deliveries_remaining'))->placeholder('—')
+                    ->state(fn (User $record) => ($c = PlusStatus::for($record)['cycle'])
+                        ? max(0, (int) $c->free_deliveries_total - (int) $c->free_deliveries_used).' / '.(int) $c->free_deliveries_total : null),
+                TextEntry::make('plus_pending')->label(__('admin.plus.pending_requests'))
+                    ->state(fn (User $record) => PlusStatus::for($record)['pending'])
+                    ->badge()->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
+                    ->url(fn (User $record) => PlusRequestResource::canViewAny() ? PlusRequestResource::getUrl('index') : null),
+                TextEntry::make('plus_membership_link')->label(__('admin.plus.membership_page'))->placeholder('—')
+                    ->state(fn (User $record) => $record->plusMembership ? __('admin.actions.open') : null)
+                    ->url(fn (User $record) => $record->plusMembership && PlusMembershipResource::canViewAny()
+                        ? PlusMembershipResource::getUrl('view', ['record' => $record->plusMembership]) : null)
+                    ->color('primary')->icon('heroicon-m-arrow-top-right-on-square'),
+            ]),
         ]);
     }
 
@@ -90,7 +118,14 @@ class CustomerResource extends AdminResource
                     ->color(fn ($state) => $state === User::ACCOUNT_SUSPENDED ? 'danger' : 'success')
                     ->formatStateUsing(fn ($state) => __("admin.customers.status_{$state}")),
                 IconColumn::make('deleted_at')->label(__('admin.customers.deletion_requested'))->boolean()
+                    ->visible(fn () => User::onlyTrashed()->exists())
                     ->state(fn (User $record) => $record->trashed()),
+                TextColumn::make('plus')->label(__('admin.nav.plus'))->badge()
+                    ->state(fn (User $record) => PlusStatus::for($record)['label'])
+                    ->color(fn (User $record) => PlusStatus::for($record)['color'])
+                    ->icon(fn (User $record) => PlusStatus::for($record)['icon'])
+                    ->description(fn (User $record) => ($p = PlusStatus::for($record))['state'] === PlusStatus::NONE ? null
+                        : collect([$p['plan'], $p['cycle']?->ends_at ? __('admin.plus.until', ['date' => $p['cycle']->ends_at->translatedFormat(TableDefaults::dateFormat())]) : null])->filter()->implode(' · ')),
                 TextColumn::make('orders_count')->counts('orders')->label(__('admin.resources.order.plural'))->sortable(),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
             ])
@@ -99,8 +134,16 @@ class CustomerResource extends AdminResource
                     User::ACCOUNT_ACTIVE => __('admin.customers.status_active'),
                     User::ACCOUNT_SUSPENDED => __('admin.customers.status_suspended'),
                 ]),
+                SelectFilter::make('plus')->label(__('admin.nav.plus'))
+                    ->options([
+                        PlusStatus::ACTIVE => __('admin.plus_status.active'),
+                        PlusStatus::PENDING => __('admin.plus_status.pending'),
+                        PlusStatus::NONE => __('admin.plus_status.none'),
+                    ])
+                    ->query(fn (Builder $query, array $data) => PlusStatus::scope($query, $data['value'] ?? null)),
                 TrashedFilter::make()->label(__('admin.customers.deletion_requested')),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => PlusStatus::eagerLoad($query))
             ->recordActions([ViewAction::make()])
             ->defaultSort('id', 'desc');
     }
@@ -112,7 +155,14 @@ class CustomerResource extends AdminResource
 
     public static function getRelations(): array
     {
-        return [AddressesRelationManager::class, OrdersRelationManager::class, WalletsRelationManager::class];
+        // Everything about one customer in one place (UX overhaul 2026-11-12).
+        return [
+            'orders' => OrdersRelationManager::class,
+            'wallets' => WalletsRelationManager::class,
+            'addresses' => AddressesRelationManager::class,
+            'plus' => RelationManagers\PlusRequestsRelationManager::class,
+            'ratings' => RelationManagers\RatingsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

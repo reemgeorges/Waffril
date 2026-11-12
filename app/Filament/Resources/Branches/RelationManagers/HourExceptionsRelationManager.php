@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Branches\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use App\Models\BranchHourException;
 use Filament\Actions\CreateAction;
@@ -20,6 +21,10 @@ use Filament\Tables\Table;
  */
 class HourExceptionsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'hour_exception';
+
     protected static string $relationship = 'hourExceptions';
 
     public static function getTitle($ownerRecord, string $pageClass): string

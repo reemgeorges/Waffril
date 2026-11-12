@@ -9,6 +9,7 @@ use App\Filament\Resources\Orders\RelationManagers\CancellationRequestsRelationM
 use App\Filament\Resources\Orders\RelationManagers\DeliveryOffersRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\RatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
@@ -152,7 +153,9 @@ class OrderResource extends AdminResource
                         Order::TYPE_SCHEDULED => 'info',
                         default => 'gray',
                     }),
-                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable(),
+                // Shown under the type badge instead of a mostly empty column.
+                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn (Order $record) => $record->city?->name),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
@@ -208,6 +211,7 @@ class OrderResource extends AdminResource
             CancellationRequestsRelationManager::class,
             RefundsRelationManager::class,
             DeliveryOffersRelationManager::class,
+            RatingsRelationManager::class,
         ];
     }
 

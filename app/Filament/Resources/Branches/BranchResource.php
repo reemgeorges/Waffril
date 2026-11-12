@@ -20,6 +20,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -42,6 +43,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class BranchResource extends AdminResource
 {
     protected static ?string $model = Branch::class;
+
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'branch';
 
@@ -68,6 +76,8 @@ class BranchResource extends AdminResource
                             Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                                 ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload()
                                 ->default(fn () => request()->integer('store') ?: null)
+                                // Inside Store → Branches/Products the store is the owner record.
+                                ->hidden(fn ($livewire) => $livewire instanceof RelationManager)
                                 ->disabled(fn (?Branch $record) => $record !== null)->dehydrated(fn (?Branch $record) => $record === null),
                             Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
                                 ->getOptionLabelFromRecordUsing($label)->required()->searchable()->preload(),
@@ -124,7 +134,8 @@ class BranchResource extends AdminResource
                         fn ($admin) => app(CatalogAdminService::class)->setBranchAcceptingOrders($record, ! $record->is_accepting_orders, $admin)
                     )),
                 EditAction::make(), DeleteAction::make(), RestoreAction::make(),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder
@@ -134,7 +145,12 @@ class BranchResource extends AdminResource
 
     public static function getRelations(): array
     {
-        return [OpeningHoursRelationManager::class, HourExceptionsRelationManager::class, BranchProductsRelationManager::class];
+        // Products and prices first (?relation=products), then hours.
+        return [
+            'products' => BranchProductsRelationManager::class,
+            'hours' => OpeningHoursRelationManager::class,
+            'exceptions' => HourExceptionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

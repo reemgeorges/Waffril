@@ -57,18 +57,18 @@ class OperationsOverview extends Widget
             $oldest = (clone $pending)->min('created_at');
             $items[] = self::item('pending_orders', __('admin.dashboard.pending_orders'), (clone $pending)->count(), 'warning', 'heroicon-o-inbox-arrow-down',
                 $oldest ? __('admin.dashboard.oldest_waiting', ['time' => Carbon::parse($oldest)->locale(app()->getLocale())->diffForHumans(syntax: Carbon::DIFF_ABSOLUTE)]) : null,
-                OrderResource::getUrl('index', ['activeTab' => 'pending']));
+                OrderResource::getUrl('index', ['tab' => 'pending']));
 
             $items[] = self::item('urgent_orders', __('admin.dashboard.urgent_orders'),
                 Order::query()->where('status', OrderStatus::Pending->value)->whereNotNull('urgent_at')->count(), 'danger', 'heroicon-o-exclamation-triangle',
-                __('admin.dashboard.urgent_hint'), OrderResource::getUrl('index', ['activeTab' => 'urgent']));
+                __('admin.dashboard.urgent_hint'), OrderResource::getUrl('index', ['tab' => 'urgent']));
 
             $needsDriver = DeliveryOfferService::enabled()
                 ? Order::query()->where('status', OrderStatus::Accepted->value)->whereIn('dispatch_state', [Order::DISPATCH_OFFERING, Order::DISPATCH_NO_DRIVER])->count()
                 : Order::query()->where('status', OrderStatus::Accepted->value)->whereNull('driver_id')->count();
             $items[] = self::item('needs_driver', __('admin.dashboard.needs_driver'), $needsDriver, 'info', 'heroicon-o-user-plus',
                 __('admin.dashboard.needs_driver_hint'),
-                OrderResource::getUrl('index', ['activeTab' => DeliveryOfferService::enabled() ? 'waiting_for_driver' : 'needs_driver']));
+                OrderResource::getUrl('index', ['tab' => DeliveryOfferService::enabled() ? 'waiting_for_driver' : 'needs_driver']));
 
             $items[] = self::item('pending_cancellation_requests', __('admin.dashboard.pending_cancellation_requests'),
                 OrderCancellationRequest::query()->where('status', OrderCancellationRequest::STATUS_PENDING)->count(), 'danger', 'heroicon-o-hand-raised',
@@ -113,7 +113,7 @@ class OperationsOverview extends Widget
             'items' => $items,
             'open' => array_sum(array_column($items, 'count')),
             'active' => self::activeDeliveries(),
-            'activeUrl' => OrderResource::getUrl('index', ['activeTab' => 'on_the_road']),
+            'activeUrl' => OrderResource::getUrl('index', ['tab' => 'on_the_road']),
         ];
     }
 }

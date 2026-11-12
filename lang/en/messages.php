@@ -193,6 +193,7 @@ return [
         'device_removed' => 'Device removed.',
         'notification_marked_read' => 'Notification marked as read.',
         'notifications_marked_read' => ':count notifications marked as read.',
+        'content_not_published' => 'This page is not published yet.',
     ],
     // WAFFRLI (2026-11-03): realtime (Reverb).
     'realtime' => [

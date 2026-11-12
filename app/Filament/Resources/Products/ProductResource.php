@@ -13,6 +13,7 @@ use App\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\TableDefaults;
 use App\Models\Product;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -20,6 +21,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -41,6 +43,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ProductResource extends AdminResource
 {
     protected static ?string $model = Product::class;
+
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'product';
 
@@ -65,6 +74,8 @@ class ProductResource extends AdminResource
                     Select::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
                         ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->required()->searchable()->preload()
                         ->default(fn () => request()->integer('store') ?: null)
+                                // Inside Store → Branches/Products the store is the owner record.
+                        ->hidden(fn ($livewire) => $livewire instanceof RelationManager)
                         ->helperText(__('admin.help.product_store'))
                         ->disabled(fn (?Product $record) => $record !== null)->dehydrated(fn (?Product $record) => $record === null),
                     Fields::translatable('name'),
@@ -91,7 +102,7 @@ class ProductResource extends AdminResource
     {
         return $table
             ->columns([
-                ImageColumn::make('image')->label(__('admin.fields.image'))->disk('public'),
+                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(Product::class, 'image'))->label(__('admin.fields.image'))->disk('public'),
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
                 TextColumn::make('store.name')->label(__('admin.fields.store')),
                 TextColumn::make('categories.name')->label(__('admin.resources.category.plural'))->badge(),
@@ -110,7 +121,8 @@ class ProductResource extends AdminResource
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder
@@ -120,12 +132,14 @@ class ProductResource extends AdminResource
 
     public static function getRelations(): array
     {
+        // Pricing first: after adding a product the admin sets its price in
+        // each branch (?relation=branch-prices). Keys allow direct links.
         return [
-            OptionGroupsRelationManager::class,
-            OptionsRelationManager::class,
-            BranchPricesRelationManager::class,
-            BranchOptionPricesRelationManager::class,
-            RatingsRelationManager::class,
+            'branch-prices' => BranchPricesRelationManager::class,
+            'option-groups' => OptionGroupsRelationManager::class,
+            'options' => OptionsRelationManager::class,
+            'branch-option-prices' => BranchOptionPricesRelationManager::class,
+            'ratings' => RatingsRelationManager::class,
         ];
     }
 

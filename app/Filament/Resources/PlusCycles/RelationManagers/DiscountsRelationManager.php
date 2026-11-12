@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PlusCycles\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,6 +10,10 @@ use Filament\Tables\Table;
 /** Snapshotted store discounts of this cycle (immutable, read-only). */
 class DiscountsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'cycle_discount';
+
     protected static string $relationship = 'discounts';
 
     public static function getTitle($ownerRecord, string $pageClass): string

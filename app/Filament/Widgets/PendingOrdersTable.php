@@ -67,7 +67,7 @@ class PendingOrdersTable extends TableWidget
             ])
             ->headerActions([
                 Action::make('all')->label(__('admin.dashboard.open_list'))->link()->icon('heroicon-m-arrow-top-right-on-square')
-                    ->url(OrderResource::getUrl('index', ['activeTab' => 'pending'])),
+                    ->url(OrderResource::getUrl('index', ['tab' => 'pending'])),
             ])
             ->recordUrl(fn (Order $record) => OrderResource::getUrl('view', ['record' => $record]))
             ->emptyStateHeading(__('admin.dashboard.pending_empty'))

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Models\OrderItem;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -10,6 +11,10 @@ use Filament\Tables\Table;
 /** Snapshotted order lines with their selected options (read-only). */
 class ItemsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'order_item';
+
     protected static string $relationship = 'items';
 
     public static function getTitle($ownerRecord, string $pageClass): string

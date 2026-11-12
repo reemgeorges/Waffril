@@ -6,9 +6,10 @@ use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\SafeCategoryDelete;
+use App\Filament\Support\TableDefaults;
 use App\Models\StoreCategory;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
@@ -34,6 +35,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class StoreCategoryResource extends AdminResource
 {
     protected static ?string $model = StoreCategory::class;
+
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'store_category';
 
@@ -77,12 +85,12 @@ class StoreCategoryResource extends AdminResource
         return $table
             ->columns([
                 TextColumn::make('sort_order')->label('#')->sortable()->tooltip(__('admin.fields.sort_order')),
-                ImageColumn::make('image')->label(__('admin.fields.image'))->disk('public')->imageSize(36)->square(),
+                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(StoreCategory::class, 'image'))->label(__('admin.fields.image'))->disk('public')->imageSize(36)->square(),
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold),
                 TextColumn::make('slug')->label(__('admin.fields.slug'))->searchable()->toggleable(isToggledHiddenByDefault: true),
                 // The store count opens the store list filtered on this category.
                 TextColumn::make('stores_count')->counts('stores')->label(__('admin.resources.store.plural'))
-                    ->url(fn ($record) => StoreResource::canViewAny() ? StoreResource::getUrl('index', ['tableFilters' => ['categories' => ['value' => $record->id]]]) : null)
+                    ->url(fn ($record) => StoreResource::canViewAny() ? StoreResource::getUrl('index', ['filters' => ['categories' => ['value' => $record->id]]]) : null)
                     ->color('primary'),
                 ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
                     ->disabled(fn ($record) => ! static::can('update', $record)),
@@ -90,7 +98,7 @@ class StoreCategoryResource extends AdminResource
             ->filters([TrashedFilter::make()])
             ->recordActions([
                 EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())->modalWidth(Width::TwoExtraLarge),
-                ActionGroup::make([DeleteAction::make(), RestoreAction::make()]),
+                ActionGroup::make([SafeCategoryDelete::make('store'), RestoreAction::make()]),
             ])
             ->emptyStateDescription(__('admin.empty.store_categories'))
             ->defaultSort('sort_order');

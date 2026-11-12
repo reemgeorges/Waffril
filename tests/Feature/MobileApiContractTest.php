@@ -23,12 +23,15 @@ class MobileApiContractTest extends TestCase
         $document = Yaml::parseFile(base_path(BuildMobileApiContractCommand::PATH));
         $operations = collect($document['paths'])->flatMap(fn ($ops, $path) => collect($ops)->map(fn ($op, $method) => $op + ['path' => $path, 'method' => $method])->values())->values();
 
-        $this->assertCount(92, $operations, '63 customer + 29 driver operations (4 delivery-offer endpoints, 2026-11-10).');
+        $this->assertCount(94, $operations, '65 customer + 29 driver operations (4 delivery-offer endpoints 2026-11-10; 2 read-only content endpoints 2026-11-12).');
         $public = $operations->filter(fn ($op) => empty($op['security']))->map(fn ($op) => $op['method'].' '.$op['path'])->sort()->values()->all();
         $this->assertSame([
+            // 2026-11-12: published Terms & Conditions and FAQ, read-only (shown during registration).
+            'get /api/v1/customer/content/faqs', 'get /api/v1/customer/content/terms',
             'post /api/v1/customer/auth/otp/request', 'post /api/v1/customer/auth/otp/verify', 'post /api/v1/customer/auth/recovery/request',
             'post /api/v1/customer/auth/recovery/verify', 'post /api/v1/customer/auth/register', 'post /api/v1/driver/login',
-        ], $public, 'Only sign-in endpoints are public.');
+        ], $public, 'Only sign-in endpoints and the read-only published content are public.');
+        $this->assertTrue(collect($public)->every(fn ($e) => str_starts_with($e, 'post ') || str_contains($e, '/content/')), 'Public GETs are content reads only.');
         foreach ($public as $endpoint) {
             $op = $operations->first(fn ($o) => $endpoint === $o['method'].' '.$o['path']);
             $this->assertNotEmpty($op['x-throttle'], "{$endpoint} must be rate limited.");

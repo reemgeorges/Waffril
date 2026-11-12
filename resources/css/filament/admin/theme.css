@@ -2147,3 +2147,53 @@ a.wf-task:hover {
     font-variant-numeric: tabular-nums;
 }
 .wf-break { overflow-wrap: anywhere; }
+
+/* ================================================================ detail panels and timelines (overhaul 2026-11-12) */
+.wf-muted { color: var(--wf-text-3); font-size: 0.8125rem; }
+
+.wf-detail__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: var(--wf-space-4);
+    margin: 0;
+}
+
+.wf-detail__grid dt { font-size: 0.8125rem; color: var(--wf-text-3); }
+.wf-detail__grid dd { margin: 0.25rem 0 0; font-weight: 500; color: var(--wf-text); }
+.wf-detail__wide { grid-column: 1 / -1; }
+
+.wf-detail__title {
+    margin: var(--wf-space-6) 0 var(--wf-space-3);
+    font-family: var(--wf-font-display);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.wf-timeline { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--wf-space-3); }
+
+.wf-timeline__item {
+    display: grid;
+    grid-template-columns: 0.75rem 1fr;
+    gap: var(--wf-space-3);
+    padding: var(--wf-space-3);
+    border-radius: var(--wf-radius);
+    font-size: 0.875rem;
+}
+
+.wf-timeline__item[data-current='yes'] { background-color: var(--wf-green-tint); }
+
+.wf-timeline__dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    margin-top: 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--tone, var(--wf-text-3));
+}
+
+/* PLUS status pill in customer lists and profiles */
+.wf-plus-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wf-space-4) var(--wf-space-6);
+}

@@ -72,7 +72,8 @@ WAFFRLI_DEV_OTP_PEEK_TOKEN=
 w('.gitignore', '.env\n')
 
 folders = ['Authentication','Profile','Addresses','Cities','Stores and Branches','Products and Search','Favorites','Ratings',
- 'Carts','Checkout','Orders','Wallet and Payments','PLUS','Notifications','Device Tokens','Authorization and Negative Tests']
+ 'Carts','Checkout','Orders','Wallet and Payments','PLUS','Notifications','Device Tokens','Authorization and Negative Tests',
+ 'App Content']
 F={}
 for i,name in enumerate(folders,1):
     key=f'{i:02d} {name}'
@@ -445,3 +446,13 @@ req(Z,6,'Realtime - admin channel refused','post','broadcasting/auth', body='{\n
 req(Z,7,'Validation envelope','post','addresses', body='{\n  "lat": "north"\n}', tests=status(400, 'test("first validation message in error", function () {\n  expect(res.getBody().error).to.be.a("string").and.not.empty;\n  expect(res.getBody().data).to.equal(null);\n});'))
 req(Z,8,'Logout','post','auth/logout', body='{\n  "device_id": "bruno-device"\n}', tests=ok())
 req(Z,9,'Token revoked after logout - 401','get','me', tests=status(401))
+
+# ---------------- 17 App Content (public, read-only; 2026-11-12) ----------------
+K='App Content'
+req(K,1,'Terms and Conditions (published only)','get','content/terms', auth='none',
+    tests='test("published terms, or 404 while none is published", function () {\n  expect(res.getStatus()).to.be.oneOf([200, 404]);\n  if (res.getStatus() === 200) { expect(res.getBody().data.page).to.include.all.keys("key", "title", "body", "version", "published_at"); }\n});\n'+ENV,
+    docs='Public: the registration screen shows the terms. Reading them records nothing (no automatic consent). Drafts are never returned. Send Accept-Language: ar or en.')
+req(K,2,'Frequently asked questions (published only)','get','content/faqs', auth='none',
+    tests=ok('test("a list of questions", function () {\n  expect(res.getBody().data.faqs).to.be.an("array");\n});'),
+    docs='Public: published questions in display order, in the request language.')
+

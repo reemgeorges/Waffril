@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Settings;
 
+use App\Filament\Pages\PlatformSettingsPage;
 use App\Filament\Resources\Settings\Pages\ListSettings;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Readable;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 class SettingResource extends AdminResource
 {
     protected static ?string $model = Setting::class;
+
+    protected static ?string $navParent = PlatformSettingsPage::class;
 
     protected static string $labelKey = 'setting';
 

@@ -70,6 +70,9 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
             'chk_bpo_price_delta' => ['branch_product_options', ['price_delta' => -1]],
             'chk_bp_price' => ['branch_products', ['price' => -1]],
             'chk_branches_coordinates' => ['branches', ['lat' => 91]],
+            // 2026-11-12: app content.
+            'chk_content_pages_key' => ['content_pages', ['key' => 'privacy']],
+            'chk_content_pages_version' => ['content_pages', ['version' => 0]],
             'chk_branches_min_order' => ['branches', ['min_order_amount' => -1]],
             'chk_cio_quantity' => ['cart_item_options', ['quantity' => 0]],
             'chk_cart_items_quantity' => ['cart_items', ['quantity' => 100]],

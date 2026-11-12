@@ -183,6 +183,12 @@ class Order extends BasePlatformModel
         return $this->hasMany(OrderCancellationRequest::class)->orderByDesc('id');
     }
 
+    /** Ratings left for products of this (delivered) order. */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(ProductRating::class);
+    }
+
     public function cancellation(): HasOne
     {
         return $this->hasOne(OrderCancellation::class);

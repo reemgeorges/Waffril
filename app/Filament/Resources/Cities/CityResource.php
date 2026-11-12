@@ -26,11 +26,11 @@ class CityResource extends AdminResource
 
     protected static string $labelKey = 'city';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
+    protected static string|\UnitEnum|null $navigationGroup = 'platform';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {

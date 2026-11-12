@@ -54,7 +54,7 @@ class OrdersByStatusChart extends Widget
                 'label' => OrderStatus::from($status)->label(),
                 'count' => $counts[$status],
                 'share' => (int) round($counts[$status] / $max * 100),
-                'url' => OrderResource::getUrl('index', ['activeTab' => $tabs[$status]]),
+                'url' => OrderResource::getUrl('index', ['tab' => $tabs[$status]]),
             ], $open),
             'open' => array_sum(array_map(fn ($s) => $counts[$s], $open)),
             'delivered' => $counts['delivered'],

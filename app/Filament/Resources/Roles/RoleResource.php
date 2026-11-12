@@ -30,13 +30,15 @@ class RoleResource extends AdminResource
 {
     protected static ?string $model = Role::class;
 
+    protected static ?string $navParent = \App\Filament\Resources\Admins\AdminResource::class;
+
     protected static string $labelKey = 'role';
 
     protected static string|\UnitEnum|null $navigationGroup = 'system';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 11;
 
     public static function form(Schema $schema): Schema
     {
@@ -98,7 +100,8 @@ class RoleResource extends AdminResource
                         return self::syncPermissions($record, $data);
                     }),
                 DeleteAction::make()->after(fn () => app(PermissionRegistrar::class)->forgetCachedPermissions()),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getPages(): array

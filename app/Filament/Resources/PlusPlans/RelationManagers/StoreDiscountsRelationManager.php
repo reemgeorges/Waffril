@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PlusPlans\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use App\Models\PlusStoreDiscount;
 use App\Models\Store;
@@ -26,6 +27,10 @@ use Illuminate\Validation\Rule;
  */
 class StoreDiscountsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'store_discount';
+
     protected static string $relationship = 'storeDiscounts';
 
     public static function getTitle($ownerRecord, string $pageClass): string

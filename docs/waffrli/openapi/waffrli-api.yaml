@@ -5536,6 +5536,60 @@ paths:
       x-throttle:
         - customer-api
         - '60,1'
+  /api/v1/customer/content/faqs:
+    get:
+      tags:
+        - Customer
+      operationId: customer.contentFaqs.get
+      summary: 'Customercontentcontroller Faqs'
+      description: |-
+        Public (no token).
+        Throttle: `customer-content`.
+        Handler: `Customer\CustomerContentController@faqs`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      security: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-content
+  /api/v1/customer/content/terms:
+    get:
+      tags:
+        - Customer
+      operationId: customer.contentTerms.get
+      summary: 'Customercontentcontroller Terms'
+      description: |-
+        Public (no token).
+        Throttle: `customer-content`.
+        Handler: `Customer\CustomerContentController@terms`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      security: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-content
   /api/v1/customer/context:
     get:
       tags:

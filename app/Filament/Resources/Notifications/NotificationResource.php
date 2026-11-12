@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Notifications;
 
+use App\Filament\Resources\AdminAuditLogs\AdminAuditLogResource;
 use App\Filament\Resources\Notifications\Pages\ListNotifications;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Readable;
@@ -26,13 +27,15 @@ class NotificationResource extends AdminResource
 {
     protected static ?string $model = DatabaseNotification::class;
 
+    protected static ?string $navParent = AdminAuditLogResource::class;
+
     protected static string $labelKey = 'notification';
 
     protected static string|\UnitEnum|null $navigationGroup = 'system';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-bell';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 31;
 
     protected static ?string $slug = 'notifications';
 

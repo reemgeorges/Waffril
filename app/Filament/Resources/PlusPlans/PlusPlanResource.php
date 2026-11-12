@@ -77,7 +77,8 @@ class PlusPlanResource extends AdminResource
                 IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
             ])
             ->filters([TrashedFilter::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->defaultSort('sort_order');
     }
 
     public static function getEloquentQuery(): Builder

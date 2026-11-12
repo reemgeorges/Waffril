@@ -63,6 +63,16 @@ final class TableDefaults
         return app()->getLocale() === 'ar' ? 'j F Y' : 'j M Y';
     }
 
+    /**
+     * Shows a column only when at least one row has a value (UX overhaul
+     * 2026-11-12): a picture or optional figure that nobody filled yet does
+     * not take a whole column of dashes. Display only.
+     */
+    public static function onlyWhenFilled(string $model, string $column): \Closure
+    {
+        return fn (): bool => $model::query()->withoutGlobalScopes()->whereNotNull($column)->where($column, '!=', '')->exists();
+    }
+
     public static function register(): void
     {
         foreach ([Table::class, Schema::class] as $class) {
