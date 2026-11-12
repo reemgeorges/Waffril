@@ -18,6 +18,7 @@ return [
         'customers' => 'العملاء',
         'drivers' => 'السائقون',
         'content' => 'محتوى التطبيق والتواصل',
+        'settings' => 'الإعدادات',
     ],
     'resources' => [
         'currency' => [
@@ -1109,6 +1110,11 @@ return [
         'no_products' => 'لا توجد منتجات لهذا المتجر بعد',
         'no_products_help' => 'أضف منتجات المتجر هنا، ثم حدّد سعرها وتوفرها في كل فرع.',
         'back_to_store' => 'العودة إلى المتجر',
+        'branches_tab' => 'فروع هذا المتجر',
+        'products_tab' => 'منتجات هذا المتجر',
+        'ratings_queue' => 'مراجعة تقييمات المنتجات',
+        'categories_and_ratings' => 'التصنيفات والتقييمات',
+        'back_to_stores' => 'العودة إلى المتاجر',
     ],
     'categories' => [
         'no_parent' => 'بدون (تصنيف رئيسي)',
@@ -1267,5 +1273,7 @@ return [
         'payment' => ['singular' => 'دفعة', 'plural' => 'المدفوعات'],
         'refund' => ['singular' => 'مبلغ مسترد', 'plural' => 'المبالغ المستردة'],
         'cancellation_request' => ['singular' => 'طلب إلغاء', 'plural' => 'طلبات الإلغاء'],
+        'rating' => ['singular' => 'تقييم', 'plural' => 'التقييمات'],
+        'plus_request' => ['singular' => 'طلب بلس', 'plural' => 'طلبات بلس'],
     ],
 ];

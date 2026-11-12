@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
@@ -12,6 +13,10 @@ use Filament\Tables\Table;
  */
 class RatingsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'rating';
+
     protected static string $relationship = 'productRatings';
 
     protected static string|\BackedEnum|null $icon = 'heroicon-o-star';

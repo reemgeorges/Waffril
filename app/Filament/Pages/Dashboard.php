@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
-use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Models\Order;
 use App\Support\Settings\PlatformSettings;
@@ -60,10 +59,11 @@ class Dashboard extends BaseDashboard
         $canOrders = OrderResource::canViewAny();
 
         $shortcuts = array_values(array_filter([
-            $canOrders ? ['label' => __('admin.dashboard.action_pending_orders'), 'icon' => 'heroicon-m-inbox-arrow-down', 'url' => OrderResource::getUrl('index', ['activeTab' => 'pending']), 'primary' => true] : null,
+            $canOrders ? ['label' => __('admin.dashboard.action_pending_orders'), 'icon' => 'heroicon-m-inbox-arrow-down', 'url' => OrderResource::getUrl('index', ['tab' => 'pending']), 'primary' => true] : null,
             DriverMapPage::canAccess() ? ['label' => __('admin.drivers.map'), 'icon' => 'heroicon-m-map', 'url' => DriverMapPage::getUrl()] : null,
             StoreResource::canCreate() ? ['label' => __('admin.dashboard.action_new_store'), 'icon' => 'heroicon-m-building-storefront', 'url' => StoreResource::getUrl('create')] : null,
-            ProductResource::canCreate() ? ['label' => __('admin.dashboard.action_new_product'), 'icon' => 'heroicon-m-cube', 'url' => ProductResource::getUrl('create')] : null,
+            // Products are added inside their store (Stores → store → Products).
+            StoreResource::canViewAny() ? ['label' => __('admin.resources.store.plural'), 'icon' => 'heroicon-m-squares-plus', 'url' => StoreResource::getUrl('index')] : null,
         ]));
 
         return view('filament.dashboard.hero', [
@@ -72,8 +72,8 @@ class Dashboard extends BaseDashboard
                 .(auth()->user()?->name ? ($locale === 'ar' ? '، ' : ', ').auth()->user()->name : ''),
             'date' => $now->isoFormat($locale === 'ar' ? 'dddd، D MMMM YYYY' : 'dddd, D MMMM YYYY'),
             'chips' => $canOrders ? [
-                ['tone' => 'transit', 'label' => __('admin.dashboard.active_deliveries'), 'count' => Order::query()->whereIn('status', OrderStatus::active())->count(), 'url' => OrderResource::getUrl('index', ['activeTab' => 'on_the_road'])],
-                ['tone' => 'warning', 'label' => __('admin.dashboard.pending_orders'), 'count' => Order::query()->where('status', OrderStatus::Pending->value)->count(), 'url' => OrderResource::getUrl('index', ['activeTab' => 'pending'])],
+                ['tone' => 'transit', 'label' => __('admin.dashboard.active_deliveries'), 'count' => Order::query()->whereIn('status', OrderStatus::active())->count(), 'url' => OrderResource::getUrl('index', ['tab' => 'on_the_road'])],
+                ['tone' => 'warning', 'label' => __('admin.dashboard.pending_orders'), 'count' => Order::query()->where('status', OrderStatus::Pending->value)->count(), 'url' => OrderResource::getUrl('index', ['tab' => 'pending'])],
             ] : [],
             'shortcuts' => $shortcuts,
         ]);

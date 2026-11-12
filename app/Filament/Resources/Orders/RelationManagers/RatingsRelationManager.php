@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\RelationManagers;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
@@ -15,6 +16,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class RatingsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'rating';
+
     protected static string $relationship = 'ratings';
 
     protected static string|\BackedEnum|null $icon = 'heroicon-o-star';

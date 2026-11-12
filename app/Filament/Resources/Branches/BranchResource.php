@@ -8,7 +8,6 @@ use App\Filament\Resources\Branches\Pages\ListBranches;
 use App\Filament\Resources\Branches\RelationManagers\BranchProductsRelationManager;
 use App\Filament\Resources\Branches\RelationManagers\HourExceptionsRelationManager;
 use App\Filament\Resources\Branches\RelationManagers\OpeningHoursRelationManager;
-use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\Fields;
@@ -45,12 +44,12 @@ class BranchResource extends AdminResource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navParent = StoreResource::class;
-
-    public static function getNavigationLabel(): string
-    {
-        return __('admin.nav_items.all_branches');
-    }
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'branch';
 
@@ -146,7 +145,12 @@ class BranchResource extends AdminResource
 
     public static function getRelations(): array
     {
-        return [OpeningHoursRelationManager::class, HourExceptionsRelationManager::class, BranchProductsRelationManager::class];
+        // Products and prices first (?relation=products), then hours.
+        return [
+            'products' => BranchProductsRelationManager::class,
+            'hours' => OpeningHoursRelationManager::class,
+            'exceptions' => HourExceptionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

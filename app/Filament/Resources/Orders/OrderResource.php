@@ -153,7 +153,9 @@ class OrderResource extends AdminResource
                         Order::TYPE_SCHEDULED => 'info',
                         default => 'gray',
                     }),
-                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable(),
+                // Shown under the type badge instead of a mostly empty column.
+                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn (Order $record) => $record->city?->name),
                 TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),

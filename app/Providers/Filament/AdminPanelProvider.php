@@ -103,8 +103,8 @@ class AdminPanelProvider extends PanelProvider
                 'finance' => NavigationGroup::make()->label(fn () => __('admin.nav.finance')),
                 'plus' => NavigationGroup::make()->label(fn () => __('admin.nav.plus')),
                 'content' => NavigationGroup::make()->label(fn () => __('admin.nav.content'))->collapsed(),
-                'delivery' => NavigationGroup::make()->label(fn () => __('admin.nav.delivery'))->collapsed(),
-                'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.platform'))->collapsed(),
+                // One settings group: platform, cities and delivery zones, currencies, payment methods.
+                'platform' => NavigationGroup::make()->label(fn () => __('admin.nav.settings'))->collapsed(),
                 'system' => NavigationGroup::make()->label(fn () => __('admin.nav.system'))->collapsed(),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

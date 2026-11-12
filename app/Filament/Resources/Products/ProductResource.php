@@ -11,9 +11,9 @@ use App\Filament\Resources\Products\RelationManagers\BranchPricesRelationManager
 use App\Filament\Resources\Products\RelationManagers\OptionGroupsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager;
-use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\TableDefaults;
 use App\Models\Product;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -44,12 +44,12 @@ class ProductResource extends AdminResource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navParent = StoreResource::class;
-
-    public static function getNavigationLabel(): string
-    {
-        return __('admin.nav_items.all_products');
-    }
+    /**
+     * UX overhaul (2026-11-12): not in the sidebar. Managed from its owning
+     * workflow (Stores → store → Branches / Products / categories / ratings);
+     * the pages and routes stay, protected by the same policy.
+     */
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string $labelKey = 'product';
 
@@ -102,7 +102,7 @@ class ProductResource extends AdminResource
     {
         return $table
             ->columns([
-                ImageColumn::make('image')->label(__('admin.fields.image'))->disk('public'),
+                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(Product::class, 'image'))->label(__('admin.fields.image'))->disk('public'),
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
                 TextColumn::make('store.name')->label(__('admin.fields.store')),
                 TextColumn::make('categories.name')->label(__('admin.resources.category.plural'))->badge(),
@@ -132,12 +132,14 @@ class ProductResource extends AdminResource
 
     public static function getRelations(): array
     {
+        // Pricing first: after adding a product the admin sets its price in
+        // each branch (?relation=branch-prices). Keys allow direct links.
         return [
-            OptionGroupsRelationManager::class,
-            OptionsRelationManager::class,
-            BranchPricesRelationManager::class,
-            BranchOptionPricesRelationManager::class,
-            RatingsRelationManager::class,
+            'branch-prices' => BranchPricesRelationManager::class,
+            'option-groups' => OptionGroupsRelationManager::class,
+            'options' => OptionsRelationManager::class,
+            'branch-option-prices' => BranchOptionPricesRelationManager::class,
+            'ratings' => RatingsRelationManager::class,
         ];
     }
 

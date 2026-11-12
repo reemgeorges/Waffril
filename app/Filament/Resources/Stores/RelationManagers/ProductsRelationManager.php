@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Stores\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Products\ProductResource;
+use App\Filament\Support\TableDefaults;
 use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -63,7 +64,7 @@ class ProductsRelationManager extends RelationManager
             ->modifyQueryUsing(fn (Builder $query) => $query->with('categories')->withCount('branchProducts')
                 ->withoutGlobalScopes([SoftDeletingScope::class]))
             ->columns([
-                ImageColumn::make('image')->label(__('admin.fields.image'))->disk('public')->imageSize(40)->square(),
+                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(Product::class, 'image'))->label(__('admin.fields.image'))->disk('public')->imageSize(40)->square(),
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)
                     ->description(fn (Product $record) => $record->categories->map->name->implode(' · ')),
                 TextColumn::make('branch_products_count')->label(__('admin.stores.sold_in_branches'))
@@ -83,11 +84,13 @@ class ProductsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->label(__('admin.stores.add_product_short'))->modalWidth(Width::FiveExtraLarge)
-                    ->visible(fn () => ProductResource::canCreate()),
+                    ->visible(fn () => ProductResource::canCreate())
+                    // Next step right away: price it in each branch.
+                    ->successRedirectUrl(fn ($record) => ProductResource::getUrl('edit', ['record' => $record]).'?relation=branch-prices'),
             ])
             ->recordActions([
                 Action::make('manage')->label(__('admin.stores.manage_product'))->icon('heroicon-m-adjustments-horizontal')
-                    ->url(fn ($record) => ProductResource::getUrl('edit', ['record' => $record])),
+                    ->url(fn ($record) => ProductResource::getUrl('edit', ['record' => $record]).'?relation=branch-prices'),
             ])
             ->recordUrl(fn ($record) => ProductResource::getUrl('edit', ['record' => $record]))
             ->emptyStateHeading(__('admin.stores.no_products'))

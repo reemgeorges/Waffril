@@ -34,7 +34,7 @@ class CurrencyResource extends AdminResource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 30;
 
     public static function form(Schema $schema): Schema
     {

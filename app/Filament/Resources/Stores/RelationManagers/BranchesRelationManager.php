@@ -74,11 +74,13 @@ class BranchesRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->label(__('admin.stores.add_branch_short'))->modalWidth(Width::FiveExtraLarge)
-                    ->visible(fn () => BranchResource::canCreate()),
+                    ->visible(fn () => BranchResource::canCreate())
+                    // Next step right away: choose its products and prices.
+                    ->successRedirectUrl(fn ($record) => BranchResource::getUrl('edit', ['record' => $record]).'?relation=products'),
             ])
             ->recordActions([
                 Action::make('manage')->label(__('admin.stores.manage_branch'))->icon('heroicon-m-adjustments-horizontal')
-                    ->url(fn ($record) => BranchResource::getUrl('edit', ['record' => $record])),
+                    ->url(fn ($record) => BranchResource::getUrl('edit', ['record' => $record]).'?relation=products'),
             ])
             ->recordUrl(fn ($record) => BranchResource::getUrl('edit', ['record' => $record]))
             ->emptyStateHeading(__('admin.stores.no_branches'))

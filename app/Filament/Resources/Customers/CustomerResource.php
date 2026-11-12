@@ -118,6 +118,7 @@ class CustomerResource extends AdminResource
                     ->color(fn ($state) => $state === User::ACCOUNT_SUSPENDED ? 'danger' : 'success')
                     ->formatStateUsing(fn ($state) => __("admin.customers.status_{$state}")),
                 IconColumn::make('deleted_at')->label(__('admin.customers.deletion_requested'))->boolean()
+                    ->visible(fn () => User::onlyTrashed()->exists())
                     ->state(fn (User $record) => $record->trashed()),
                 TextColumn::make('plus')->label(__('admin.nav.plus'))->badge()
                     ->state(fn (User $record) => PlusStatus::for($record)['label'])

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryFeeRules;
 
+use App\Filament\Resources\Cities\CityResource;
 use App\Filament\Resources\DeliveryFeeRules\Pages\ManageDeliveryFeeRules;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
@@ -33,13 +34,15 @@ class DeliveryFeeRuleResource extends AdminResource
 {
     protected static ?string $model = DeliveryFeeRule::class;
 
+    protected static ?string $navParent = CityResource::class;
+
     protected static string $labelKey = 'delivery_fee_rule';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'delivery';
+    protected static string|\UnitEnum|null $navigationGroup = 'platform';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 22;
 
     public static function form(Schema $schema): Schema
     {

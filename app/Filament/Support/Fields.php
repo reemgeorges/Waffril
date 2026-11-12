@@ -13,6 +13,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -49,10 +50,29 @@ final class Fields
      */
     public static function slug(string $table): TextInput
     {
+        // Optional: the English name is required, and an empty URL name is
+        // generated from it when saving (made unique). Not marking it required
+        // also keeps the browser from blocking a fast "Save" before the
+        // automatic fill has come back from the server.
         return TextInput::make('slug')->label(__('admin.fields.slug'))
-            ->required()->maxLength(120)->alphaDash()->unique($table, 'slug', ignoreRecord: true)
+            ->maxLength(120)->alphaDash()->unique($table, 'slug', ignoreRecord: true)
             ->extraInputAttributes(['dir' => 'ltr'])
+            ->dehydrateStateUsing(fn (?string $state, Get $get, ?Model $record) => filled($state)
+                ? $state
+                : self::uniqueSlug($table, (string) $get('name.en'), $record?->getKey()))
             ->helperText(__('admin.help.slug'));
+    }
+
+    /** "Levantine starters" → "levantine-starters" (or "-2", "-3", … when taken). */
+    public static function uniqueSlug(string $table, string $source, mixed $ignoreId = null): string
+    {
+        $base = Str::slug($source) ?: 'item';
+        $slug = $base;
+        for ($i = 2; DB::table($table)->where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists(); $i++) {
+            $slug = $base.'-'.$i;
+        }
+
+        return $slug;
     }
 
     /**

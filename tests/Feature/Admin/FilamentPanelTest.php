@@ -62,7 +62,10 @@ class FilamentPanelTest extends AdminPanelTestCase
         Livewire::test(CreateStore::class)
             ->fillForm(['slug' => ''])
             ->call('create')
-            ->assertHasFormErrors(['name.ar' => 'required', 'name.en' => 'required', 'slug' => 'required', 'categories' => 'required']);
+            ->assertHasFormErrors(['name.ar' => 'required', 'name.en' => 'required', 'categories' => 'required'])
+            // The URL name is optional since the PR #3 fix: left empty, it is
+            // generated (unique) from the English name when saving.
+            ->assertHasNoFormErrors(['slug']);
 
         Livewire::test(CreateStore::class)
             ->fillForm([

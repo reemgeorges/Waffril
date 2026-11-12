@@ -18,6 +18,7 @@ return [
         'customers' => 'Customers',
         'drivers' => 'Drivers',
         'content' => 'App content & messages',
+        'settings' => 'Settings',
     ],
     'resources' => [
         'currency' => [
@@ -1109,6 +1110,11 @@ return [
         'no_products' => 'This store has no products yet',
         'no_products_help' => 'Add the store\'s products here, then set their price and availability per branch.',
         'back_to_store' => 'Back to store',
+        'branches_tab' => 'This store\'s branches',
+        'products_tab' => 'This store\'s products',
+        'ratings_queue' => 'Review product ratings',
+        'categories_and_ratings' => 'Categories & ratings',
+        'back_to_stores' => 'Back to stores',
     ],
     'categories' => [
         'no_parent' => 'None (main category)',
@@ -1267,5 +1273,7 @@ return [
         'payment' => ['singular' => 'payment', 'plural' => 'payments'],
         'refund' => ['singular' => 'refund', 'plural' => 'refunds'],
         'cancellation_request' => ['singular' => 'cancellation request', 'plural' => 'cancellation requests'],
+        'rating' => ['singular' => 'rating', 'plural' => 'ratings'],
+        'plus_request' => ['singular' => 'PLUS request', 'plural' => 'PLUS requests'],
     ],
 ];

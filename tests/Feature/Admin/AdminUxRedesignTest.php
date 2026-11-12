@@ -55,7 +55,7 @@ class AdminUxRedesignTest extends AdminPanelTestCase
         $items = collect(OperationsOverview::items())->keyBy('key');
         $this->assertSame(2, $items['pending_orders']['count']);
         $this->assertSame(1, $items['urgent_orders']['count']);
-        $this->assertStringContainsString('activeTab=pending', $items['pending_orders']['url']);
+        $this->assertStringContainsString('tab=pending', $items['pending_orders']['url']);
 
         Livewire::test(OperationsOverview::class)
             ->assertSee(__('admin.dashboard.attention_title'))

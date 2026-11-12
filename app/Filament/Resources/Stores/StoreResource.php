@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Stores;
 
 use App\Filament\Resources\Branches\BranchResource;
+use App\Filament\Resources\Categories\CategoryResource;
+use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\StoreCategories\StoreCategoryResource;
 use App\Filament\Resources\Stores\Pages\CreateStore;
@@ -12,6 +14,7 @@ use App\Filament\Resources\Stores\RelationManagers\BranchesRelationManager;
 use App\Filament\Resources\Stores\RelationManagers\ProductsRelationManager;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\TableDefaults;
 use App\Models\Store;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -58,6 +61,23 @@ class StoreResource extends AdminResource
      * right here, with the same fields and rules as the category page, by
      * staff allowed to create categories.
      */
+    /**
+     * "Stores" stays highlighted on the catalog pages that live under it and
+     * are not in the sidebar themselves (branches, products, categories,
+     * ratings), so staff always see where they are.
+     */
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return [
+            static::getRouteBaseName().'.*',
+            BranchResource::getRouteBaseName().'.*',
+            ProductResource::getRouteBaseName().'.*',
+            StoreCategoryResource::getRouteBaseName().'.*',
+            CategoryResource::getRouteBaseName().'.*',
+            ProductRatingResource::getRouteBaseName().'.*',
+        ];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -108,16 +128,17 @@ class StoreResource extends AdminResource
     {
         return $table
             ->columns([
-                ImageColumn::make('logo')->label(__('admin.fields.logo'))->disk('public')->circular()->imageSize(36),
+                ImageColumn::make('logo')->visible(TableDefaults::onlyWhenFilled(Store::class, 'logo'))->label(__('admin.fields.logo'))->disk('public')->circular()->imageSize(36),
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)
                     ->description(fn (Store $record) => $record->categories->map->name->implode(' · ')),
                 TextColumn::make('slug')->label(__('admin.fields.slug'))->toggleable(isToggledHiddenByDefault: true),
-                // Counts open the branch / product lists filtered on this store.
+                // Counts open this store's own Branches / Products tab.
                 TextColumn::make('branches_count')->counts('branches')->label(__('admin.resources.branch.plural'))->color('primary')
-                    ->url(fn (Store $record) => BranchResource::canViewAny() ? BranchResource::getUrl('index', ['tableFilters' => ['store_id' => ['value' => $record->id]]]) : null),
+                    ->url(fn (Store $record) => static::can('update', $record) ? static::getUrl('edit', ['record' => $record]).'?relation=branches' : null),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.product.plural'))->color('primary')
-                    ->url(fn (Store $record) => ProductResource::canViewAny() ? ProductResource::getUrl('index', ['tableFilters' => ['store_id' => ['value' => $record->id]]]) : null),
+                    ->url(fn (Store $record) => static::can('update', $record) ? static::getUrl('edit', ['record' => $record]).'?relation=products' : null),
                 TextColumn::make('plus_discount_percent')->label(__('admin.stores.plus_short'))->alignCenter()->width('1%')
+                    ->visible(fn () => Store::query()->where('plus_discount_percent', '>', 0)->exists())
                     ->formatStateUsing(fn ($state, $record) => $record->plusDiscountPercentText() !== null ? $record->plusDiscountPercentText().'%' : '—')->sortable(),
                 ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
                     ->disabled(fn ($record) => ! static::can('update', $record)),
@@ -131,12 +152,12 @@ class StoreResource extends AdminResource
             ->recordActions([
                 EditAction::make(),
                 ActionGroup::make([
-                    Action::make('newBranch')->label(__('admin.stores.add_branch'))->icon('heroicon-m-plus')
-                        ->url(fn (Store $record) => BranchResource::getUrl('create', ['store' => $record->id]))
-                        ->visible(fn () => BranchResource::canCreate()),
-                    Action::make('newProduct')->label(__('admin.stores.add_product'))->icon('heroicon-m-plus')
-                        ->url(fn (Store $record) => ProductResource::getUrl('create', ['store' => $record->id]))
-                        ->visible(fn () => ProductResource::canCreate()),
+                    Action::make('branches')->label(__('admin.stores.branches_tab'))->icon('heroicon-m-building-office-2')
+                        ->url(fn (Store $record) => static::getUrl('edit', ['record' => $record]).'?relation=branches')
+                        ->visible(fn (Store $record) => static::can('update', $record)),
+                    Action::make('products')->label(__('admin.stores.products_tab'))->icon('heroicon-m-cube')
+                        ->url(fn (Store $record) => static::getUrl('edit', ['record' => $record]).'?relation=products')
+                        ->visible(fn (Store $record) => static::can('update', $record)),
                     DeleteAction::make(), RestoreAction::make(),
                 ]),
             ])

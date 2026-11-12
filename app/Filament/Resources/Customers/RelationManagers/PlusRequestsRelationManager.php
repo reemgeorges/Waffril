@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\RelationManagers;
 
+use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\PlusRequests\PlusRequestResource;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
@@ -13,6 +14,10 @@ use Filament\Tables\Table;
  */
 class PlusRequestsRelationManager extends RelationManager
 {
+    use TranslatedRelationLabels;
+
+    protected static string $relationLabelKey = 'plus_request';
+
     protected static string $relationship = 'plusRequests';
 
     protected static string|\BackedEnum|null $icon = 'heroicon-o-star';

@@ -3,17 +3,26 @@
 namespace Tests\Feature\Admin;
 
 use App\Exceptions\BusinessRuleException;
+use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Branches\Pages\EditBranch;
+use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
+use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
+use App\Filament\Resources\ProductRatings\ProductRatingResource;
+use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
+use App\Filament\Resources\StoreCategories\StoreCategoryResource;
 use App\Filament\Resources\Stores\Pages\EditStore;
+use App\Filament\Resources\Stores\Pages\ListStores;
 use App\Filament\Resources\Stores\RelationManagers\BranchesRelationManager;
 use App\Filament\Resources\Stores\RelationManagers\ProductsRelationManager;
+use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\PlusStatus;
+use App\Filament\Widgets\OperationsOverview;
 use App\Models\AdminAuditLog;
 use App\Models\Branch;
 use App\Models\Category;
@@ -28,7 +37,9 @@ use App\Models\User;
 use App\Services\Catalog\CategoryDeletionService;
 use App\Services\Platform\PlatformSettingsService;
 use Filament\Actions\Testing\TestAction;
+use Filament\Facades\Filament;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\WaffrliFixtures;
 
 /**
@@ -209,5 +220,109 @@ class AdminWorkflowOverhaulTest extends AdminPanelTestCase
         // Review actions stay permission-bound: plus.view alone cannot approve.
         Livewire::test(ListPlusRequests::class)->assertActionHidden(TestAction::make('approveNew')->table($new))
             ->assertActionVisible(TestAction::make('details')->table($new));
+    }
+
+    /** @return list<string> every label in the sidebar the current admin sees (groups expanded). */
+    protected function sidebarLabels(): array
+    {
+        $labels = [];
+        foreach (Filament::getPanel('admin')->getNavigation() as $group) {
+            foreach ($group->getItems() as $item) {
+                $labels[] = $item->getLabel();
+                foreach ($item->getChildItems() as $child) {
+                    $labels[] = $child->getLabel();
+                }
+            }
+        }
+
+        return $labels;
+    }
+
+    /** One fresh application per language (Filament builds the menu once per request). */
+    public static function locales(): array
+    {
+        return ['Arabic' => ['ar'], 'English' => ['en']];
+    }
+
+    #[DataProvider('locales')]
+    public function test_redundant_catalog_entries_are_not_in_the_sidebar_but_stay_reachable_in_context(string $locale): void
+    {
+        $hidden = [
+            ProductResource::class,
+            ProductRatingResource::class,
+            BranchResource::class,
+            CategoryResource::class,
+            StoreCategoryResource::class,
+        ];
+        foreach ([$locale] as $locale) {
+            app()->setLocale($locale);
+            $this->actingAsAdmin($this->superAdmin());
+            $labels = $this->sidebarLabels();
+            $this->assertContains(StoreResource::getNavigationLabel(), $labels);
+            foreach ($hidden as $resource) {
+                $this->assertFalse($resource::shouldRegisterNavigation(), "{$resource} must not register navigation");
+                $this->assertNotContains($resource::getNavigationLabel(), $labels, "{$resource} must not be in the {$locale} sidebar");
+                // "Stores" stays the highlighted sidebar entry on these pages.
+                $this->assertContains($resource::getRouteBaseName().'.*', (array) StoreResource::getNavigationItemActiveRoutePattern());
+                // Contextual pages stay reachable for authorised staff.
+                $this->get($resource::getUrl('index'))->assertOk();
+            }
+        }
+
+        // …and stay protected: no catalog permission, no access.
+        $this->actingAsAdmin($this->employee(['orders.view']));
+        foreach ($hidden as $resource) {
+            $this->get($resource::getUrl('index'))->assertForbidden();
+        }
+    }
+
+    public function test_catalog_staff_reach_categories_and_ratings_from_the_stores_page(): void
+    {
+        $this->actingAsAdmin($this->employee(['catalog.view', 'catalog.manage', 'ratings.moderate']));
+        Livewire::test(ListStores::class)
+            ->assertActionVisible('storeCategories')->assertActionVisible('productCategories')->assertActionVisible('ratings');
+
+        $this->actingAsAdmin($this->employee(['catalog.view']));
+        Livewire::test(ListStores::class)->assertActionHidden('ratings');
+    }
+
+    public function test_new_store_products_and_branches_open_their_pricing_next(): void
+    {
+        $store = $this->store();
+        $city = $this->city();
+        $category = Category::create(['name' => ['ar' => 'مشاوي', 'en' => 'Grills'], 'slug' => 'grills-x']);
+        $this->actingAsAdmin($this->superAdmin());
+
+        $product = Livewire::test(ProductsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+            ->callAction(TestAction::make('create')->table(), ['name' => ['ar' => 'كبة', 'en' => 'Kibbeh'], 'categories' => [$category->id], 'is_active' => true]);
+        $created = Product::query()->where('store_id', $store->id)->sole();
+        $product->assertRedirect(ProductResource::getUrl('edit', ['record' => $created]).'?relation=branch-prices');
+
+        $branch = Livewire::test(BranchesRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+            ->callAction(TestAction::make('create')->table(), [
+                'city_id' => $city->id, 'name' => ['ar' => 'فرع', 'en' => 'Branch'], 'address' => ['ar' => 'عنوان', 'en' => 'Address'],
+                'lat' => 33.5, 'lng' => 36.3, 'is_active' => true, 'is_accepting_orders' => true,
+            ]);
+        $branch->assertRedirect(BranchResource::getUrl('edit', ['record' => Branch::query()->where('store_id', $store->id)->sole()]).'?relation=products');
+    }
+
+    public function test_a_new_category_gets_its_url_name_from_the_english_name(): void
+    {
+        StoreCategory::create(['name' => ['ar' => 'حلويات', 'en' => 'Sweets'], 'slug' => 'sweets']);
+        $this->actingAsAdmin($this->superAdmin());
+
+        Livewire::test(ManageStoreCategories::class)
+            ->callAction('create', ['name' => ['ar' => 'حلويات شرقية', 'en' => 'Sweets'], 'slug' => null])
+            ->assertHasNoFormErrors();
+        $this->assertDatabaseHas('store_categories', ['slug' => 'sweets-2']);
+    }
+
+    public function test_dashboard_links_open_the_right_tab(): void
+    {
+        $this->actingAsAdmin($this->superAdmin());
+        Livewire::withQueryParams(['tab' => 'pending'])->test(ListOrders::class)
+            ->assertSet('activeTab', 'pending');
+        Livewire::withQueryParams(['tab' => 'approved'])->test(ListPlusRequests::class)->assertSet('activeTab', 'approved');
+        $this->assertStringContainsString('tab=pending', OperationsOverview::items()[0]['url']);
     }
 }
