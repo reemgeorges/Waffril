@@ -8,10 +8,11 @@ use App\Models\PlusCycle;
 use App\Models\PlusMembership;
 use App\Models\PlusPlan;
 use App\Models\PlusRequest;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Customer\CustomerCatalogService;
 use App\Services\Plus\PlusService;
-use App\Support\Settings\PlatformSettings;
 use App\Support\Localization\Label;
+use App\Support\Settings\PlatformSettings;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,11 +31,12 @@ class CustomerPlusController extends CustomerController
             'id' => $p->id, 'code' => $p->code, 'name' => $p->name, 'description' => $p->description,
             // What a newly confirmed cycle receives (platform setting since 2026-11-12).
             'duration_days' => $p->default_duration_days, 'free_deliveries_per_cycle' => PlusService::freeDeliveriesLimit(),
-            'display_price' => $p->display_price !== null ? (string) $p->display_price : null,
+            'display_price' => CurrencyPolicy::operationalAmount($p->display_price),
+            'currency' => CurrencyPolicy::displayCurrency(null)?->code,
             'store_benefits' => $p->storeDiscounts->where('is_active', true)->map(fn ($d) => [
                 'store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type,
-                'discount_value' => (string) $d->discount_value, 'max_discount' => $d->max_discount_amount !== null ? (string) $d->max_discount_amount : null,
-                'min_order' => $d->min_order_amount !== null ? (string) $d->min_order_amount : null,
+                'discount_value' => $d->discount_type === 'percent' ? (string) $d->discount_value : CurrencyPolicy::operationalAmount($d->discount_value), 'max_discount' => CurrencyPolicy::operationalAmount($d->max_discount_amount),
+                'min_order' => CurrencyPolicy::operationalAmount($d->min_order_amount),
             ])->values(),
         ])->values()]);
     }
@@ -82,8 +84,8 @@ class CustomerPlusController extends CustomerController
                 'delivery_discount_percent' => PlusService::cycleDeliveryDiscountPercent($c) + 0,
                 'store_discounts' => $c->discounts->map(fn ($d) => [
                     'store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type,
-                    'discount_value' => (string) $d->snapshot_discount_value, 'max_discount' => $d->snapshot_max_discount_amount !== null ? (string) $d->snapshot_max_discount_amount : null,
-                    'min_order' => $d->snapshot_min_order_amount !== null ? (string) $d->snapshot_min_order_amount : null,
+                    'discount_value' => $d->discount_type === 'percent' ? (string) $d->op_discount_value : CurrencyPolicy::operationalAmount($d->op_discount_value, $d->op_currency_id), 'max_discount' => CurrencyPolicy::operationalAmount($d->op_max_discount_amount, $d->op_currency_id),
+                    'min_order' => CurrencyPolicy::operationalAmount($d->op_min_order_amount, $d->op_currency_id),
                 ])->values(),
             ] : null;
 
@@ -111,7 +113,7 @@ class CustomerPlusController extends CustomerController
             return [
                 'has_active_cycle' => (bool) $cycle,
                 'free_deliveries_remaining' => $cycle ? max(0, $cycle->free_deliveries_total - $cycle->free_deliveries_used) : 0,
-                'discounts' => $discounts->map(fn ($d) => ['store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type, 'discount_value' => (string) $d->op_discount_value, 'max_discount' => $d->op_max_discount_amount !== null ? (string) $d->op_max_discount_amount : null, 'min_order' => $d->op_min_order_amount !== null ? (string) $d->op_min_order_amount : null])->values(),
+                'discounts' => $discounts->map(fn ($d) => ['store' => ['id' => $d->store->id, 'name' => $d->store->name], 'discount_type' => $d->discount_type, 'discount_value' => $d->discount_type === 'percent' ? (string) $d->op_discount_value : CurrencyPolicy::operationalAmount($d->op_discount_value, $d->op_currency_id), 'max_discount' => CurrencyPolicy::operationalAmount($d->op_max_discount_amount, $d->op_currency_id), 'min_order' => CurrencyPolicy::operationalAmount($d->op_min_order_amount, $d->op_currency_id)])->values(),
                 'note' => __('messages.customer.plus_priority_note'),
             ];
         });

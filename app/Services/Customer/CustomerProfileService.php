@@ -5,10 +5,10 @@ namespace App\Services\Customer;
 use App\Contracts\Delivery\DistanceCalculator;
 use App\Exceptions\BusinessRuleException;
 use App\Models\City;
-use App\Models\Currency;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\Auth\OtpService;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Model\City\CityService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +31,7 @@ class CustomerProfileService
     {
         $changes = array_intersect_key($data, array_flip(['first_name', 'last_name', 'language', 'display_currency_id']));
         if (array_key_exists('display_currency_id', $changes) && $changes['display_currency_id'] !== null
-            && ! Currency::query()->whereKey($changes['display_currency_id'])->where('is_active', true)->exists()) {
+            && ! CurrencyPolicy::customerCurrencies()->contains('id', (int) $changes['display_currency_id'])) {
             throw new BusinessRuleException(__('validation.exists', ['attribute' => 'display_currency_id']), 422);
         }
         if (isset($changes['first_name']) || isset($changes['last_name'])) {

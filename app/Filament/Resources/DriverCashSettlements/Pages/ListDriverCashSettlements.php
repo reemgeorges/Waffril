@@ -6,6 +6,8 @@ use App\Filament\Resources\DriverCashSettlements\DriverCashSettlementResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\Currency;
 use App\Models\Driver;
+use App\Models\OrderPayment;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Driver\DriverCashSettlementService;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Settings\PlatformSettings;
@@ -27,8 +29,15 @@ class ListDriverCashSettlements extends ListRecords
                 ->schema([
                     Select::make('driver_id')->label(__('admin.fields.driver'))->required()->searchable()
                         ->options(fn () => Driver::query()->orderBy('name')->pluck('name', 'id')),
+                    // Operational currencies (CurrencyPolicy: SYP at launch), plus any
+                    // currency in which collected cash still awaits settlement (e.g.
+                    // an order paid before the switch), so nothing is stranded.
                     Select::make('currency_id')->label(__('admin.fields.currency'))->required()
-                        ->options(fn () => Currency::query()->where('is_active', true)->pluck('code', 'id')),
+                        ->default(fn () => CurrencyPolicy::displayCurrency(null)?->id)
+                        ->options(fn () => Currency::query()
+                            ->whereIn('id', CurrencyPolicy::customerCurrencies()->pluck('id')
+                                ->merge(OrderPayment::query()->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->distinct()->pluck('currency_id')))
+                            ->orderByDesc('is_default')->orderBy('code')->pluck('code', 'id')),
                     // Business days are in the platform timezone (not UTC): just after local
                     // midnight "today" must already be the new day.
                     DatePicker::make('business_date')->label(__('admin.fields.business_date'))->required()

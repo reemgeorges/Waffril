@@ -116,6 +116,8 @@ return [
     */
     'currency' => [
         'redenomination_enabled' => (bool) env('WAFFRLI_CURRENCY_SWITCH_ENABLED', false),
+        'operational_default' => env('WAFFRLI_OPERATIONAL_CURRENCY', 'SYP'),
+        'customer_currencies' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAFFRLI_CUSTOMER_CURRENCIES', 'SYP'))))),
     ],
 
     'dev' => [

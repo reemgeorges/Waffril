@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Currency;
 use App\Models\User;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Order\OrderPricingService;
 use App\Support\Money\Money;
 use Illuminate\Support\Facades\DB;
@@ -104,7 +105,8 @@ class CartService
         if ($lines !== []) {
             try {
                 $address = $user->addresses()->where('is_default', true)->first();
-                $currency = ($user->display_currency_id ? Currency::query()->whereKey($user->display_currency_id)->where('is_active', true)->first() : null) ?? Currency::query()->default()->firstOrFail();
+                // Same currency checkout charges in (CurrencyPolicy).
+                $currency = CurrencyPolicy::paymentCurrency($user, null);
                 // PLUS (2026-11-12): the cart shows what checkout charges by
                 // default, so a free delivery is applied here whenever one is
                 // available. Pricing is read-only: nothing is consumed or

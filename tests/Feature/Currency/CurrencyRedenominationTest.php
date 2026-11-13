@@ -146,6 +146,7 @@ class CurrencyRedenominationTest extends CustomerTestCase
         config(['waffrli.currency.redenomination_enabled' => true]);
         $syp = Currency::where('code', 'SYP')->firstOrFail();
         $this->service()->execute($this->service()->request($this->admin(), $syp->id, 'switch-checkout'));
+        config(['waffrli.currency.operational_default' => 'SYP']);
 
         $user = $this->demoCustomer(1); // Damascus
         $token = $this->loginCustomer($user);

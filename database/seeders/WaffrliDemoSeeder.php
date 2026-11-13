@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Currency;
 use Database\Seeders\Demo\DemoCatalogSeeder;
 use Database\Seeders\Demo\DemoContext;
 use Database\Seeders\Demo\DemoEngagementSeeder;
@@ -42,11 +43,17 @@ class WaffrliDemoSeeder extends Seeder
         $broadcaster = config('broadcasting.default');
         $push = config('waffrli.push.enabled');
         $muted = config('waffrli.notifications_muted');
-        config(['broadcasting.default' => 'null', 'waffrli.push.enabled' => false, 'waffrli.notifications_muted' => true]);
+        // Demo history spans several currencies (USD, SYP, EUR orders and
+        // wallets), so every active currency is payable while seeding; the
+        // launch policy (default currency only) is restored afterwards.
+        $customerCurrencies = config('waffrli.currency.customer_currencies');
+        config(['broadcasting.default' => 'null', 'waffrli.push.enabled' => false, 'waffrli.notifications_muted' => true,
+        ]);
 
         try {
+            $this->call(DemoPlatformSeeder::class);
+            config(['waffrli.currency.customer_currencies' => Currency::query()->where('is_active', true)->pluck('code')->all()]);
             $this->call([
-                DemoPlatformSeeder::class,
                 DemoCatalogSeeder::class,
                 DemoPeopleSeeder::class,
                 DemoPlusSeeder::class,
@@ -55,7 +62,8 @@ class WaffrliDemoSeeder extends Seeder
             ]);
         } finally {
             $context->retireOperator();
-            config(['broadcasting.default' => $broadcaster, 'waffrli.push.enabled' => $push, 'waffrli.notifications_muted' => $muted]);
+            config(['broadcasting.default' => $broadcaster, 'waffrli.push.enabled' => $push, 'waffrli.notifications_muted' => $muted,
+                'waffrli.currency.customer_currencies' => $customerCurrencies]);
         }
     }
 }

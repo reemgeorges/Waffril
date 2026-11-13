@@ -2,11 +2,11 @@
 
 namespace App\Services\Functional\Currency;
 
+use App\Exceptions\BusinessRuleException;
 use App\Models\Currency;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
-use InvalidArgumentException;
 
 /**
  * WAFFRLI P0 (2026-10-30) — converts an amount between any two
@@ -40,7 +40,7 @@ class CurrencyConverter
         $toRate = BigDecimal::of((string) $to->exchange_rate);
 
         if ($fromRate->isLessThanOrEqualTo(0) || $toRate->isLessThanOrEqualTo(0)) {
-            throw new InvalidArgumentException('Exchange rates must be positive.');
+            throw new BusinessRuleException(__('messages.customer.currency_not_payable'), 422);
         }
 
         return $toRate->dividedBy($fromRate, Money::RATE_SCALE, RoundingMode::HALF_UP);

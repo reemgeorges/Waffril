@@ -109,14 +109,30 @@ final class Fields
             ->maxLength(16);
     }
 
+    /**
+     * A catalog amount in the platform DEFAULT currency (prices, option
+     * deltas, minimum orders, delivery fees, PLUS display prices). The
+     * suffix names that currency (SYP at launch) and the input accepts at
+     * most its decimals (0 for SYP), so what an operator types is exactly
+     * what customers are charged.
+     */
     public static function money(string $name, bool $required = true): TextInput
     {
+        $default = self::defaultCurrency();
+
         return TextInput::make($name)
             ->label(__("admin.fields.{$name}"))
             ->numeric()
             ->minValue(0)
-            ->rule('decimal:0,4')
+            ->rule('decimal:0,'.min(4, $default?->decimals ?? 4))
+            ->suffix($default?->code)
             ->required($required);
+    }
+
+    /** The platform default currency (one query per request). */
+    public static function defaultCurrency(): ?Currency
+    {
+        return once(fn () => Currency::query()->default()->first());
     }
 
     /**

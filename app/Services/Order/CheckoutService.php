@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\Wallet;
 use App\Services\Catalog\BranchHoursService;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
@@ -243,16 +244,14 @@ class CheckoutService
         return $address;
     }
 
-    /** Payment currency: requested, else the display currency, else the default. Frozen on the order. */
+    /**
+     * Payment currency: requested, else the display currency, else the
+     * default, limited to the currencies offered to customers
+     * (CurrencyPolicy: the default only at launch). Frozen on the order.
+     */
     protected function currency(User $user, ?int $currencyId): Currency
     {
-        $id = $currencyId ?? $user->display_currency_id;
-        $currency = $id ? Currency::query()->whereKey($id)->where('is_active', true)->first() : Currency::query()->default()->first();
-        if (! $currency) {
-            throw new BusinessRuleException(__('messages.customer.currency_not_payable'), 422);
-        }
-
-        return $currency;
+        return CurrencyPolicy::paymentCurrency($user, $currencyId);
     }
 
     protected function validateTiming(Branch $branch, ?string $scheduledFor): ?Carbon

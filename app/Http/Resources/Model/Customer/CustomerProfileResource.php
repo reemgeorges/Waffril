@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Model\Customer;
 
 use App\Http\Resources\Basic\BasicResource;
+use App\Services\Currency\CurrencyPolicy;
 use App\Support\Localization\Label;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,8 @@ class CustomerProfileResource extends BasicResource
             'account_status' => $u->account_status,
             'account_status_label' => Label::of('account_status', $u->account_status),
             'profile_completed' => filled($u->first_name) && filled($u->last_name),
-            'display_currency' => $u->displayCurrency ? ['id' => $u->displayCurrency->id, 'code' => $u->displayCurrency->code] : null,
+            // Only a choice that is still offered (CurrencyPolicy); null = the default.
+            'display_currency' => ($d = CurrencyPolicy::displayCurrency($u)) && ! $d->is_default ? ['id' => $d->id, 'code' => $d->code] : null,
             'selected_address' => $default ? CustomerAddressResource::make($default) : null,
             'delivery_city' => $default?->city ? ['id' => $default->city->id, 'name' => $default->city->name] : null,
         ];

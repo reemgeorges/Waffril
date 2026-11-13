@@ -34,6 +34,8 @@
         <env name="WAFFRLI_SMS_DRIVER" value="fake"/>
         <env name="WAFFRLI_DEV_OTP_PEEK_TOKEN" value=""/>
         <env name="WAFFRLI_CURRENCY_SWITCH_ENABLED" value="false"/>
+        <env name="WAFFRLI_CUSTOMER_CURRENCIES" value="USD,SYP,EUR" force="true"/>
+        <env name="WAFFRLI_OPERATIONAL_CURRENCY" value="USD" force="true"/>
         <env name="WAFFRLI_API_DOCS_ENABLED" value="false"/>
         <env name="FIREBASE_CREDENTIALS" value=""/>
         <env name="APP_LOCALE" value="en"/>

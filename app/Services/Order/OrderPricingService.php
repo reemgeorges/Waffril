@@ -12,10 +12,11 @@ use App\Models\Order;
 use App\Models\PlusCycle;
 use App\Models\PlusCycleDiscount;
 use App\Models\PlusStoreDiscount;
-use App\Models\Store;
 use App\Models\ProductOption;
+use App\Models\Store;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Services\Functional\Currency\CurrencyConverter;
 use App\Services\Functional\Delivery\DeliveryFeeResolver;
 use App\Services\Plus\PlusService;
 use App\Support\Money\Money;
@@ -62,7 +63,7 @@ class OrderPricingService
         }
 
         $default = Currency::query()->default()->firstOrFail();
-        $rate = (string) $currency->exchange_rate;
+        $rate = (string) app(CurrencyConverter::class)->crossRate($default, $currency);
         $convert = fn ($amount) => Money::roundTo(BigDecimal::of((string) $amount)->multipliedBy($rate), $currency->decimals);
 
         $branchProducts = BranchProduct::query()->where('branch_id', $branch->id)

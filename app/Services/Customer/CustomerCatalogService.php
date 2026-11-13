@@ -14,9 +14,10 @@ use App\Models\Setting;
 use App\Models\StoreCategory;
 use App\Models\User;
 use App\Services\Catalog\BranchHoursService;
+use App\Services\Currency\CurrencyPolicy;
+use App\Services\Functional\Currency\CurrencyConverter;
 use App\Support\Database\JsonSearch;
 use App\Support\Localization\Label;
-use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Builder;
@@ -275,20 +276,21 @@ class CustomerCatalogService
             ->where(fn ($q) => $q->whereNull('branch_id')->orWhere('branch_id', $branch->id))->get()->groupBy('product_id');
     }
 
-    /** A default-currency amount, plus its display-currency conversion when the customer chose one. */
+    /** A catalog amount converted from the accounting base to the operational currency. */
     public function price(BigDecimal|string|null $amount, ?User $user): array
     {
         $this->default ??= Currency::query()->default()->first();
         $value = BigDecimal::of((string) ($amount ?? '0'));
-        $display = $user?->displayCurrency;
+        $display = CurrencyPolicy::displayCurrency($user);
+        if (! $this->default || ! $display) {
+            throw new BusinessRuleException(__('messages.customer.currency_not_payable'), 422);
+        }
+        $converted = app(CurrencyConverter::class)->convert($value, $this->default, $display);
 
         return [
-            'amount' => (string) Money::roundTo($value, $this->default?->decimals ?? 2),
-            'currency' => $this->default?->code,
-            'display' => $display && $display->id !== $this->default?->id ? [
-                'amount' => (string) Money::roundTo($value->multipliedBy((string) $display->exchange_rate), $display->decimals),
-                'currency' => $display->code,
-            ] : null,
+            'amount' => (string) $converted,
+            'currency' => $display->code,
+            'display' => null,
         ];
     }
 

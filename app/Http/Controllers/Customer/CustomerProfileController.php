@@ -7,7 +7,7 @@ use App\Http\Requests\Model\Customer\CustomerCodeRequest;
 use App\Http\Requests\Model\Customer\CustomerProfileRequest;
 use App\Http\Resources\Model\Customer\CustomerAddressResource;
 use App\Http\Resources\Model\Customer\CustomerProfileResource;
-use App\Models\Currency;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Customer\Auth\CustomerAuthService;
 use App\Services\Customer\CustomerProfileService;
 use Illuminate\Http\Request;
@@ -67,13 +67,14 @@ class CustomerProfileController extends CustomerController
         return $this->respond(function () use ($request) {
             $user = $this->customer($request);
             $address = $this->profiles->defaultAddress($user);
-            $default = Currency::query()->default()->first();
+            $default = CurrencyPolicy::displayCurrency(null);
+            $display = CurrencyPolicy::displayCurrency($user);
 
             return [
                 'selected_address' => $address ? CustomerAddressResource::make($address) : null,
                 'delivery_city' => $address?->city ? ['id' => $address->city->id, 'name' => $address->city->name] : null,
                 'default_currency' => $default ? ['id' => $default->id, 'code' => $default->code, 'symbol' => $default->symbol, 'decimals' => $default->decimals] : null,
-                'display_currency' => $user->displayCurrency ? ['id' => $user->displayCurrency->id, 'code' => $user->displayCurrency->code, 'exchange_rate' => (string) $user->displayCurrency->exchange_rate] : null,
+                'display_currency' => $display && $display->id !== $default?->id ? ['id' => $display->id, 'code' => $display->code, 'exchange_rate' => (string) $display->exchange_rate] : null,
             ];
         });
     }

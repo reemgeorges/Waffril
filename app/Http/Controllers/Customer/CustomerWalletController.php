@@ -7,6 +7,7 @@ use App\Models\OrderPayment;
 use App\Models\OrderRefund;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\Currency\CurrencyPolicy;
 use App\Support\Localization\Label;
 use App\Support\Money\Money;
 use Illuminate\Http\Request;
@@ -71,9 +72,10 @@ class CustomerWalletController extends CustomerController
 
     public function currencies()
     {
-        return $this->respond(fn () => ['currencies' => Currency::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('code')->get()->map(fn ($c) => [
+        // Only the currencies offered to customers (CurrencyPolicy).
+        return $this->respond(fn () => ['currencies' => CurrencyPolicy::customerCurrencies()->map(fn ($c) => [
             'id' => $c->id, 'code' => $c->code, 'name' => $c->name, 'symbol' => $c->symbol, 'decimals' => $c->decimals,
-            'exchange_rate' => (string) $c->exchange_rate, 'is_default' => (bool) $c->is_default,
+            'exchange_rate' => (string) $c->exchange_rate, 'is_default' => $c->code === strtoupper((string) config('waffrli.currency.operational_default', 'SYP')),
         ])->values()]);
     }
 }
