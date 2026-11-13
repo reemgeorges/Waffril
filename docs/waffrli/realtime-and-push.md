@@ -8,6 +8,7 @@
   - client events (whisper) are **disabled** (`REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM=none`), so clients only receive what the server publishes;
   - origins: see [Mobile clients and Origin](#mobile-clients-and-origin) below.
 - Business code publishes through `App\Services\Realtime\Realtime::publish()` and notifications go through `Notify::send()`. Both run after the transaction commits, and both log failures instead of throwing, so a WebSocket outage never fails an order, a payment or a GPS update.
+- `Notify::send()` delivers each recipient and each channel (database, broadcast, push) separately (audit 2026-11-13): a failing channel no longer cancels the push or the other recipients. Driver order updates, marketing messages and admin alerts go through the same protected paths. See [audit/notification-realtime-audit.md](audit/notification-realtime-audit.md).
 - Events are queued (`ShouldBroadcast`), so production needs a queue worker.
 
 ### Environment
@@ -143,7 +144,7 @@ The offer events are the one exception that carries amounts: `payment.cash_to_co
 | Fake (tests and local; refused in production) | `App\Services\Push\FakePushTransport` |
 | Queued send per token | `App\Jobs\Push\SendPushMessage`: 3 tries with backoff, dedupe per (notification, token), skipped while the recipient's channel is occupied (app open), unregistered tokens deactivated |
 | Notification channel | `App\Notifications\Channels\PushChannel` (`database` + `broadcast` + push via `App\Notifications\AppNotification`) |
-| Tokens | `App\Services\Push\DeviceTokenService`: customers get one active device; drivers up to 3; owner-only update/remove; a token moves to whoever signs in on the device |
+| Tokens | `App\Services\Push\DeviceTokenService`: customers get one active device; drivers up to 3 **devices** (a refreshed token from the same `device_id` replaces the old one, 2026-11-13); owner-only update/remove; a token moves to whoever signs in on the device; customer **and driver** logout stop push to the device |
 
 ### Environment
 
@@ -152,7 +153,7 @@ The offer events are the one exception that carries amounts: `payment.cash_to_co
 | `WAFFRLI_PUSH_ENABLED` | `false` | nothing is pushed until true |
 | `WAFFRLI_PUSH_DRIVER` | `fake` | `fcm` for real delivery |
 | `WAFFRLI_PUSH_QUEUE` | `default` | queue for push jobs |
-| `WAFFRLI_PUSH_SKIP_WHEN_ONLINE` | `true` | skip the push when the Reverb channel is occupied |
+| `WAFFRLI_PUSH_SKIP_WHEN_ONLINE` | `true` | skip the push when the Reverb channel is occupied. **Measured 2026-11-13:** a phone that silently loses its network stays "occupied" for about 3 minutes, and a backgrounded app that keeps its socket also counts as online. Use `false` in production unless the apps close the socket when backgrounded (see the audit) |
 | `FIREBASE_CREDENTIALS` | — | path to the service-account JSON **outside the repository** |
 | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | — | alternative to the JSON file (`\n` escapes allowed) |
 

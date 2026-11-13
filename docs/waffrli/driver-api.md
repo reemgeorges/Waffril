@@ -25,7 +25,7 @@ All routes except `login` require `Authorization: Bearer <driver token>`.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/login` | `{phone, password, device_name?}` → `{token, token_type, driver}` |
-| POST | `/logout` | revokes the current token |
+| POST | `/logout` | revokes the current token and stops push to the device: send `device_id` (the one used for `device-tokens`) to stop only this device; without it, all of this driver's push tokens are deactivated (2026-11-13) |
 | GET | `/me` | profile, city, vehicle, account state, availability, active orders, last location |
 | PATCH | `/profile` | `{language: ar\|en}`: the only self-editable field |
 | POST | `/password` | `{current_password, password, password_confirmation}`; revokes the driver's other tokens |
