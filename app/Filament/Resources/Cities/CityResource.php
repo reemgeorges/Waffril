@@ -2,17 +2,24 @@
 
 namespace App\Filament\Resources\Cities;
 
+use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Cities\Pages\ManageCities;
+use App\Filament\Resources\DeliveryAreas\DeliveryAreaResource;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\City;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -46,21 +53,43 @@ class CityResource extends AdminResource
         ]);
     }
 
+    /**
+     * Cities (table UX overhaul 2026-11-12): a handful of records, so each
+     * city is a card — name, coverage radius, its branches and delivery
+     * areas (links), status. Map coordinates stay in the edit form.
+     */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('center_lat')->label(__('admin.fields.center_lat')),
-                TextColumn::make('center_lng')->label(__('admin.fields.center_lng')),
-                TextColumn::make('radius_km')->label(__('admin.fields.radius_km'))->sortable(),
-                TextColumn::make('branches_count')->counts('branches')->label(__('admin.resources.branch.plural')),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn (City $record) => ! static::can('update', $record)),
-                TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->sortable(),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)->size(TextSize::Large),
+                            TextColumn::make('radius_km')->label(__('admin.fields.radius_km'))->color('gray')->size(TextSize::Small)->icon('heroicon-m-map')
+                                ->formatStateUsing(fn ($state) => __('admin.table.radius', ['km' => Fields::formatDecimal($state)])),
+                        ])->space(1),
+                        Columns::status()->grow(false),
+                    ]),
+                    Split::make([
+                        Columns::countLink('branches_count', __('admin.resources.branch.plural'), 'admin.table.branches_count', 'heroicon-m-building-office-2',
+                            fn (City $record) => BranchResource::canViewAny() ? BranchResource::getUrl('index', ['filters' => ['city_id' => ['value' => $record->getKey()]]]) : null,
+                            __('admin.table.open_city_branches'))->counts('branches')->grow(false),
+                        Columns::countLink('delivery_areas_count', __('admin.resources.delivery_area.plural'), 'admin.table.areas_count', 'heroicon-m-map-pin',
+                            fn (City $record) => DeliveryAreaResource::canViewAny() ? DeliveryAreaResource::getUrl('index', ['filters' => ['city_id' => ['value' => $record->getKey()]]]) : null)
+                            ->counts('deliveryAreas')->grow(false),
+                    ])->extraAttributes(['class' => 'wf-card-stats']),
+                ])->space(3),
             ])
-            ->filters([TernaryFilter::make('is_active')->label(__('admin.fields.is_active'))])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())])
+            ->contentGrid(['md' => 2, 'xl' => 3])
+            ->recordUrl(null)
+            ->searchPlaceholder(__('admin.table.search_cities'))
+            ->filters([TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive'))])
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())),
+                RowActions::more(RowActions::activation(static::class)),
+            ])
             ->defaultSort('sort_order');
     }
 

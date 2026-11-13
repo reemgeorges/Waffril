@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderPayments;
 
 use App\Filament\Resources\OrderPayments\Pages\ListOrderPayments;
+use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager as OrderPaymentsRelationManager;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
 use App\Models\OrderPayment;
@@ -51,7 +52,9 @@ class OrderPaymentResource extends AdminResource
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => $record->order?->user?->fullName())
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$search}%"))
-                        ->orWhereHas('order.user', fn ($u) => $u->where('phone', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"))),
+                        ->orWhereHas('order.user', fn ($u) => $u->where('phone', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")))
+                    // Inside an order's Payments tab the order is the page itself.
+                    ->hidden(fn ($livewire) => $livewire instanceof OrderPaymentsRelationManager),
                 TextColumn::make('method.name')->label(__('admin.table.method'))
                     ->description(fn ($record) => $record->collectedBy ? __('admin.table.by', ['name' => $record->collectedBy->name]) : null)
                     ->visibleFrom('md'),

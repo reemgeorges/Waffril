@@ -6,10 +6,10 @@ use App\Filament\Resources\Faqs\Pages\ManageFaqs;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\Faq;
 use App\Services\Content\ContentService;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\TextInput;
@@ -64,31 +64,32 @@ class FaqResource extends AdminResource
 
         return $table
             ->columns([
-                TextColumn::make('sort_order')->label('#')->sortable(),
+                TextColumn::make('sort_order')->label('#')->sortable()->color('gray')->visibleFrom('md'),
                 TextColumn::make('question')->label(__('admin.fields.question'))->weight(FontWeight::SemiBold)->wrap()->searchable()
                     ->description(fn (Faq $record) => Str::limit((string) $record->answer, 110)),
                 TextColumn::make('is_published')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state ? __('admin.content.published') : __('admin.content.draft'))
                     ->color(fn ($state) => $state ? 'success' : 'gray')
                     ->icon(fn ($state) => $state ? 'heroicon-m-globe-alt' : 'heroicon-m-pencil'),
-                TextColumn::make('updatedBy.name')->label(__('admin.content.updated_by'))->placeholder('—')
-                    ->description(fn (Faq $record) => $record->updated_at?->diffForHumans()),
+                TextColumn::make('updatedBy.name')->label(__('admin.content.updated_by'))->placeholder('—')->color('gray')
+                    ->description(fn (Faq $record) => $record->updated_at?->diffForHumans())->visibleFrom('lg'),
             ])
             ->filters([
-                TernaryFilter::make('is_published')->label(__('admin.content.published')),
+                TernaryFilter::make('is_published')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.content.published'))->falseLabel(__('admin.content.draft')),
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                Action::make('publish')->label(__('admin.content.publish'))->icon('heroicon-m-globe-alt')->color('success')->link()
-                    ->visible(fn (Faq $record) => ! $record->is_published && ! $record->trashed() && static::can('update', $record))
-                    ->action(fn (Faq $record) => BusinessAction::run(fn ($admin) => $service()->setFaqPublished($record, true, $admin))),
-                Action::make('unpublish')->label(__('admin.content.unpublish'))->icon('heroicon-m-eye-slash')->color('gray')->link()
-                    ->visible(fn (Faq $record) => $record->is_published && ! $record->trashed() && static::can('update', $record))
-                    ->action(fn (Faq $record) => BusinessAction::run(fn ($admin) => $service()->setFaqPublished($record, false, $admin))),
-                EditAction::make()->modalWidth(Width::FourExtraLarge)
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->modalWidth(Width::FourExtraLarge)
                     ->mutateRecordDataUsing(Fields::withTranslations())
-                    ->using(fn (Faq $record, array $data) => BusinessAction::run(fn ($admin) => $service()->saveFaq($data, $admin, $record)) ?? throw new Halt),
-                ActionGroup::make([
+                    ->using(fn (Faq $record, array $data) => BusinessAction::run(fn ($admin) => $service()->saveFaq($data, $admin, $record)) ?? throw new Halt)),
+                RowActions::more([
+                    Action::make('publish')->label(__('admin.content.publish'))->icon('heroicon-m-globe-alt')->color('success')
+                        ->visible(fn (Faq $record) => ! $record->is_published && ! $record->trashed() && static::can('update', $record))
+                        ->action(fn (Faq $record) => BusinessAction::run(fn ($admin) => $service()->setFaqPublished($record, true, $admin))),
+                    Action::make('unpublish')->label(__('admin.content.unpublish'))->icon('heroicon-m-eye-slash')->color('gray')
+                        ->visible(fn (Faq $record) => $record->is_published && ! $record->trashed() && static::can('update', $record))
+                        ->action(fn (Faq $record) => BusinessAction::run(fn ($admin) => $service()->setFaqPublished($record, false, $admin))),
                     Action::make('delete')->label(__('filament-actions::delete.single.label'))->icon('heroicon-m-trash')->color('danger')
                         ->visible(fn (Faq $record) => ! $record->trashed() && static::can('delete', $record))
                         ->requiresConfirmation()
@@ -96,6 +97,7 @@ class FaqResource extends AdminResource
                     RestoreAction::make(),
                 ]),
             ])
+            ->searchPlaceholder(__('admin.table.search_faqs'))
             ->defaultSort('sort_order')
             ->emptyStateHeading(__('admin.content.no_faqs'))
             ->emptyStateDescription(__('admin.content.no_faqs_help'))

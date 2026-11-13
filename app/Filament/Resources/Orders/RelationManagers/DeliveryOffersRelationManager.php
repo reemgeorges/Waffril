@@ -4,8 +4,10 @@ namespace App\Filament\Resources\Orders\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
+use App\Filament\Support\TableDefaults;
 use App\Models\DeliveryOffer;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -38,24 +40,30 @@ class DeliveryOffersRelationManager extends RelationManager
         return true;
     }
 
+    /**
+     * Order → Delivery offers (table UX overhaul 2026-11-12): the driver
+     * with round and attempt, the outcome with its reason, who offered it
+     * (system or admin), and when it was offered / answered. Read only.
+     */
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['driver', 'offeredBy']))
             ->columns([
-                TextColumn::make('round')->label(__('admin.dispatch.round_attempt'))
-                    ->formatStateUsing(fn ($state, DeliveryOffer $record) => $record->round.' / #'.$record->attempt),
-                TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
+                TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—')->weight(FontWeight::SemiBold)
+                    ->description(fn (DeliveryOffer $record) => __('admin.table.round_attempt', ['round' => $record->round, 'attempt' => $record->attempt])),
+                TextColumn::make('status')->label(__('admin.fields.status'))->badge()
+                    ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => DispatchPanel::statusColor($state))
+                    ->description(fn (DeliveryOffer $record) => DispatchPanel::reason($record)),
                 TextColumn::make('source')->label(__('admin.dispatch.source'))->badge()
                     ->formatStateUsing(fn ($state) => __('admin.dispatch.source_'.$state))
-                    ->color(fn ($state) => $state === DeliveryOffer::SOURCE_ADMIN ? 'info' : 'gray'),
-                TextColumn::make('offeredBy.name')->label(__('admin.dispatch.offered_by'))->placeholder('—')->toggleable(),
-                TextColumn::make('status')->label(__('admin.fields.status'))->badge()
-                    ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => DispatchPanel::statusColor($state)),
-                TextColumn::make('offered_at')->label(__('admin.dispatch.offered_at'))->dateTime('Y-m-d H:i:s'),
-                TextColumn::make('responded_at')->label(__('admin.dispatch.responded_at'))->dateTime('Y-m-d H:i:s')->placeholder('—'),
-                TextColumn::make('reason')->label(__('admin.fields.reason'))->placeholder('—')
-                    ->state(fn (DeliveryOffer $record) => DispatchPanel::reason($record))->wrap(),
-                TextColumn::make('selection_meta')->label(__('admin.dispatch.selection'))->placeholder('—')->wrap()->toggleable()
+                    ->color(fn ($state) => $state === DeliveryOffer::SOURCE_ADMIN ? 'info' : 'gray')
+                    ->description(fn (DeliveryOffer $record) => $record->offeredBy?->name)->visibleFrom('md'),
+                TextColumn::make('offered_at')->label(__('admin.dispatch.offered_at'))->dateTime('H:i:s')
+                    ->description(fn (DeliveryOffer $record) => $record->responded_at ? __('admin.table.responded_at', ['time' => $record->responded_at->format('H:i:s')]) : null)
+                    ->tooltip(fn (DeliveryOffer $record) => $record->offered_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->extraAttributes(['class' => 'wf-ltr wf-num']),
+                TextColumn::make('selection_meta')->label(__('admin.dispatch.selection'))->placeholder('—')->wrap()->toggleable(isToggledHiddenByDefault: true)
                     ->state(fn (DeliveryOffer $record) => self::selection($record->selection_meta)),
             ])
             ->defaultSort('id');

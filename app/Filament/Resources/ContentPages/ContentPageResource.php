@@ -6,6 +6,8 @@ use App\Filament\Resources\ContentPages\Pages\CreateContentPage;
 use App\Filament\Resources\ContentPages\Pages\EditContentPage;
 use App\Filament\Resources\ContentPages\Pages\ListContentPages;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\ContentPage;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -18,6 +20,9 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -71,23 +76,40 @@ class ContentPageResource extends AdminResource
         ]);
     }
 
+    /**
+     * Terms and other app pages (table UX overhaul 2026-11-12): one card per
+     * page — page, its title, published or draft with version and date, who
+     * changed it last. Edit is the one action.
+     */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('key')->label(__('admin.content.page'))->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state) => __("admin.content.keys.{$state}")),
-                TextColumn::make('title')->label(__('admin.content.title'))->limit(60),
-                TextColumn::make('is_published')->label(__('admin.fields.status'))->badge()
-                    ->formatStateUsing(fn ($state) => $state ? __('admin.content.published') : __('admin.content.draft'))
-                    ->color(fn ($state) => $state ? 'success' : 'gray')
-                    ->icon(fn ($state) => $state ? 'heroicon-m-globe-alt' : 'heroicon-m-pencil'),
-                TextColumn::make('version')->label(__('admin.content.version')),
-                TextColumn::make('published_at')->label(__('admin.content.published_at'))->dateTime()->placeholder('—'),
-                TextColumn::make('updatedBy.name')->label(__('admin.content.updated_by'))->placeholder('—')
-                    ->description(fn (ContentPage $record) => $record->updated_at?->diffForHumans()),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('key')->label(__('admin.content.page'))->weight(FontWeight::SemiBold)->size(TextSize::Large)
+                                ->formatStateUsing(fn ($state) => __("admin.content.keys.{$state}")),
+                            TextColumn::make('title')->label(__('admin.content.title'))->limit(70)->color('gray'),
+                        ])->space(1),
+                        TextColumn::make('is_published')->label(__('admin.fields.status'))->badge()->grow(false)
+                            ->formatStateUsing(fn ($state) => $state ? __('admin.content.published') : __('admin.content.draft'))
+                            ->color(fn ($state) => $state ? 'success' : 'gray')
+                            ->icon(fn ($state) => $state ? 'heroicon-m-globe-alt' : 'heroicon-m-pencil'),
+                    ]),
+                    TextColumn::make('version')->label(__('admin.content.version'))->size(TextSize::Small)->color('gray')->icon('heroicon-m-document-check')
+                        ->formatStateUsing(fn ($state, ContentPage $record) => collect([
+                            __('admin.table.version_n', ['n' => $state]),
+                            $record->published_at ? __('admin.table.published_on', ['date' => $record->published_at->translatedFormat(TableDefaults::dateFormat())]) : __('admin.table.not_published'),
+                        ])->implode(' · ')),
+                    TextColumn::make('updatedBy.name')->label(__('admin.content.updated_by'))->size(TextSize::Small)->color('gray')->icon('heroicon-m-user')
+                        ->formatStateUsing(fn ($state, ContentPage $record) => __('admin.table.updated_by', ['name' => $state, 'time' => $record->updated_at?->diffForHumans()]))
+                        ->placeholder(null),
+                ])->space(2),
             ])
-            ->recordActions([EditAction::make()])
+            ->contentGrid(['md' => 2])
+            ->recordUrl(null)
+            ->recordActions([RowActions::primary(EditAction::make()->label(__('admin.table.edit')))])
             ->emptyStateHeading(__('admin.content.no_pages'))
             ->emptyStateDescription(__('admin.content.no_pages_help'))
             ->emptyStateIcon('heroicon-o-document-text');

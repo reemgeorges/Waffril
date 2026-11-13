@@ -5,6 +5,8 @@ namespace App\Filament\Resources\PlusMemberships\RelationManagers;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\PlusPlans\RelationManagers\StoreDiscountsRelationManager;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\Store;
 use App\Services\Plus\PlusService;
 use App\Support\Auth\AdminPermissions;
@@ -16,7 +18,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -43,15 +45,23 @@ class ExceptionsRelationManager extends RelationManager
         $can = fn () => AdminPermissions::currentAllows('plus.approve');
 
         return $table
+            // Table UX overhaul (2026-11-12): the store, then "Excluded" or the
+            // custom discount with its limits in words, and who approved it.
+            ->modifyQueryUsing(fn ($query) => $query->with(['store', 'approvedBy']))
             ->columns([
-                TextColumn::make('store.name')->label(__('admin.fields.store')),
-                IconColumn::make('is_excluded')->label(__('admin.fields.is_excluded'))->boolean(),
-                TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))->placeholder('—')
-                    ->formatStateUsing(fn ($state, $record) => $record->discount_type === 'percent' ? $state.'%' : $state),
-                TextColumn::make('max_discount_amount')->label(__('admin.fields.max_discount_amount'))->placeholder('—'),
-                TextColumn::make('min_order_amount')->label(__('admin.fields.min_order_amount'))->placeholder('—'),
-                TextColumn::make('approvedBy.name')->label(__('admin.fields.approved_by'))->placeholder('—'),
-                TextColumn::make('note')->label(__('admin.fields.note'))->placeholder('—'),
+                TextColumn::make('store.name')->label(__('admin.fields.store'))->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => $record->note),
+                TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))->badge()
+                    ->state(fn ($record) => $record->is_excluded ? __('admin.table.excluded')
+                        : '−'.Fields::formatDecimal($record->discount_value).($record->discount_type === 'percent' ? '%' : ''))
+                    ->color(fn ($record) => $record->is_excluded ? 'danger' : 'gold')
+                    ->icon(fn ($record) => $record->is_excluded ? 'heroicon-m-no-symbol' : 'heroicon-m-tag')
+                    ->description(fn ($record) => $record->is_excluded ? null : (collect([
+                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::formatDecimal($record->max_discount_amount)]) : null,
+                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::formatDecimal($record->min_order_amount)]) : null,
+
+                    ])->filter()->implode(' · ') ?: null)),
+                TextColumn::make('approvedBy.name')->label(__('admin.fields.approved_by'))->placeholder('—')->color('gray')->visibleFrom('md'),
             ])
             ->headerActions([
                 Action::make('saveException')->label(__('admin.plus.add_exception'))->icon('heroicon-o-plus')
@@ -67,7 +77,7 @@ class ExceptionsRelationManager extends RelationManager
                         ->saveException($this->getOwnerRecord(), Store::findOrFail($data['store_id']), $data, $admin))),
             ])
             ->recordActions([
-                DeleteAction::make()->visible($can)->authorize($can),
+                RowActions::more([DeleteAction::make()->visible($can)->authorize($can)]),
             ]);
     }
 }
