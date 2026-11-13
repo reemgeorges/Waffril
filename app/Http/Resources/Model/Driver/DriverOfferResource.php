@@ -41,7 +41,7 @@ class DriverOfferResource extends JsonResource
         return [
             'id' => $offer->id,
             'status' => $offer->status->value,
-            'status_label' => $offer->status->label(),
+            'status_label' => $offer->status->publicLabel(),
             'order' => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
