@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MarketingBroadcasts;
 
 use App\Filament\Resources\MarketingBroadcasts\Pages\ListMarketingBroadcasts;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\TableDefaults;
 use App\Models\MarketingBroadcast;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -41,8 +42,10 @@ class MarketingBroadcastResource extends AdminResource
         return $table
             ->description(__('admin.marketing.notice'))
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
-                TextColumn::make('title')->label(__('admin.fields.name'))->limit(40)->searchable()->weight(FontWeight::SemiBold),
+                // Table UX overhaul (2026-11-12): the message with when it was
+                // created, audience, status, recipients, who sent it.
+                TextColumn::make('title')->label(__('admin.fields.name'))->limit(60)->searchable()->weight(FontWeight::SemiBold)
+                    ->description(fn (MarketingBroadcast $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
                 TextColumn::make('audience')->label(__('admin.marketing.audience'))
                     ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.'.$state).($record->city ? ' — '.$record->city->name : '')),
                 TextColumn::make('status')->label(__('admin.marketing.status'))->badge()
@@ -50,9 +53,12 @@ class MarketingBroadcastResource extends AdminResource
                     ->color(fn ($state) => match ($state) {
                         'sent' => 'success', 'failed' => 'danger', default => 'warning'
                     }),
-                TextColumn::make('recipients_count')->label(__('admin.marketing.recipients'))->numeric(),
-                TextColumn::make('admin.name')->label(__('admin.marketing.sent_by')),
+                TextColumn::make('recipients_count')->label(__('admin.marketing.recipients'))
+                    ->formatStateUsing(fn ($state) => trans_choice('admin.table.recipients_n', (int) $state, ['count' => (int) $state])),
+                TextColumn::make('admin.name')->label(__('admin.marketing.sent_by'))->color('gray')->visibleFrom('md'),
+                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->searchPlaceholder(__('admin.table.search_broadcasts'))
             ->defaultSort('created_at', 'desc');
     }
 

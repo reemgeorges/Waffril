@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\Order;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
@@ -41,7 +42,9 @@ class PendingOrdersTable extends TableWidget
             ->query(Order::query()->with(['branch.store', 'currency', 'user'])->where('status', OrderStatus::Pending->value)
                 ->orderByRaw('CASE WHEN urgent_at IS NULL THEN 1 ELSE 0 END')->orderBy('created_at'))
             ->columns([
-                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold),
+                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
+                    ->description(fn (Order $record) => $record->created_at?->diffForHumans())
+                    ->tooltip(fn (Order $record) => $record->created_at?->toDateTimeString()),
                 TextColumn::make('urgency')->label(__('admin.fields.type'))->badge()
                     ->state(fn (Order $record) => $record->urgent_at !== null ? 'urgent' : $record->type)
                     ->formatStateUsing(fn (string $state) => $state === 'urgent' ? __('admin.orders.urgent') : __("admin.orders.type_{$state}"))
@@ -54,21 +57,23 @@ class PendingOrdersTable extends TableWidget
                         'urgent' => 'danger',
                         Order::TYPE_SCHEDULED => 'info',
                         default => 'gray',
-                    }),
-                TextColumn::make('branch.name')->label(__('admin.fields.branch'))
-                    ->description(fn (Order $record) => $record->branch?->store?->name),
+                    })
+                    // A scheduled order shows its time under the badge.
+                    ->description(fn (Order $record) => $record->scheduled_for?->translatedFormat('j M، H:i')),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
-                    ->state(fn (Order $record) => $record->user?->fullName()),
-                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime('j M, H:i'),
-                TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()
+                    ->state(fn (Order $record) => $record->user?->fullName())
+                    ->description(fn (Order $record) => Fields::ltr($record->user?->phone)),
+                TextColumn::make('branch.name')->label(__('admin.fields.branch'))
+                    ->description(fn (Order $record) => $record->branch?->store?->name)->visibleFrom('md'),
+                TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
-                TextColumn::make('created_at')->label(__('admin.dashboard.waiting_for'))
-                    ->since()->tooltip(fn (Order $record) => $record->created_at?->toDateTimeString()),
             ])
             ->headerActions([
                 Action::make('all')->label(__('admin.dashboard.open_list'))->link()->icon('heroicon-m-arrow-top-right-on-square')
                     ->url(OrderResource::getUrl('index', ['tab' => 'pending'])),
             ])
+            ->recordActions([RowActions::primary(Action::make('open')->label(__('admin.table.view_order'))->icon('heroicon-m-eye')
+                ->url(fn (Order $record) => OrderResource::getUrl('view', ['record' => $record])))])
             ->recordUrl(fn (Order $record) => OrderResource::getUrl('view', ['record' => $record]))
             ->emptyStateHeading(__('admin.dashboard.pending_empty'))
             ->emptyStateDescription(__('admin.dashboard.pending_empty_help'))

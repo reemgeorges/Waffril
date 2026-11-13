@@ -8,9 +8,13 @@ use App\Filament\Resources\Drivers\Pages\EditDriver;
 use App\Filament\Resources\Drivers\Pages\ListDrivers;
 use App\Filament\Resources\Drivers\RelationManagers\CashCollectionsRelationManager;
 use App\Filament\Resources\Drivers\RelationManagers\CashSettlementsRelationManager;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\Driver;
 use App\Services\Driver\DriverAdminService;
 use Filament\Actions\Action;
@@ -21,7 +25,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -73,41 +76,62 @@ class DriverResource extends AdminResource
         ]);
     }
 
+    /**
+     * Drivers (table UX overhaul 2026-11-12): who (name, vehicle, phone),
+     * where (city), whether they can take work now (availability and
+     * account status), what they carry now (active deliveries, a link to
+     * those orders) and when their position was last seen. Manage is the
+     * primary action; activation and "force offline" (audited services)
+     * sit under "More actions" with their confirmation.
+     */
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('city'))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->sortable()->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => trim(($record->vehicle_type ?? '').' '.($record->vehicle_plate ?? '')) ?: null),
-                TextColumn::make('phone')->label(__('admin.fields.phone'))->searchable(),
-                TextColumn::make('city.name')->label(__('admin.fields.city')),
+                TextColumn::make('phone')->label(__('admin.fields.phone'))->searchable()->icon('heroicon-m-phone')->color('gray')->visibleFrom('md'),
+                TextColumn::make('city.name')->label(__('admin.fields.city'))->visibleFrom('lg'),
                 TextColumn::make('availability')->label(__('admin.fields.availability'))->badge()
                     ->icon(fn ($state) => $state === 'available' ? 'heroicon-m-signal' : 'heroicon-m-moon')
                     ->color(fn ($state) => $state === Driver::AVAILABILITY_AVAILABLE ? 'success' : 'gray')
                     ->formatStateUsing(fn ($state) => __("admin.drivers.availability_{$state}")),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
-                TextColumn::make('active_orders_count')->counts('activeOrders')->label(__('admin.drivers.active_deliveries')),
-                TextColumn::make('last_location_at')->label(__('admin.fields.last_location_at'))->since()->placeholder('—'),
+                Columns::countLink('active_orders_count', __('admin.drivers.active_deliveries'), 'admin.table.deliveries_count', 'heroicon-m-truck',
+                    fn (Driver $record) => (int) $record->active_orders_count > 0 && OrderResource::canViewAny()
+                        ? OrderResource::getUrl('index', ['tab' => 'on_the_road', 'filters' => ['driver_id' => ['value' => $record->getKey()]]]) : null,
+                    __('admin.table.open_driver_orders'))->counts('activeOrders'),
+                Columns::status(),
+                TextColumn::make('last_location_at')->label(__('admin.table.last_seen'))->since()->placeholder('—')->sortable()
+                    ->tooltip(fn ($record) => $record->last_location_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->visibleFrom('lg'),
             ])
+            ->searchPlaceholder(__('admin.table.search_drivers'))
             ->filters([
-                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 SelectFilter::make('availability')->label(__('admin.fields.availability'))->options([
                     Driver::AVAILABILITY_AVAILABLE => __('admin.drivers.availability_available'),
                     Driver::AVAILABILITY_OFFLINE => __('admin.drivers.availability_offline'),
                 ]),
-                TernaryFilter::make('is_active')->label(__('admin.fields.is_active')),
+                TernaryFilter::make('on_delivery')->label(__('admin.table.delivery_state'))
+                    ->trueLabel(__('admin.table.on_delivery'))->falseLabel(__('admin.table.unassigned'))
+                    ->queries(true: fn ($query) => $query->has('activeOrders'), false: fn ($query) => $query->doesntHave('activeOrders')),
+                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
             ])
             ->recordActions([
-                EditAction::make(),
-                Action::make('activate')->label(__('admin.actions.activate'))->icon('heroicon-o-check-circle')->color('success')
-                    ->visible(fn (Driver $record) => ! $record->is_active && static::can('update', $record))->requiresConfirmation()
-                    ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->setActive($record, true, $admin))),
-                Action::make('deactivate')->label(__('admin.actions.deactivate'))->icon('heroicon-o-x-circle')->color('danger')
-                    ->visible(fn (Driver $record) => $record->is_active && static::can('update', $record))->requiresConfirmation()
-                    ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->setActive($record, false, $admin))),
-                Action::make('forceOffline')->label(__('admin.drivers.force_offline'))->icon('heroicon-o-signal-slash')
-                    ->visible(fn (Driver $record) => $record->availability === Driver::AVAILABILITY_AVAILABLE && static::can('update', $record))->requiresConfirmation()
-                    ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->forceOffline($record, $admin))),
+                RowActions::primary(EditAction::make()->label(__('admin.table.manage_driver'))->icon('heroicon-m-cog-6-tooth')),
+                RowActions::more([
+                    Action::make('activate')->label(__('admin.actions.activate'))->icon('heroicon-m-check-circle')->color('success')
+                        ->visible(fn (Driver $record) => ! $record->is_active && static::can('update', $record))->requiresConfirmation()
+                        ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->setActive($record, true, $admin))),
+                    Action::make('deactivate')->label(__('admin.actions.deactivate'))->icon('heroicon-m-x-circle')->color('danger')
+                        ->visible(fn (Driver $record) => $record->is_active && static::can('update', $record))->requiresConfirmation()
+                        ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->setActive($record, false, $admin))),
+                    Action::make('forceOffline')->label(__('admin.drivers.force_offline'))->icon('heroicon-m-signal-slash')->color('warning')
+                        ->visible(fn (Driver $record) => $record->availability === Driver::AVAILABILITY_AVAILABLE && static::can('update', $record))->requiresConfirmation()
+                        ->action(fn (Driver $record) => BusinessAction::run(fn ($admin) => app(DriverAdminService::class)->forceOffline($record, $admin))),
+                ]),
             ])
             ->defaultSort('name');
     }

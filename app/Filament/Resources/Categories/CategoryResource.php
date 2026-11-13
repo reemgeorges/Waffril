@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\Categories;
 
 use App\Filament\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Filament\Support\SafeCategoryDelete;
 use App\Models\Category;
 use Filament\Actions\EditAction;
@@ -16,9 +19,10 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,23 +86,40 @@ class CategoryResource extends AdminResource
         ];
     }
 
+    /**
+     * Product categories (opened from Stores → Categories & ratings; table
+     * UX overhaul 2026-11-12): name with its parent, a link to its
+     * products, status and position. Edit is the primary action; the safe
+     * delete (moves products to a replacement) sits under "More actions".
+     */
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('parent'))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('parent.name')->label(__('admin.fields.parent'))->placeholder('—'),
-                TextColumn::make('products_count')->counts('products')->label(__('admin.resources.product.plural')),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn ($record) => ! static::can('update', $record)),
-                TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->sortable(),
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->sortable()->weight(FontWeight::SemiBold)
+                    ->description(fn (Category $record) => $record->parent ? __('admin.table.under', ['parent' => $record->parent->name]) : __('admin.table.top_level')),
+                Columns::countLink('products_count', __('admin.resources.product.plural'), 'admin.table.products_in_category', 'heroicon-m-cube',
+                    fn (Category $record) => ProductResource::canViewAny() ? ProductResource::getUrl('index', ['filters' => ['categories' => ['values' => [$record->id]]]]) : null,
+                    __('admin.table.open_products'))->counts('products'),
+                Columns::status(),
+                TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->sortable()->color('gray')->visibleFrom('md'),
             ])
+            ->searchPlaceholder(__('admin.table.search_categories'))
             ->filters([
                 SelectFilter::make('parent_id')->label(__('admin.fields.parent'))
-                    ->options(fn () => Category::all()->mapWithKeys(fn ($c) => [$c->id => $c->name])),
+                    ->options(fn () => Category::query()->whereNull('parent_id')->get()->mapWithKeys(fn ($c) => [$c->id => $c->name])),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), SafeCategoryDelete::make('product'), RestoreAction::make()])
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())),
+                RowActions::more([
+                    ...RowActions::activation(static::class),
+                    SafeCategoryDelete::make('product'), RestoreAction::make(),
+                ]),
+            ])
             ->defaultSort('sort_order');
     }
 

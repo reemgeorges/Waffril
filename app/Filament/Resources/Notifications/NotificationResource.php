@@ -6,10 +6,10 @@ use App\Filament\Resources\AdminAuditLogs\AdminAuditLogResource;
 use App\Filament\Resources\Notifications\Pages\ListNotifications;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Readable;
+use App\Filament\Support\TableDefaults;
 use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\User;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -44,14 +44,20 @@ class NotificationResource extends AdminResource
         return $table
             ->description(__('admin.notifications_page.notice'))
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
+                // Table UX overhaul (2026-11-12): the type with its recipient,
+                // the text, read / unread as words, and when.
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()->color('gray')
-                    ->formatStateUsing(fn ($state) => Readable::notificationType($state)),
-                TextColumn::make('notifiable_type')->label(__('admin.fields.recipient'))
-                    ->formatStateUsing(fn ($state, $record) => Readable::model($state, $record->notifiable_id)),
+                    ->formatStateUsing(fn ($state) => Readable::notificationType($state))
+                    ->description(fn ($record) => Readable::model($record->notifiable_type, $record->notifiable_id)),
                 TextColumn::make('data')->label(__('admin.fields.details'))
                     ->state(fn ($record) => Readable::notificationText($record->data))->limit(90)->wrap(),
-                IconColumn::make('read_at')->label(__('admin.fields.read'))->boolean()->state(fn ($record) => $record->read_at !== null),
+                TextColumn::make('read_at')->label(__('admin.fields.read'))->badge()
+                    ->state(fn ($record) => $record->read_at !== null ? 'read' : 'unread')
+                    ->formatStateUsing(fn ($state) => __('admin.table.'.$state))
+                    ->color(fn ($state) => $state === 'read' ? 'gray' : 'info')
+                    ->icon(fn ($state) => $state === 'read' ? 'heroicon-m-envelope-open' : 'heroicon-m-envelope'),
+                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->since()->sortable()->color('gray')
+                    ->tooltip(fn ($record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
             ])
             ->filters([
                 // e.g. driver.problem_reported isolates delivery problem reports.

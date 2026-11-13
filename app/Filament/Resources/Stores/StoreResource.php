@@ -13,11 +13,11 @@ use App\Filament\Resources\Stores\Pages\ListStores;
 use App\Filament\Resources\Stores\RelationManagers\BranchesRelationManager;
 use App\Filament\Resources\Stores\RelationManagers\ProductsRelationManager;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Avatar;
 use App\Filament\Support\Fields;
-use App\Filament\Support\TableDefaults;
+use App\Filament\Support\RowActions;
 use App\Models\Store;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
@@ -30,10 +30,13 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -124,40 +127,101 @@ class StoreResource extends AdminResource
         ]);
     }
 
+    /**
+     * Stores list — the reference layout of the table UX overhaul
+     * (2026-11-12). A store list has few fields, so each store is a compact
+     * card instead of a sparse full-width row: logo (or an initial
+     * placeholder), name and categories, a clear status, then two links that
+     * open this store's Branches / Products tab. "Manage store" is the one
+     * primary action; the rest sits under "More actions". 1 card per row on
+     * phones, 2 on tablets, 3 on wide screens.
+     */
     public static function table(Table $table): Table
     {
+        $storeTab = fn (string $tab) => fn (Store $record) => static::can('update', $record)
+            ? static::getUrl('edit', ['record' => $record]).'?relation='.$tab
+            : null;
+
         return $table
             ->columns([
-                ImageColumn::make('logo')->visible(TableDefaults::onlyWhenFilled(Store::class, 'logo'))->label(__('admin.fields.logo'))->disk('public')->circular()->imageSize(36),
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)
-                    ->description(fn (Store $record) => $record->categories->map->name->implode(' · ')),
-                TextColumn::make('slug')->label(__('admin.fields.slug'))->toggleable(isToggledHiddenByDefault: true),
-                // Counts open this store's own Branches / Products tab.
-                TextColumn::make('branches_count')->counts('branches')->label(__('admin.resources.branch.plural'))->color('primary')
-                    ->url(fn (Store $record) => static::can('update', $record) ? static::getUrl('edit', ['record' => $record]).'?relation=branches' : null),
-                TextColumn::make('products_count')->counts('products')->label(__('admin.resources.product.plural'))->color('primary')
-                    ->url(fn (Store $record) => static::can('update', $record) ? static::getUrl('edit', ['record' => $record]).'?relation=products' : null),
-                TextColumn::make('plus_discount_percent')->label(__('admin.stores.plus_short'))->alignCenter()->width('1%')
-                    ->visible(fn () => Store::query()->where('plus_discount_percent', '>', 0)->exists())
-                    ->formatStateUsing(fn ($state, $record) => $record->plusDiscountPercentText() !== null ? $record->plusDiscountPercentText().'%' : '—')->sortable(),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn ($record) => ! static::can('update', $record)),
+                Stack::make([
+                    Split::make([
+                        ImageColumn::make('logo')->label(__('admin.fields.logo'))->disk('public')
+                            ->defaultImageUrl(fn (Store $record) => Avatar::placeholder($record->name))
+                            ->imageSize(48)->square()->grow(false)->extraImgAttributes(['class' => 'wf-avatar', 'alt' => '']),
+                        Stack::make([
+                            TextColumn::make('name')->label(__('admin.fields.name'))
+                                ->searchable()
+                                ->weight(FontWeight::SemiBold)->size(TextSize::Large)
+                                ->url(fn (Store $record) => static::can('update', $record) ? static::getUrl('edit', ['record' => $record]) : null)
+                                ->extraAttributes(['class' => 'wf-card-title']),
+                            TextColumn::make('category_names')->label(__('admin.resources.store_category.plural'))
+                                ->state(fn (Store $record) => $record->categories->map->name->implode(' · ') ?: null)
+                                ->color('gray')->size(TextSize::Small)->placeholder(null),
+                        ])->space(1),
+                        TextColumn::make('status')->label(__('admin.fields.status'))->grow(false)->badge()
+                            ->state(fn (Store $record) => match (true) {
+                                $record->trashed() => 'deleted',
+                                $record->is_active => 'active',
+                                default => 'inactive',
+                            })
+                            ->formatStateUsing(fn (string $state) => match ($state) {
+                                'deleted' => __('admin.table.deleted'),
+                                'active' => __('admin.table.active'),
+                                default => __('admin.table.inactive'),
+                            })
+                            ->icon(fn (string $state) => match ($state) {
+                                'active' => 'heroicon-m-check-circle',
+                                'deleted' => 'heroicon-m-trash',
+                                default => 'heroicon-m-pause-circle',
+                            })
+                            ->color(fn (string $state) => match ($state) {
+                                'active' => 'success',
+                                'deleted' => 'danger',
+                                default => 'gray',
+                            }),
+                    ])->from('sm'),
+                    Split::make([
+                        // Counts open this store's own Branches / Products tab.
+                        TextColumn::make('branches_count')->counts('branches')->label(__('admin.resources.branch.plural'))
+                            ->formatStateUsing(fn ($state) => trans_choice('admin.table.branches_count', (int) $state, ['count' => (int) $state]))
+                            ->icon('heroicon-m-building-office-2')->badge()->color('primary')->grow(false)
+                            ->url($storeTab('branches'))->tooltip(__('admin.table.open_branches'))
+                            ->extraAttributes(['class' => 'wf-stat-link']),
+                        TextColumn::make('products_count')->counts('products')->label(__('admin.resources.product.plural'))
+                            ->formatStateUsing(fn ($state) => trans_choice('admin.table.products_count', (int) $state, ['count' => (int) $state]))
+                            ->icon('heroicon-m-cube')->badge()->color('primary')->grow(false)
+                            ->url($storeTab('products'))->tooltip(__('admin.table.open_products'))
+                            ->extraAttributes(['class' => 'wf-stat-link']),
+                        TextColumn::make('plus_discount_percent')->label(__('admin.stores.plus_short'))->grow(false)
+                            ->state(fn (Store $record) => $record->plusDiscountPercentText() !== null ? 'PLUS −'.$record->plusDiscountPercentText().'%' : null)
+                            ->badge()->color('gold')->icon('heroicon-m-star')->placeholder(null),
+                    ])->extraAttributes(['class' => 'wf-card-stats']),
+                ])->space(3),
             ])
+            ->contentGrid(['md' => 2, '2xl' => 3])
+            ->recordUrl(null)
+            ->defaultSort('name')
+            ->searchPlaceholder(__('admin.table.search_stores'))
             ->modifyQueryUsing(fn (Builder $query) => $query->with('categories'))
             ->filters([
                 SelectFilter::make('categories')->label(__('admin.resources.store_category.plural'))
-                    ->relationship('categories', 'slug')->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                    ->relationship('categories', 'slug')->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
+                    ->multiple()->preload(),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
-                ActionGroup::make([
+                RowActions::primary(EditAction::make()->label(__('admin.table.manage_store'))->icon('heroicon-m-cog-6-tooth')),
+                RowActions::more([
                     Action::make('branches')->label(__('admin.stores.branches_tab'))->icon('heroicon-m-building-office-2')
-                        ->url(fn (Store $record) => static::getUrl('edit', ['record' => $record]).'?relation=branches')
+                        ->url($storeTab('branches'))
                         ->visible(fn (Store $record) => static::can('update', $record)),
                     Action::make('products')->label(__('admin.stores.products_tab'))->icon('heroicon-m-cube')
-                        ->url(fn (Store $record) => static::getUrl('edit', ['record' => $record]).'?relation=products')
+                        ->url($storeTab('products'))
                         ->visible(fn (Store $record) => static::can('update', $record)),
+                    ...RowActions::activation(static::class),
                     DeleteAction::make(), RestoreAction::make(),
                 ]),
             ])

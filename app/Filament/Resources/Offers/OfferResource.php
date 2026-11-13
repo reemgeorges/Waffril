@@ -6,6 +6,8 @@ use App\Filament\Resources\Offers\Pages\ManageOffers;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\Branch;
 use App\Models\Offer;
 use App\Models\Product;
@@ -19,7 +21,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -72,27 +74,72 @@ class OfferResource extends AdminResource
         ]);
     }
 
+    /**
+     * Public offers (table UX overhaul 2026-11-12): the store with what the
+     * offer covers (branch, product or the whole store), the discount, the
+     * period in one column, and its state now (running, scheduled, ended or
+     * inactive) so an employee sees at a glance what customers get today.
+     */
     public static function table(Table $table): Table
     {
+        $state = fn (Offer $record) => match (true) {
+            $record->trashed() || ! $record->is_active => 'inactive',
+            $record->starts_at?->isFuture() => 'scheduled',
+            $record->ends_at !== null && $record->ends_at->isPast() => 'ended',
+            default => 'running',
+        };
+        $date = fn ($value) => $value?->translatedFormat(TableDefaults::dateTimeFormat());
+
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['store', 'branch', 'product']))
             ->columns([
-                TextColumn::make('store.name')->label(__('admin.fields.store')),
-                TextColumn::make('branch.name')->label(__('admin.fields.branch'))->placeholder(__('admin.offers.all_branches')),
-                TextColumn::make('product.name')->label(__('admin.fields.product'))->placeholder(__('admin.offers.all_products')),
+                TextColumn::make('store.name')->label(__('admin.fields.store'))->weight(FontWeight::SemiBold)
+                    ->description(fn (Offer $record) => collect([
+                        $record->branch?->name ?? __('admin.offers.all_branches'),
+                        $record->product?->name ?? __('admin.offers.all_products'),
+                    ])->implode(' · ')),
                 TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))
                     ->formatStateUsing(fn ($state, Offer $record) => $record->discount_type === 'percent'
-                        ? Fields::formatDecimal($state).'%' : Fields::formatDecimal($state))
-                    ->badge()->color(fn (Offer $record) => $record->discount_type === 'percent' ? 'success' : 'info'),
-                TextColumn::make('starts_at')->label(__('admin.fields.starts_at'))->dateTime()->sortable(),
-                TextColumn::make('ends_at')->label(__('admin.fields.ends_at'))->dateTime()->placeholder('—'),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
+                        ? '−'.Fields::formatDecimal($state).'%' : '−'.Fields::formatDecimal($state))
+                    ->badge()->icon('heroicon-m-tag')->color(fn (Offer $record) => $record->discount_type === 'percent' ? 'success' : 'info')
+                    ->alignCenter()->width(TableDefaults::COMPACT_WIDTH),
+                TextColumn::make('starts_at')->label(__('admin.table.offer_period'))->sortable()
+                    ->formatStateUsing(fn ($state, Offer $record) => __('admin.table.period_from', ['date' => $date($record->starts_at)]))
+                    ->description(fn (Offer $record) => $record->ends_at ? __('admin.table.period_to', ['date' => $date($record->ends_at)]) : __('admin.table.no_end'))
+                    ->visibleFrom('md'),
+                TextColumn::make('offer_state')->label(__('admin.table.offer_state'))->badge()->state($state)
+                    ->formatStateUsing(fn (string $state) => __('admin.table.'.$state))
+                    ->icon(fn (string $state) => match ($state) {
+                        'running' => 'heroicon-m-bolt',
+                        'scheduled' => 'heroicon-m-calendar',
+                        'ended' => 'heroicon-m-check',
+                        default => 'heroicon-m-pause-circle',
+                    })
+                    ->color(fn (string $state) => match ($state) {
+                        'running' => 'success',
+                        'scheduled' => 'info',
+                        default => 'gray',
+                    })->width(TableDefaults::COMPACT_WIDTH),
             ])
             ->filters([
                 SelectFilter::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->searchable()->preload(),
+                SelectFilter::make('offer_state')->label(__('admin.table.offer_state'))
+                    ->options(collect(['running', 'scheduled', 'ended', 'inactive'])->mapWithKeys(fn ($k) => [$k => __('admin.table.'.$k)])->all())
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'running' => $query->where('is_active', true)->where('starts_at', '<=', now())
+                            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now())),
+                        'scheduled' => $query->where('is_active', true)->where('starts_at', '>', now()),
+                        'ended' => $query->where('is_active', true)->whereNotNull('ends_at')->where('ends_at', '<=', now()),
+                        'inactive' => $query->where('is_active', false),
+                        default => $query,
+                    }),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations()), DeleteAction::make(), RestoreAction::make()])
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())),
+                RowActions::more([...RowActions::activation(static::class), DeleteAction::make(), RestoreAction::make()]),
+            ])
             ->defaultSort('starts_at', 'desc');
     }
 

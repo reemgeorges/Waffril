@@ -5,7 +5,9 @@ namespace App\Filament\Resources\DeliveryAreas;
 use App\Filament\Resources\Cities\CityResource;
 use App\Filament\Resources\DeliveryAreas\Pages\ManageDeliveryAreas;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\DeliveryArea;
 use App\Support\Geo\Polygon;
 use Closure;
@@ -15,9 +17,13 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 /**
@@ -61,20 +67,39 @@ class DeliveryAreaResource extends AdminResource
         ]);
     }
 
+    /**
+     * Delivery areas (table UX overhaul 2026-11-12): small cards — area name
+     * and its city, status. The bounding box stays in the edit form.
+     */
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('city'))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('city.name')->label(__('admin.fields.city')),
-                TextColumn::make('min_lat')->label(__('admin.fields.bounding_box'))->toggleable(isToggledHiddenByDefault: true)
-                    ->formatStateUsing(fn (DeliveryArea $record) => "{$record->min_lat}, {$record->min_lng} → {$record->max_lat}, {$record->max_lng}"),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn (DeliveryArea $record) => ! static::can('update', $record)),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)->size(TextSize::Large),
+                            TextColumn::make('city.name')->label(__('admin.fields.city'))->color('gray')->size(TextSize::Small)->icon('heroicon-m-map-pin'),
+                        ])->space(1),
+                        Columns::status()->grow(false),
+                    ]),
+
+                ])->space(3),
             ])
-            ->filters([SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
-                ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)])
-            ->recordActions([EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())]);
+            ->contentGrid(['md' => 2, 'xl' => 3])
+            ->recordUrl(null)
+            ->searchPlaceholder(__('admin.table.search_areas'))
+            ->filters([
+                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
+            ])
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())),
+                RowActions::more(RowActions::activation(static::class)),
+            ]);
     }
 
     public static function getPages(): array

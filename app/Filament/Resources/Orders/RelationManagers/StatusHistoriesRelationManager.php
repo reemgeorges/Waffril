@@ -27,19 +27,27 @@ class StatusHistoriesRelationManager extends RelationManager
         return true;
     }
 
+    /**
+     * Order → Status history (table UX overhaul 2026-11-12): a timeline —
+     * the new status with the previous one under it, who did it (and which
+     * driver), the note, and when.
+     */
     public function table(Table $table): Table
     {
         $label = fn ($state) => $state ? (OrderStatus::tryFrom($state)?->label() ?? $state) : '—';
 
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('driver'))
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime(),
-                TextColumn::make('from_status')->label(__('admin.fields.from_status'))->formatStateUsing($label),
-                TextColumn::make('to_status')->label(__('admin.fields.to_status'))->formatStateUsing($label)->badge(),
+                TextColumn::make('to_status')->label(__('admin.fields.to_status'))->badge()
+                    ->formatStateUsing($label)
+                    ->color(fn ($state) => OrderStatus::tryFrom((string) $state)?->color() ?? 'gray')
+                    ->description(fn ($record) => $record->from_status ? __('admin.table.from_status', ['status' => $label($record->from_status)]) : null),
                 TextColumn::make('actor_type')->label(__('admin.fields.actor'))
-                    ->formatStateUsing(fn ($state, $record) => __("admin.orders.actor_{$state}").($record->actor_id ? ' #'.$record->actor_id : '')),
-                TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
-                TextColumn::make('note')->label(__('admin.fields.note'))->placeholder('—'),
+                    ->formatStateUsing(fn ($state, $record) => __("admin.orders.actor_{$state}").($record->actor_id ? ' #'.$record->actor_id : ''))
+                    ->description(fn ($record) => $record->driver?->name),
+                TextColumn::make('note')->label(__('admin.fields.note'))->placeholder('—')->wrap()->visibleFrom('md'),
+                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->color('gray'),
             ])
             ->defaultSort('id');
     }

@@ -10,7 +10,10 @@ use App\Filament\Resources\Branches\RelationManagers\HourExceptionsRelationManag
 use App\Filament\Resources\Branches\RelationManagers\OpeningHoursRelationManager;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\Branch;
 use App\Services\Catalog\CatalogAdminService;
 use Filament\Actions\Action;
@@ -25,7 +28,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -106,34 +109,70 @@ class BranchResource extends AdminResource
         ]);
     }
 
+    /**
+     * All branches (opened from Stores; table UX overhaul 2026-11-12): name
+     * with its store and city, whether it takes orders, priced products and
+     * status. "Prices & availability" is the primary action; pausing orders
+     * keeps its audited service and confirmation.
+     */
     public static function table(Table $table): Table
     {
+        $edit = fn (Branch $record, ?string $tab = null) => static::getUrl('edit', ['record' => $record]).($tab ? '?relation='.$tab : '');
+
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['store', 'city']))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('store.name')->label(__('admin.fields.store')),
-                TextColumn::make('city.name')->label(__('admin.fields.city')),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
-                IconColumn::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders'))->boolean(),
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->sortable()->weight(FontWeight::SemiBold)
+                    ->description(fn (Branch $record) => collect([$record->store?->name, $record->city?->name])->filter()->implode(' · ')),
+                TextColumn::make('orders_state')->label(__('admin.fields.is_accepting_orders'))->badge()
+                    ->state(fn (Branch $record) => ! $record->is_active || $record->trashed() ? 'inactive' : ($record->is_accepting_orders ? 'accepting' : 'paused'))
+                    ->formatStateUsing(fn (string $state) => __('admin.table.'.$state))
+                    ->icon(fn (string $state) => match ($state) {
+                        'accepting' => 'heroicon-m-check-circle',
+                        'paused' => 'heroicon-m-pause-circle',
+                        default => 'heroicon-m-no-symbol',
+                    })
+                    ->color(fn (string $state) => match ($state) {
+                        'accepting' => 'success',
+                        'paused' => 'warning',
+                        default => 'gray',
+                    })->width(TableDefaults::COMPACT_WIDTH),
+                Columns::countLink('branch_products_count', __('admin.stores.priced_products'), 'admin.table.priced_products_count', 'heroicon-m-cube',
+                    fn (Branch $record) => $edit($record, 'products'))->counts('branchProducts')->visibleFrom('md'),
+                Columns::status(),
             ])
+            ->searchPlaceholder(__('admin.table.search_branches'))
             ->filters([
-                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 SelectFilter::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
-                TernaryFilter::make('is_active')->label(__('admin.fields.is_active')),
-                TernaryFilter::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders')),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->searchable()->preload(),
+                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->preload(),
+                TernaryFilter::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders'))
+                    ->trueLabel(__('admin.table.accepting'))->falseLabel(__('admin.table.paused')),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                Action::make('toggleAccepting')
-                    ->label(fn (Branch $record) => $record->is_accepting_orders ? __('admin.branches.pause_orders') : __('admin.branches.resume_orders'))
-                    ->icon('heroicon-o-pause-circle')->requiresConfirmation()
-                    ->visible(fn (Branch $record) => static::can('update', $record) && ! $record->trashed())
-                    ->action(fn (Branch $record) => BusinessAction::run(
-                        fn ($admin) => app(CatalogAdminService::class)->setBranchAcceptingOrders($record, ! $record->is_accepting_orders, $admin)
-                    )),
-                EditAction::make(), DeleteAction::make(), RestoreAction::make(),
+                RowActions::primary(Action::make('manage')->label(__('admin.table.prices_and_availability'))->icon('heroicon-m-currency-dollar')
+                    ->url(fn (Branch $record) => $edit($record, 'products'))
+                    ->visible(fn (Branch $record) => static::can('update', $record))),
+                RowActions::more([
+                    EditAction::make()->label(__('admin.table.edit_details')),
+                    Action::make('hours')->label(__('admin.table.opening_hours'))->icon('heroicon-m-clock')
+                        ->url(fn (Branch $record) => $edit($record, 'hours')),
+                    Action::make('toggleAccepting')
+                        ->label(fn (Branch $record) => $record->is_accepting_orders ? __('admin.branches.pause_orders') : __('admin.branches.resume_orders'))
+                        ->icon(fn (Branch $record) => $record->is_accepting_orders ? 'heroicon-m-pause-circle' : 'heroicon-m-play-circle')
+                        ->color(fn (Branch $record) => $record->is_accepting_orders ? 'warning' : 'success')
+                        ->requiresConfirmation()
+                        ->visible(fn (Branch $record) => static::can('update', $record) && ! $record->trashed())
+                        ->action(fn (Branch $record) => BusinessAction::run(
+                            fn ($admin) => app(CatalogAdminService::class)->setBranchAcceptingOrders($record, ! $record->is_accepting_orders, $admin)
+                        )),
+                    ...RowActions::activation(static::class),
+                    DeleteAction::make(), RestoreAction::make(),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }

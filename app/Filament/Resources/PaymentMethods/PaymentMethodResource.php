@@ -4,14 +4,19 @@ namespace App\Filament\Resources\PaymentMethods;
 
 use App\Filament\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\PaymentMethod;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -49,19 +54,37 @@ class PaymentMethodResource extends AdminResource
         ]);
     }
 
+    /**
+     * Payment methods (table UX overhaul 2026-11-12): a few records, so each
+     * is a card — name, kind (cash / wallet / online), status and position.
+     * Online methods stay inactive (they are not available yet).
+     */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('code')->label(__('admin.fields.code')),
-                TextColumn::make('kind')->label(__('admin.fields.kind'))->badge()->formatStateUsing(fn ($state) => __("admin.payments.kind_{$state}")),
-                TextColumn::make('name')->label(__('admin.fields.name')),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
-                TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->sortable(),
+                Stack::make([
+                    Split::make([
+                        Stack::make([
+                            TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)->size(TextSize::Large),
+                            TextColumn::make('kind')->label(__('admin.fields.kind'))->badge()->color('gray')
+                                ->formatStateUsing(fn ($state) => __("admin.payments.kind_{$state}"))
+                                ->icon(fn ($state) => match ($state) {
+                                    'cash' => 'heroicon-m-banknotes', 'wallet' => 'heroicon-m-wallet', default => 'heroicon-m-credit-card'
+                                })
+                                ->tooltip(fn (PaymentMethod $record) => $record->kind === 'online' ? __('admin.table.online_unavailable') : null),
+                        ])->space(2),
+                        Columns::status()->grow(false),
+                    ]),
+                    TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->color('gray')->size(TextSize::Small)
+                        ->formatStateUsing(fn ($state) => __('admin.table.sort_position', ['n' => $state])),
+                ])->space(3),
             ])
+            ->contentGrid(['md' => 2, 'xl' => 3])
+            ->recordUrl(null)
             ->recordActions([
-                EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())
-                    ->mutateDataUsing(fn (array $data, PaymentMethod $record) => $record->kind === 'online' ? array_merge($data, ['is_active' => false]) : $data),
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())
+                    ->mutateDataUsing(fn (array $data, PaymentMethod $record) => $record->kind === 'online' ? array_merge($data, ['is_active' => false]) : $data)),
             ])
             ->defaultSort('sort_order');
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Branches\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
+use App\Filament\Support\RowActions;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -10,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -44,15 +46,25 @@ class OpeningHoursRelationManager extends RelationManager
         ]);
     }
 
+    /**
+     * Branch → Opening hours (table UX overhaul 2026-11-12): the day and
+     * its hours in one line ("09:00 – 23:00"), in week order.
+     */
     public function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('day_of_week')->label(__('admin.fields.day_of_week'))->formatStateUsing(fn ($state) => self::days()[$state] ?? $state),
-                TextColumn::make('opens_at')->label(__('admin.fields.opens_at')),
-                TextColumn::make('closes_at')->label(__('admin.fields.closes_at')),
+                TextColumn::make('day_of_week')->label(__('admin.fields.day_of_week'))->weight(FontWeight::SemiBold)
+                    ->formatStateUsing(fn ($state) => self::days()[$state] ?? $state),
+                TextColumn::make('opens_at')->label(__('admin.table.opening_hours'))->icon('heroicon-m-clock')
+                    ->formatStateUsing(fn ($state, $record) => __('admin.table.hours_range', ['from' => substr((string) $record->opens_at, 0, 5), 'to' => substr((string) $record->closes_at, 0, 5)]))
+                    ->extraAttributes(['class' => 'wf-ltr wf-num']),
             ])
+            ->defaultSort('day_of_week')
             ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))),
+                RowActions::more([DeleteAction::make()]),
+            ]);
     }
 }

@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Currencies;
 use App\Filament\Resources\Currencies\Pages\ManageCurrencies;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\Currency;
 use App\Services\Currency\CurrencyManagement;
 use Filament\Actions\Action;
@@ -13,7 +16,6 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -56,41 +58,49 @@ class CurrencyResource extends AdminResource
     public static function table(Table $table): Table
     {
         return $table
+            // Table UX overhaul (2026-11-12): code and name together, the rate
+            // with when it was last updated, default and status as badges.
             ->columns([
-                TextColumn::make('code')->label(__('admin.fields.code'))->searchable()->sortable()->badge()->color('gray'),
+                TextColumn::make('code')->label(__('admin.fields.code'))->searchable()->sortable()->badge()->color('gray')
+                    ->width(TableDefaults::COMPACT_WIDTH),
                 TextColumn::make('name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => $record->symbol),
-                TextColumn::make('decimals')->label(__('admin.fields.decimals')),
+                    ->description(fn ($record) => collect([$record->symbol, trans_choice('admin.table.decimals_n', (int) $record->decimals, ['count' => (int) $record->decimals])])->filter()->implode(' · ')),
                 TextColumn::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->sortable()
-                    ->formatStateUsing(fn ($state) => Fields::formatDecimal($state)),
-                IconColumn::make('is_default')->label(__('admin.fields.is_default'))->boolean()->trueIcon('heroicon-s-star')->trueColor('gold'),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
-                TextColumn::make('rate_updated_at')->label(__('admin.fields.rate_updated_at'))->dateTime()->sortable(),
+                    ->formatStateUsing(fn ($state) => Fields::formatDecimal($state))
+                    ->description(fn ($record) => $record->rate_updated_at ? __('admin.table.rate_updated', ['time' => $record->rate_updated_at->diffForHumans()]) : null),
+                // Only the default currency shows a badge; the others show nothing.
+                TextColumn::make('default_badge')->label(__('admin.fields.is_default'))->badge()->color('gold')->icon('heroicon-m-star')
+                    ->state(fn ($record) => $record->is_default ? __('admin.table.default_currency') : null)->placeholder(null),
+                Columns::status(),
             ])
-            ->filters([TernaryFilter::make('is_active')->label(__('admin.fields.is_active'))])
+            ->searchPlaceholder(__('admin.table.search_currencies'))
+            ->filters([TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive'))])
             ->recordActions([
-                EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())
                     ->using(fn (Currency $record, array $data) => BusinessAction::run(
                         fn ($admin) => app(CurrencyManagement::class)->update($record, $data, $admin)
-                    ) ?? $record),
-                Action::make('activate')->label(__('admin.actions.activate'))->icon('heroicon-o-check-circle')->color('success')
-                    ->visible(fn (Currency $record) => ! $record->is_active && static::can('update', $record))
-                    ->requiresConfirmation()
-                    ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->setActive($record, true, $admin))),
-                Action::make('deactivate')->label(__('admin.actions.deactivate'))->icon('heroicon-o-x-circle')->color('danger')
-                    ->visible(fn (Currency $record) => $record->is_active && ! $record->is_default && static::can('update', $record))
-                    ->requiresConfirmation()
-                    ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->setActive($record, false, $admin))),
-                Action::make('initializeDefault')->label(__('admin.currencies.initialize_default'))->icon('heroicon-o-star')->color('warning')
-                    ->visible(fn () => ! CurrencyManagement::hasDefault())
-                    ->authorize(fn (Currency $record) => static::can('update', $record))
-                    ->requiresConfirmation()
-                    ->modalDescription(__('admin.currencies.initialize_default_warning'))
-                    ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->initializeDefault($record, $admin))),
-                Action::make('switchDefault')->label(__('admin.currencies.switch_default'))->icon('heroicon-o-arrows-right-left')
-                    ->visible(fn (Currency $record) => CurrencyManagement::hasDefault() && ! $record->is_default)
-                    ->disabled()
-                    ->tooltip(__('admin.currencies.switch_default_unavailable')),
+                    ) ?? $record)),
+                RowActions::more([
+                    Action::make('activate')->label(__('admin.actions.activate'))->icon('heroicon-o-check-circle')->color('success')
+                        ->visible(fn (Currency $record) => ! $record->is_active && static::can('update', $record))
+                        ->requiresConfirmation()
+                        ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->setActive($record, true, $admin))),
+                    Action::make('deactivate')->label(__('admin.actions.deactivate'))->icon('heroicon-o-x-circle')->color('danger')
+                        ->visible(fn (Currency $record) => $record->is_active && ! $record->is_default && static::can('update', $record))
+                        ->requiresConfirmation()
+                        ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->setActive($record, false, $admin))),
+                    Action::make('initializeDefault')->label(__('admin.currencies.initialize_default'))->icon('heroicon-o-star')->color('warning')
+                        ->visible(fn () => ! CurrencyManagement::hasDefault())
+                        ->authorize(fn (Currency $record) => static::can('update', $record))
+                        ->requiresConfirmation()
+                        ->modalDescription(__('admin.currencies.initialize_default_warning'))
+                        ->action(fn (Currency $record) => BusinessAction::run(fn ($admin) => app(CurrencyManagement::class)->initializeDefault($record, $admin))),
+                    Action::make('switchDefault')->label(__('admin.currencies.switch_default'))->icon('heroicon-o-arrows-right-left')
+                        ->visible(fn (Currency $record) => CurrencyManagement::hasDefault() && ! $record->is_default)
+                        ->disabled()
+                        ->tooltip(__('admin.currencies.switch_default_unavailable')),
+                ]),
             ])
             ->defaultSort('code');
     }

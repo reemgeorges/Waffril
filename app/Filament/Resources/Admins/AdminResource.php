@@ -6,6 +6,8 @@ use App\Filament\Resources\Admins\Pages\CreateAdmin;
 use App\Filament\Resources\Admins\Pages\EditAdmin;
 use App\Filament\Resources\Admins\Pages\ListAdmins;
 use App\Filament\Support\AdminResource as BaseAdminResource;
+use App\Filament\Support\Columns;
+use App\Filament\Support\RowActions;
 use App\Models\Admin;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -15,8 +17,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -65,18 +69,33 @@ class AdminResource extends BaseAdminResource
         ]);
     }
 
+    /**
+     * Staff (table UX overhaul 2026-11-12): name with e-mail, roles, status
+     * and since when. Edit is the primary action; delete / restore sit under
+     * "More actions".
+     */
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('roles'))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('email')->label(__('admin.fields.email'))->searchable(),
-                TextColumn::make('roles.name')->label(__('admin.resources.role.plural'))->badge(),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(['name', 'email'])->sortable()->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => $record->email),
+                TextColumn::make('roles.name')->label(__('admin.resources.role.plural'))->badge()->color('primary'),
+                Columns::status(),
+                TextColumn::make('created_at')->label(__('admin.table.joined'))->date()->sortable()->color('gray')->visibleFrom('md'),
             ])
-            ->filters([TrashedFilter::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->searchPlaceholder(__('admin.table.search_staff'))
+            ->filters([
+                SelectFilter::make('roles')->label(__('admin.resources.role.plural'))->relationship('roles', 'name')->preload(),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
+                TrashedFilter::make(),
+            ])
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))),
+                RowActions::more([DeleteAction::make(), RestoreAction::make()]),
+            ])
             ->defaultSort('name');
     }
 

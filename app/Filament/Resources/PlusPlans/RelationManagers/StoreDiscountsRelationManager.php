@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\PlusPlans\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\PlusStoreDiscount;
 use App\Models\Store;
 use Filament\Actions\CreateAction;
@@ -16,7 +18,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Validation\Rule;
@@ -66,19 +68,30 @@ class StoreDiscountsRelationManager extends RelationManager
         ]);
     }
 
+    /**
+     * Plan → Store discounts (table UX overhaul 2026-11-12): the store, the
+     * discount, its limits in words and status.
+     */
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('store'))
             ->columns([
-                TextColumn::make('store.name')->label(__('admin.fields.store')),
-                TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))
-                    ->formatStateUsing(fn ($state, $record) => $record->discount_type === 'percent' ? $state.'%' : $state),
-                TextColumn::make('max_discount_amount')->label(__('admin.fields.max_discount_amount'))->placeholder('—'),
-                TextColumn::make('min_order_amount')->label(__('admin.fields.min_order_amount'))->placeholder('—'),
-                TextColumn::make('max_uses_per_cycle')->label(__('admin.fields.max_uses_per_cycle'))->placeholder('—'),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
+                TextColumn::make('store.name')->label(__('admin.fields.store'))->weight(FontWeight::SemiBold)
+                    ->searchable(query: fn ($query, string $search) => $query->whereHas('store', fn ($q) => $q->where('name', 'like', "%{$search}%"))),
+                TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))->badge()->color('gold')->icon('heroicon-m-tag')
+                    ->formatStateUsing(fn ($state, $record) => '−'.Fields::formatDecimal($state).($record->discount_type === 'percent' ? '%' : ''))
+                    ->description(fn ($record) => collect([
+                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::formatDecimal($record->max_discount_amount)]) : null,
+                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::formatDecimal($record->min_order_amount)]) : null,
+                        $record->max_uses_per_cycle ? trans_choice('admin.table.uses_per_cycle', (int) $record->max_uses_per_cycle, ['count' => (int) $record->max_uses_per_cycle]) : null,
+                    ])->filter()->implode(' · ') ?: null),
+                Columns::status(),
             ])
             ->headerActions([CreateAction::make()->mutateDataUsing(fn (array $data) => $data + ['is_excluded' => false])])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))),
+                RowActions::more([DeleteAction::make()]),
+            ]);
     }
 }

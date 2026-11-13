@@ -12,9 +12,12 @@ use App\Filament\Resources\Products\RelationManagers\OptionGroupsRelationManager
 use App\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Product;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
@@ -25,10 +28,10 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -98,30 +101,61 @@ class ProductResource extends AdminResource
         ]);
     }
 
+    /**
+     * All products (opened from Stores; table UX overhaul 2026-11-12):
+     * picture, name with its store and categories, branch pricing, rating
+     * and status. "Prices & availability" is the primary action.
+     */
     public static function table(Table $table): Table
     {
+        $edit = fn (Product $record, ?string $tab = null) => static::getUrl('edit', ['record' => $record]).($tab ? '?relation='.$tab : '');
+
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['store', 'categories']))
             ->columns([
-                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(Product::class, 'image'))->label(__('admin.fields.image'))->disk('public'),
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable(),
-                TextColumn::make('store.name')->label(__('admin.fields.store')),
-                TextColumn::make('categories.name')->label(__('admin.resources.category.plural'))->badge(),
-                TextColumn::make('rating')->label(__('admin.fields.rating'))
-                    ->state(fn (Product $record) => $record->rating_count > 0
-                        ? $record->averageRating().' ('.$record->rating_count.')'
-                        : __('admin.products.no_genuine_ratings')),
-                TextColumn::make('branch_products_count')->counts('branchProducts')->label(__('admin.resources.branch.plural')),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn ($record) => ! static::can('update', $record)),
+                Columns::picture('image', fn (Product $record) => $record->name),
+                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->sortable()->weight(FontWeight::SemiBold)
+                    ->description(fn (Product $record) => collect([$record->store?->name, $record->categories->map->name->implode(' · ')])->filter()->implode(' — ')),
+                TextColumn::make('branch_products_count')->counts('branchProducts')->label(__('admin.stores.sold_in_branches'))->badge()
+                    ->formatStateUsing(fn ($state) => (int) $state > 0
+                        ? trans_choice('admin.table.branches_count', (int) $state, ['count' => (int) $state])
+                        : __('admin.table.not_priced'))
+                    ->icon(fn ($state) => (int) $state > 0 ? 'heroicon-m-check-badge' : 'heroicon-m-exclamation-triangle')
+                    ->color(fn ($state) => (int) $state > 0 ? 'success' : 'warning')
+                    ->url(fn (Product $record) => $edit($record, 'branch-prices'))
+                    ->extraAttributes(['class' => 'wf-stat-link'])->width(TableDefaults::COMPACT_WIDTH),
+                Columns::stars('rating', fn (Product $record) => [$record->averageRating(), (int) $record->rating_count])
+                    ->url(fn (Product $record) => $edit($record, 'ratings'))->visibleFrom('md'),
+                Columns::status(),
             ])
+            ->searchPlaceholder(__('admin.table.search_product_name'))
             ->filters([
                 SelectFilter::make('store_id')->label(__('admin.fields.store'))->relationship('store', 'slug')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->searchable()->preload(),
                 SelectFilter::make('categories')->label(__('admin.resources.category.plural'))->relationship('categories', 'slug')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->multiple()->preload(),
+                TernaryFilter::make('priced')->label(__('admin.table.priced_filter'))
+                    ->trueLabel(__('admin.table.priced'))->falseLabel(__('admin.table.not_priced'))
+                    ->queries(
+                        true: fn (Builder $query) => $query->has('branchProducts'),
+                        false: fn (Builder $query) => $query->doesntHave('branchProducts'),
+                    ),
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
                 TrashedFilter::make(),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make(), RestoreAction::make()])
+            ->recordActions([
+                RowActions::primary(Action::make('manage')->label(__('admin.table.prices_and_availability'))->icon('heroicon-m-currency-dollar')
+                    ->url(fn (Product $record) => $edit($record, 'branch-prices'))
+                    ->visible(fn (Product $record) => static::can('update', $record))),
+                RowActions::more([
+                    EditAction::make()->label(__('admin.table.edit_details')),
+                    Action::make('ratings')->label(__('admin.table.ratings'))->icon('heroicon-m-star')
+                        ->url(fn (Product $record) => $edit($record, 'ratings')),
+                    ...RowActions::activation(static::class),
+                    DeleteAction::make(), RestoreAction::make(),
+                ]),
+            ])
             ->defaultSort('created_at', 'desc');
     }
 

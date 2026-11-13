@@ -2,6 +2,7 @@
 
 namespace App\Filament\Support;
 
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
@@ -11,6 +12,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 /**
@@ -45,6 +47,9 @@ final class TableDefaults
      * spare width goes to names and descriptions instead of a short slug.
      */
     public const COMPACT_TEXT = '/^(id|slug|code|symbol|phone|email|order_number|reference|uuid|scheduled_for)$|_(slug|code|phone|email|number)$|_at$/';
+
+    /** Values that always read left to right, also in Arabic. */
+    public const LTR_VALUE = '/^(slug|code|symbol|phone|email|order_number|reference|uuid|ip_address)$|_(slug|code|phone|email|number)$/';
 
     /** Shrinks a column to its content (works with the auto table layout). */
     public const COMPACT_WIDTH = '1%';
@@ -81,6 +86,29 @@ final class TableDefaults
                 ->defaultDateDisplayFormat(fn () => self::dateFormat()));
         }
 
+        // Table UX overhaul (2026-11-12): one behaviour for every list.
+        //  - phones: each row becomes a stacked card (native Filament), and
+        //    columns marked visibleFrom('md') drop out, so nothing scrolls
+        //    sideways and the row actions stay reachable;
+        //  - filters apply as soon as they change (no hidden "Apply" step),
+        //    behind a labelled "Filters" button with the active count;
+        //  - search waits for a short pause in typing;
+        //  - 25 rows per page by default, 10 / 25 / 50 / 100 to choose.
+        Table::configureUsing(fn (Table $table) => $table
+            ->stackedOnMobile()
+            ->deferFilters(false)
+            ->searchDebounce('400ms')
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
+            ->filtersTriggerAction(fn (Action $action) => $action->button()->color('gray')
+                // The active count is part of the label ("Filters · 2"); the
+                // separate badge (which also showed "0") is hidden in the theme.
+                ->label(fn () => __('admin.table.filters').(((int) $action->getBadge()) > 0 ? ' · '.$action->getBadge() : '')))
+            ->columnManagerTriggerAction(fn (Action $action) => $action->tooltip(__('admin.table.columns'))));
+
+        // A yes / no filter offers "All" (not a bare dash) as its empty choice.
+        TernaryFilter::configureUsing(fn (TernaryFilter $filter) => $filter->placeholder(__('admin.table.all')));
+
         TextColumn::configureUsing(function (TextColumn $column): void {
             $name = (string) $column->getName();
             $leaf = str_contains($name, '.') ? substr($name, strrpos($name, '.') + 1) : $name;
@@ -97,6 +125,12 @@ final class TableDefaults
                 // Badge columns (statuses, categories) are sized to their
                 // badges; ->badge() is set later, so decide when rendering.
                 $column->width(fn (TextColumn $column): ?string => $column->isBadge() ? self::COMPACT_WIDTH : null);
+            }
+
+            // Left-to-right values (phone, e-mail, codes, order numbers,
+            // money) stay readable inside Arabic text.
+            if (preg_match(self::LTR_VALUE, $leaf) || preg_match(self::MEASURE, $leaf)) {
+                $column->extraAttributes(['class' => 'wf-ltr'], merge: true);
             }
 
             $column->placeholder('—');

@@ -5,8 +5,11 @@ namespace App\Filament\Resources\Customers\RelationManagers;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Wallets\WalletResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -29,17 +32,26 @@ class WalletsRelationManager extends RelationManager
         return true;
     }
 
+    /**
+     * Customer → Wallets (table UX overhaul 2026-11-12): one row per
+     * currency, the balance in that currency (never converted), last
+     * movement. "Movements" opens the wallet history.
+     */
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('currency'))
             ->columns([
-                TextColumn::make('currency.code')->label(__('admin.fields.currency')),
-                TextColumn::make('balance')->label(__('admin.fields.balance'))->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
-                TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->dateTime(),
+                TextColumn::make('currency.code')->label(__('admin.fields.currency'))->badge()->color('gray')
+                    ->description(fn ($record) => $record->currency?->name),
+                TextColumn::make('balance')->label(__('admin.fields.balance'))->weight(FontWeight::SemiBold)
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->since()->color('gray')
+                    ->tooltip(fn ($record) => $record->updated_at?->translatedFormat(TableDefaults::dateTimeFormat())),
             ])
             ->recordActions([
-                Action::make('history')->label(__('admin.wallets.history'))->icon('heroicon-o-list-bullet')
-                    ->url(fn ($record) => WalletResource::getUrl('view', ['record' => $record])),
+                RowActions::primary(Action::make('history')->label(__('admin.table.history'))->icon('heroicon-m-list-bullet')
+                    ->url(fn ($record) => WalletResource::getUrl('view', ['record' => $record]))),
             ]);
     }
 }

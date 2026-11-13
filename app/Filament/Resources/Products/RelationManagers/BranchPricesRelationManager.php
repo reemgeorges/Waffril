@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Products\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\Branch;
 use App\Models\BranchProduct;
 use App\Services\Audit\AdminAudit;
@@ -17,9 +19,11 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 
 /**
@@ -51,27 +55,43 @@ class BranchPricesRelationManager extends RelationManager
         ]);
     }
 
+    /**
+     * Product → Branch prices (table UX overhaul 2026-11-12): branch and
+     * city, the price (aligned), a readable availability. Edit price is the
+     * primary action; availability (audited service) and removal sit under
+     * "More actions".
+     */
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('branch.city'))
             ->columns([
-                TextColumn::make('branch.name')->label(__('admin.fields.branch')),
-                TextColumn::make('branch.city.name')->label(__('admin.fields.city')),
-                TextColumn::make('price')->label(__('admin.fields.price'))->sortable(),
-                IconColumn::make('is_available')->label(__('admin.fields.is_available'))->boolean(),
+                TextColumn::make('branch.name')->label(__('admin.fields.branch'))->weight(FontWeight::SemiBold)
+                    ->description(fn (BranchProduct $record) => $record->branch?->city?->name)
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('branch', fn ($q) => $q->where('name', 'like', "%{$search}%"))),
+                TextColumn::make('price')->label(__('admin.fields.price'))->sortable()->weight(FontWeight::SemiBold),
+                Columns::status('is_available', __('admin.table.available'), __('admin.table.unavailable'))->label(__('admin.table.availability')),
             ])
+            ->searchPlaceholder(__('admin.table.search_branch'))
+            ->filters([TernaryFilter::make('is_available')->label(__('admin.table.availability'))
+                ->trueLabel(__('admin.table.available'))->falseLabel(__('admin.table.unavailable'))])
             ->headerActions([
                 CreateAction::make()->after(fn (BranchProduct $record) => AdminAudit::log('catalog.branch_price_created', $record, ['price' => (string) $record->price])),
             ])
             ->recordActions([
-                Action::make('toggleAvailability')
-                    ->label(fn (BranchProduct $record) => $record->is_available ? __('admin.actions.mark_unavailable') : __('admin.actions.mark_available'))
-                    ->icon('heroicon-o-arrow-path')->requiresConfirmation()
-                    ->action(fn (BranchProduct $record) => BusinessAction::run(
-                        fn ($admin) => app(CatalogAdminService::class)->setBranchProductAvailability($record, ! $record->is_available, $admin)
-                    )),
-                EditAction::make()->after(fn (BranchProduct $record) => AdminAudit::log('catalog.branch_price_updated', $record, ['price' => (string) $record->price])),
-                DeleteAction::make(),
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit_price'))
+                    ->after(fn (BranchProduct $record) => AdminAudit::log('catalog.branch_price_updated', $record, ['price' => (string) $record->price]))),
+                RowActions::more([
+                    Action::make('toggleAvailability')
+                        ->label(fn (BranchProduct $record) => $record->is_available ? __('admin.table.toggle_unavailable') : __('admin.table.toggle_available'))
+                        ->icon(fn (BranchProduct $record) => $record->is_available ? 'heroicon-m-no-symbol' : 'heroicon-m-check-circle')
+                        ->color(fn (BranchProduct $record) => $record->is_available ? 'warning' : 'success')
+                        ->requiresConfirmation()
+                        ->action(fn (BranchProduct $record) => BusinessAction::run(
+                            fn ($admin) => app(CatalogAdminService::class)->setBranchProductAvailability($record, ! $record->is_available, $admin)
+                        )),
+                    DeleteAction::make(),
+                ]),
             ]);
     }
 }

@@ -3,10 +3,13 @@
 namespace App\Filament\Resources\PlusRequests;
 
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Customers\RelationManagers\PlusRequestsRelationManager as CustomerPlusRequestsRelationManager;
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Filament\Support\PlusPolicyFields;
+use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\PlusRequest;
 use App\Services\Plus\PlusService;
@@ -16,6 +19,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -59,35 +63,44 @@ class PlusRequestResource extends AdminResource
             // narrow by type / plan / source / date; status lives in the page tabs.
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'requestedPlan', 'reviewedBy', 'membership.plan']))
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.plus.requested_at'))->dateTime()->sortable()
-                    ->description(fn (PlusRequest $record) => $record->created_at?->diffForHumans()),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->state(fn (PlusRequest $record) => $record->user?->fullName())
-                    ->description(fn (PlusRequest $record) => $record->user?->phone)
+                    ->description(fn (PlusRequest $record) => collect([Fields::ltr($record->user?->phone), $record->created_at ? __('admin.table.requested_ago', ['time' => $record->created_at->diffForHumans()]) : null])->filter()->implode(' · '))
+                    ->tooltip(fn (PlusRequest $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
                     ->url(fn (PlusRequest $record) => $record->user && CustomerResource::canViewAny() ? CustomerResource::getUrl('view', ['record' => $record->user]) : null)
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $user) => $user
                         ->where('phone', 'like', "%{$search}%")
                         ->orWhere('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%"))),
+                        ->orWhere('email', 'like', "%{$search}%")))
+                    // Inside a customer's PLUS tab the customer is the page itself.
+                    ->hidden(fn ($livewire) => $livewire instanceof CustomerPlusRequestsRelationManager),
+                // What was asked: the request type, with the plan under it.
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()->color('gray')
                     ->icon(fn ($state) => self::TYPE_ICONS[$state] ?? null)
-                    ->formatStateUsing(fn ($state) => __("admin.plus.request_{$state}")),
-                TextColumn::make('requestedPlan.name')->label(__('admin.fields.plan'))->placeholder('—')
-                    ->description(fn (PlusRequest $record) => $record->membership?->plan && $record->membership->plan_id !== $record->requested_plan_id
-                        ? __('admin.plus.current_plan', ['plan' => $record->membership->plan->name]) : null),
-                TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(50)->tooltip(fn (PlusRequest $record) => $record->customer_note)->placeholder('—')->wrap(),
+                    ->formatStateUsing(fn ($state) => __("admin.plus.request_{$state}"))
+                    ->description(fn (PlusRequest $record) => collect([
+                        $record->requestedPlan?->name,
+                        $record->membership?->plan && $record->membership->plan_id !== $record->requested_plan_id
+                            ? __('admin.plus.current_plan', ['plan' => $record->membership->plan->name]) : null,
+                    ])->filter()->implode(' · ') ?: null),
+                // The decision: status, with who reviewed it and when.
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->color(fn ($state) => self::STATUS_COLORS[$state] ?? 'gray')
                     ->icon(fn ($state) => self::STATUS_ICONS[$state] ?? null)
-                    ->formatStateUsing(fn ($state) => __("admin.requests.status_{$state}")),
-                TextColumn::make('reviewedBy.name')->label(__('admin.plus.reviewed_by'))->placeholder('—')
-                    ->description(fn (PlusRequest $record) => $record->reviewed_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->formatStateUsing(fn ($state) => __("admin.requests.status_{$state}"))
+                    ->description(fn (PlusRequest $record) => $record->reviewedBy
+                        ? collect([$record->reviewedBy->name, $record->reviewed_at?->translatedFormat(TableDefaults::dateTimeFormat())])->filter()->implode(' · ') : null),
+                TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(70)->tooltip(fn (PlusRequest $record) => $record->customer_note)
+                    ->placeholder('—')->wrap()->visibleFrom('lg'),
+                TextColumn::make('created_at')->label(__('admin.plus.requested_at'))->dateTime()->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('admin_note')->label(__('admin.plus.review_note'))->limit(50)->tooltip(fn (PlusRequest $record) => $record->admin_note)
                     ->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('source')->label(__('admin.fields.source'))->formatStateUsing(fn ($state) => __("admin.plus.source_{$state}"))
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->searchPlaceholder(__('admin.table.search_plus_requests'))
             ->filters([
                 SelectFilter::make('type')->label(__('admin.fields.type'))->multiple()
                     ->options(collect([PlusRequest::TYPE_NEW, PlusRequest::TYPE_RENEW, PlusRequest::TYPE_CHANGE, PlusRequest::TYPE_CANCEL, PlusRequest::TYPE_CUSTOM])
@@ -112,14 +125,16 @@ class PlusRequestResource extends AdminResource
             ])
             ->filtersFormColumns(2)
             ->recordActions([
-                Action::make('details')->label(__('admin.plus.details'))->icon('heroicon-o-eye')->color('gray')
+                // Pending: Approve (primary) and Reject side by side; Details
+                // is always available under "More actions".
+                RowActions::more([Action::make('details')->label(__('admin.plus.details'))->icon('heroicon-m-eye')->color('gray')
                     ->modalHeading(fn (PlusRequest $record) => __('admin.plus.request_heading', ['customer' => $record->user?->fullName()]))
                     ->modalSubmitAction(false)->modalCancelActionLabel(__('admin.actions.close'))
                     ->modalContent(fn (PlusRequest $record) => view('filament.plus.request-details', [
                         'request' => $record,
                         'history' => PlusRequest::query()->with(['requestedPlan', 'reviewedBy'])->where('user_id', $record->user_id)->latest('id')->limit(20)->get(),
-                    ])),
-                Action::make('approveNew')->label(__('admin.requests.approve'))->icon('heroicon-o-check')->color('success')
+                    ]))]),
+                RowActions::primary(Action::make('approveNew')->label(__('admin.requests.approve'))->icon('heroicon-m-check')->color('success')
                     ->visible(fn (PlusRequest $record) => $pending($record) && $record->type === PlusRequest::TYPE_NEW)
                     ->schema([
                         ...PlusPolicyFields::make(),
@@ -131,8 +146,8 @@ class PlusRequestResource extends AdminResource
                         $record, $admin, $data['renewal_policy'],
                         isset($data['custom_duration_days']) ? (int) $data['custom_duration_days'] : null,
                         Carbon::parse($data['starts_at']), $data['note'] ?? null,
-                    ))),
-                Action::make('approveOther')->label(__('admin.requests.approve'))->icon('heroicon-o-check')->color('success')
+                    )))),
+                RowActions::primary(Action::make('approveOther')->label(__('admin.requests.approve'))->icon('heroicon-m-check')->color('success')
                     ->visible(fn (PlusRequest $record) => $pending($record) && $record->type !== PlusRequest::TYPE_NEW)
                     ->schema(fn (PlusRequest $record) => [
                         Textarea::make('note')->label(__('admin.fields.note'))->maxLength(1000)->required($record->type === PlusRequest::TYPE_CUSTOM),
@@ -144,8 +159,9 @@ class PlusRequestResource extends AdminResource
                         PlusRequest::TYPE_CHANGE => $service()->approveChange($record, $admin, $data['note'] ?? null),
                         PlusRequest::TYPE_CANCEL => $service()->approveCancellation($record, $admin, $data['note'] ?? null),
                         default => $service()->resolveCustom($record, $admin, (string) $data['note']),
-                    })),
-                Action::make('reject')->label(__('admin.requests.reject'))->icon('heroicon-o-x-mark')->color('danger')
+                    }))),
+                Action::make('reject')->label(__('admin.requests.reject'))->icon('heroicon-m-x-mark')->color('danger')
+                    ->button()->outlined()->size(Size::Small)
                     ->visible($pending)
                     ->schema([Textarea::make('note')->label(__('admin.fields.note'))->required()->maxLength(1000)])
                     ->action(fn (PlusRequest $record, array $data) => BusinessAction::run(fn ($admin) => $service()->reject($record, $admin, $data['note']))),
