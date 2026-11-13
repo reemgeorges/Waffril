@@ -5,11 +5,11 @@ namespace App\Filament\Resources\StoreCategories;
 use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Filament\Support\SafeCategoryDelete;
-use App\Filament\Support\TableDefaults;
 use App\Models\StoreCategory;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\FileUpload;
@@ -19,10 +19,12 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 use Filament\Support\Enums\Width;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,25 +82,43 @@ class StoreCategoryResource extends AdminResource
         ];
     }
 
+    /**
+     * Store categories (opened from Stores → Categories & ratings; table UX
+     * overhaul 2026-11-12): few records with few fields, so each is a small
+     * card — picture (or initial), name, a link to its stores, status. Edit
+     * is the primary action; the safe delete sits under "More actions".
+     */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('sort_order')->label('#')->sortable()->tooltip(__('admin.fields.sort_order')),
-                ImageColumn::make('image')->visible(TableDefaults::onlyWhenFilled(StoreCategory::class, 'image'))->label(__('admin.fields.image'))->disk('public')->imageSize(36)->square(),
-                TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold),
-                TextColumn::make('slug')->label(__('admin.fields.slug'))->searchable()->toggleable(isToggledHiddenByDefault: true),
-                // The store count opens the store list filtered on this category.
-                TextColumn::make('stores_count')->counts('stores')->label(__('admin.resources.store.plural'))
-                    ->url(fn ($record) => StoreResource::canViewAny() ? StoreResource::getUrl('index', ['filters' => ['categories' => ['value' => $record->id]]]) : null)
-                    ->color('primary'),
-                ToggleColumn::make('is_active')->label(__('admin.fields.is_active'))
-                    ->disabled(fn ($record) => ! static::can('update', $record)),
+                Stack::make([
+                    Split::make([
+                        Columns::picture('image', fn (StoreCategory $record) => $record->name, 44)->grow(false),
+                        Stack::make([
+                            TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)->size(TextSize::Large),
+                            TextColumn::make('sort_order')->label(__('admin.fields.sort_order'))->color('gray')->size(TextSize::Small)
+                                ->formatStateUsing(fn ($state) => __('admin.table.sort_position', ['n' => $state])),
+                        ])->space(1),
+                        Columns::status()->grow(false),
+                    ]),
+                    // The store count opens the store list filtered on this category.
+                    Columns::countLink('stores_count', __('admin.resources.store.plural'), 'admin.table.stores_count', 'heroicon-m-building-storefront',
+                        fn ($record) => StoreResource::canViewAny() ? StoreResource::getUrl('index', ['filters' => ['categories' => ['values' => [$record->id]]]]) : null,
+                        __('admin.table.open_stores'))->counts('stores'),
+                ])->space(3),
             ])
-            ->filters([TrashedFilter::make()])
+            ->contentGrid(['md' => 2, 'xl' => 3])
+            ->recordUrl(null)
+            ->searchPlaceholder(__('admin.table.search_categories'))
+            ->filters([
+                TernaryFilter::make('is_active')->label(__('admin.fields.status'))
+                    ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
+                TrashedFilter::make(),
+            ])
             ->recordActions([
-                EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())->modalWidth(Width::TwoExtraLarge),
-                ActionGroup::make([SafeCategoryDelete::make('store'), RestoreAction::make()]),
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())->modalWidth(Width::TwoExtraLarge)),
+                RowActions::more([...RowActions::activation(static::class), SafeCategoryDelete::make('store'), RestoreAction::make()]),
             ])
             ->emptyStateDescription(__('admin.empty.store_categories'))
             ->defaultSort('sort_order');
