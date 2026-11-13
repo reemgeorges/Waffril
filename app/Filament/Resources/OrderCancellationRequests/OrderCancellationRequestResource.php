@@ -6,6 +6,8 @@ use App\Filament\Resources\OrderCancellationRequests\Pages\ListOrderCancellation
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\OrderCancellationRequest;
 use App\Services\Order\OrderAdminService;
 use App\Support\Auth\AdminPermissions;
@@ -13,6 +15,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -43,26 +46,46 @@ class OrderCancellationRequestResource extends AdminResource
         return $count > 0 ? (string) $count : null;
     }
 
+    /**
+     * Cancellation requests (table UX overhaul 2026-11-12; also the tab on
+     * an order): the order with its customer, how long ago, the order's
+     * state now, the customer's note and the decision. Approve and Reject are
+     * explicit labelled buttons, only on pending requests and only with
+     * orders.resolve_cancellation_requests; both keep their confirmation.
+     */
     public static function table(Table $table): Table
     {
         $canResolve = fn (OrderCancellationRequest $record) => $record->status === OrderCancellationRequest::STATUS_PENDING
             && AdminPermissions::currentAllows('orders.resolve_cancellation_requests');
 
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['order.user', 'resolvedBy']))
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable(),
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => $record->order?->user?->fullName())
+                    ->description(fn ($record) => collect([$record->order?->user?->fullName(), $record->order?->user?->phone])->filter()->implode(' · '))
                     ->searchable(query: fn ($query, string $search) => $query->whereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$search}%"))
                         ->orWhereHas('order.user', fn ($u) => $u->where('phone', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")))
                     ->url(fn (OrderCancellationRequest $record) => OrderResource::getUrl('view', ['record' => $record->order_id])),
-                TextColumn::make('order.status')->label(__('admin.fields.order_status'))->badge()
-                    ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state?->color()),
-                TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(50)->placeholder('—'),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
-                    ->formatStateUsing(fn ($state) => __("admin.requests.status_{$state}")),
-                TextColumn::make('resolvedBy.name')->label(__('admin.fields.resolved_by'))->placeholder('—'),
+                    ->formatStateUsing(fn ($state) => __("admin.requests.status_{$state}"))
+                    ->icon(fn ($state) => match ($state) {
+                        'approved' => 'heroicon-m-check-circle',
+                        'rejected' => 'heroicon-m-x-circle',
+                        default => 'heroicon-m-clock',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        default => 'warning',
+                    })
+                    ->description(fn ($record) => $record->resolvedBy?->name),
+                TextColumn::make('order.status')->label(__('admin.fields.order_status'))->badge()
+                    ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state?->color())->visibleFrom('md'),
+                TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(80)->wrap()->placeholder('—')->visibleFrom('md'),
+                TextColumn::make('created_at')->label(__('admin.table.requested'))->since()->sortable()
+                    ->tooltip(fn ($record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
             ])
+            ->searchPlaceholder(__('admin.table.search_cancellations'))
             ->filters([
                 SelectFilter::make('status')->label(__('admin.fields.status'))->default(OrderCancellationRequest::STATUS_PENDING)->options([
                     'pending' => __('admin.requests.status_pending'),
@@ -71,7 +94,7 @@ class OrderCancellationRequestResource extends AdminResource
                 ]),
             ])
             ->recordActions([
-                Action::make('approve')->label(__('admin.requests.approve'))->icon('heroicon-o-check')->color('success')
+                RowActions::primary(Action::make('approve')->label(__('admin.table.approve'))->icon('heroicon-m-check')->color('success')
                     ->visible(fn (OrderCancellationRequest $record) => $canResolve($record) && $record->order->status->value !== 'picked_up')
                     ->schema([
                         Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
@@ -80,8 +103,9 @@ class OrderCancellationRequestResource extends AdminResource
                     ->requiresConfirmation()->modalDescription(__('admin.orders.cancel_warning'))
                     ->action(fn (OrderCancellationRequest $record, array $data) => BusinessAction::run(
                         fn ($admin) => app(OrderAdminService::class)->approveCancellationRequest($record, $admin, $data)
-                    )),
-                Action::make('reject')->label(__('admin.requests.reject'))->icon('heroicon-o-x-mark')->color('danger')
+                    ))),
+                Action::make('reject')->label(__('admin.table.reject'))->icon('heroicon-m-x-mark')->color('danger')
+                    ->button()->outlined()->size(Size::Small)
                     ->visible($canResolve)
                     ->schema([Textarea::make('note')->label(__('admin.fields.note'))->required()->maxLength(500)])
                     ->action(fn (OrderCancellationRequest $record, array $data) => BusinessAction::run(

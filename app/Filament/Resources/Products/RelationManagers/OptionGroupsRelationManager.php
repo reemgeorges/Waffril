@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Products\RelationManagers;
 
 use App\Filament\Concerns\TranslatedRelationLabels;
+use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
 use App\Models\ProductOptionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -17,7 +19,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -70,23 +72,30 @@ class OptionGroupsRelationManager extends RelationManager
         ]);
     }
 
+    /**
+     * Product → Option groups (table UX overhaul 2026-11-12): name and kind,
+     * the choice rule in words ("Choose 1–3"), number of options, status.
+     */
     public function table(Table $table): Table
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->withoutGlobalScopes([SoftDeletingScope::class]))
             ->columns([
-                TextColumn::make('name')->label(__('admin.fields.name')),
-                TextColumn::make('kind')->label(__('admin.fields.kind'))->badge()->formatStateUsing(fn ($state) => __("admin.products.kind_{$state}")),
-                TextColumn::make('min_select')->label(__('admin.fields.min_select')),
-                TextColumn::make('max_select')->label(__('admin.fields.max_select')),
-                TextColumn::make('options_count')->counts('options')->label(__('admin.products.options')),
-                IconColumn::make('is_active')->label(__('admin.fields.is_active'))->boolean(),
+                TextColumn::make('name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
+                    ->description(fn ($record) => __("admin.products.kind_{$record->kind}")),
+                TextColumn::make('selection')->label(__('admin.table.selection'))->badge()->color('gray')
+                    ->state(fn ($record) => (int) $record->min_select === (int) $record->max_select
+                        ? __('admin.table.choose_exact', ['n' => (int) $record->max_select])
+                        : __('admin.table.choose_range', ['min' => (int) $record->min_select, 'max' => (int) $record->max_select])),
+                TextColumn::make('options_count')->counts('options')->label(__('admin.products.options'))
+                    ->formatStateUsing(fn ($state) => trans_choice('admin.table.options_count', (int) $state, ['count' => (int) $state])),
+                Columns::status(),
             ])
             ->filters([TrashedFilter::make()])
             ->headerActions([CreateAction::make()->mutateDataUsing(fn (array $data) => self::normalize($data))])
             ->recordActions([
-                EditAction::make()->mutateRecordDataUsing(Fields::withTranslations())->mutateDataUsing(fn (array $data) => self::normalize($data)),
-                DeleteAction::make(), RestoreAction::make(),
+                RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())->mutateDataUsing(fn (array $data) => self::normalize($data))),
+                RowActions::more([DeleteAction::make(), RestoreAction::make()]),
             ]);
     }
 

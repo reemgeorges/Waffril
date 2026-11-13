@@ -15,6 +15,8 @@ use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManage
 use App\Filament\Resources\Orders\Support\DispatchPanel;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Fields;
+use App\Filament\Support\RowActions;
+use App\Filament\Support\TableDefaults;
 use App\Models\Order;
 use App\Services\Delivery\DeliveryOfferService;
 use Filament\Actions\ViewAction;
@@ -126,20 +128,30 @@ class OrderResource extends AdminResource
         ]);
     }
 
+    /**
+     * Orders (table UX overhaul 2026-11-12; work tabs since 2026-11-11). The
+     * columns follow the questions an employee asks: which order and how
+     * old, what state and how urgent, which customer, which branch, who
+     * delivers, how much. "View order" is the one row action (accept,
+     * assign and cancel live on the order page with their own checks). On
+     * phones: order, status, type, customer, total and the action.
+     */
     public static function table(Table $table): Table
     {
         $waitingTab = fn ($livewire) => ($livewire->activeTab ?? null) === 'waiting_for_driver';
 
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch', 'city', 'driver', 'currency']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch.store', 'city', 'driver', 'currency', 'user']))
             // Dispatch B4: orders without an available driver stand out.
             ->recordClasses(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER ? 'waffrli-row-no-driver' : null)
             ->columns([
-                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable()->weight(FontWeight::SemiBold),
+                TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable()->weight(FontWeight::SemiBold)
+                    ->description(fn (Order $record) => $record->created_at?->diffForHumans())
+                    ->tooltip(fn (Order $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
-                // UX redesign (2026-11-11): type and urgency as one labelled badge
-                // (icon + words; colour is never the only signal).
+                // Type and urgency as one labelled badge (icon + words; colour
+                // is never the only signal); a scheduled order shows its time.
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()
                     ->state(fn (Order $record) => $record->urgent_at !== null && $record->status === OrderStatus::Pending ? 'urgent' : $record->type)
                     ->formatStateUsing(fn (string $state) => $state === 'urgent' ? __('admin.orders.urgent') : __("admin.orders.type_{$state}"))
@@ -152,15 +164,19 @@ class OrderResource extends AdminResource
                         'urgent' => 'danger',
                         Order::TYPE_SCHEDULED => 'info',
                         default => 'gray',
-                    }),
-                // Shown under the type badge instead of a mostly empty column.
-                TextColumn::make('scheduled_for')->label(__('admin.fields.scheduled_for'))->dateTime()->placeholder('—')->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    })
+                    ->description(fn (Order $record) => $record->scheduled_for
+                        ? __('admin.table.scheduled_for', ['date' => $record->scheduled_for->translatedFormat('j M، H:i')]) : null),
+                TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
+                    ->state(fn (Order $record) => $record->user?->fullName())
+                    ->description(fn (Order $record) => $record->user?->phone)
+                    ->searchable(query: Fields::searchCustomer('user')),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
-                    ->description(fn (Order $record) => $record->city?->name),
-                TextColumn::make('driver.name')->label(__('admin.fields.driver'))->placeholder('—'),
+                    ->description(fn (Order $record) => collect([$record->branch?->store?->name, $record->city?->name])->filter()->implode(' · '))
+                    ->visibleFrom('md'),
+                TextColumn::make('driver.name')->label(__('admin.table.driver'))->placeholder(__('admin.table.not_assigned'))
+                    ->icon(fn (Order $record) => $record->driver ? 'heroicon-m-truck' : null)->visibleFrom('lg'),
                 // Dispatch B4: "Waiting for driver" queue columns (that tab only).
-                TextColumn::make('branch.store.name')->label(__('admin.dispatch.restaurant'))->visible($waitingTab),
                 TextColumn::make('order_age')->label(__('admin.dispatch.order_age'))->visible($waitingTab)
                     ->state(fn (Order $record) => $record->created_at?->diffForHumans(short: true)),
                 TextColumn::make('dispatch_state')->label(__('admin.dispatch.state'))->badge()->visible($waitingTab)
@@ -172,23 +188,28 @@ class OrderResource extends AdminResource
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state ? DispatchPanel::statusColor($state) : 'gray')->placeholder('—'),
                 IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
                     ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle')->falseIcon('heroicon-o-minus')->falseColor('gray'),
-                TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()
+                TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()
-                    ->description(fn (Order $record) => $record->created_at?->diffForHumans()),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->searchPlaceholder(__('admin.table.search_orders'))
             ->filters([
                 SelectFilter::make('status')->label(__('admin.fields.status'))->options(OrderStatus::options())->multiple(),
-                SelectFilter::make('branch_id')->label(__('admin.fields.branch'))->relationship('branch', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->searchable()->preload(),
-                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 SelectFilter::make('type')->label(__('admin.fields.type'))->options([
                     Order::TYPE_IMMEDIATE => __('admin.orders.type_immediate'),
                     Order::TYPE_SCHEDULED => __('admin.orders.type_scheduled'),
                 ]),
                 TernaryFilter::make('urgent')->label(__('admin.orders.urgent'))
                     ->queries(true: fn (Builder $query) => $query->whereNotNull('urgent_at'), false: fn (Builder $query) => $query->whereNull('urgent_at')),
+                SelectFilter::make('branch_id')->label(__('admin.fields.branch'))->relationship('branch', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->searchable()->preload(),
+                SelectFilter::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
+                SelectFilter::make('driver_id')->label(__('admin.table.driver'))->relationship('driver', 'name')->searchable()->preload(),
+                TernaryFilter::make('assigned')->label(__('admin.table.driver_assigned'))
+                    ->trueLabel(__('admin.table.assigned'))->falseLabel(__('admin.table.unassigned'))
+                    ->queries(true: fn (Builder $query) => $query->whereNotNull('driver_id'), false: fn (Builder $query) => $query->whereNull('driver_id')),
                 Filter::make('created_between')->label(__('admin.fields.created_at'))
                     ->schema([
                         DatePicker::make('from')->label(__('admin.fields.from')),
@@ -198,7 +219,7 @@ class OrderResource extends AdminResource
                         ->when($data['from'] ?? null, fn ($query, $d) => $query->whereDate('created_at', '>=', $d))
                         ->when($data['until'] ?? null, fn ($query, $d) => $query->whereDate('created_at', '<=', $d))),
             ])
-            ->recordActions([ViewAction::make()])
+            ->recordActions([RowActions::primary(ViewAction::make()->label(__('admin.table.view_order')))])
             ->defaultSort('created_at', 'desc');
     }
 
