@@ -26,9 +26,20 @@ use Throwable;
  */
 class Notify
 {
-    public static function send(mixed $notifiables, BaseNotification $notification): void
+    /**
+     * @param  bool  $storeWhenMuted  while notifications are muted (demo
+     *                                seeding) still store the in-app record —
+     *                                nothing is broadcast or pushed. Driver
+     *                                order updates use it, as they always
+     *                                left a stored notification in the demo.
+     */
+    public static function send(mixed $notifiables, BaseNotification $notification, bool $storeWhenMuted = false): void
     {
         if (config('waffrli.notifications_muted')) {
+            if ($storeWhenMuted) {
+                Notification::sendNow($notifiables, $notification, ['database']);
+            }
+
             return; // demo seeding
         }
         DB::afterCommit(function () use ($notifiables, $notification) {

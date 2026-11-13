@@ -80,7 +80,16 @@ class AdminAlerts
                 if ($url) {
                     $notification->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)->markAsRead()]);
                 }
-                $notification->sendToDatabase($recipients, isEventDispatched: true);
+                // One admin at a time (notification audit, 2026-11-13): the bell
+                // refresh broadcast of one admin failing (e.g. Reverb down on a
+                // sync queue) must not cost the other admins their alert.
+                foreach ($recipients as $admin) {
+                    try {
+                        $notification->sendToDatabase($admin, isEventDispatched: true);
+                    } catch (Throwable $e) {
+                        Log::warning('admin_alert.failed', ['type' => $type, 'admin_id' => $admin->id, 'error' => $e->getMessage()]);
+                    }
+                }
             } catch (Throwable $e) {
                 Log::warning('admin_alert.failed', ['type' => $type, 'error' => $e->getMessage()]);
             }

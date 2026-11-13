@@ -2,10 +2,15 @@
 
 namespace Tests\Feature\Push;
 
+use App\Enums\OrderStatus;
 use App\Jobs\Push\SendPushMessage;
+use App\Models\Admin;
+use App\Models\Driver;
 use App\Models\Order;
 use App\Models\User;
 use App\Notifications\CustomerOrderUpdate;
+use App\Services\Notifications\AdminAlerts;
+use App\Services\Order\OrderAdminService;
 use App\Services\Realtime\Notify;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Bus;
@@ -86,5 +91,44 @@ class NotificationDeliveryResilienceTest extends CustomerTestCase
         $this->assertNotNull($a);
         $this->assertNotNull($b);
         $this->assertNotSame($a, $b);
+    }
+
+    /**
+     * Driver notifications (assigned / unassigned / cancelled) used to be
+     * sent with $driver->notify() inside the business transaction: a
+     * realtime outage threw out of it and rolled the admin's action back.
+     */
+    public function test_a_realtime_outage_never_rolls_back_a_driver_assignment(): void
+    {
+        $order = Order::query()->where('status', OrderStatus::Accepted->value)->whereNull('driver_id')->firstOrFail();
+        $driver = Driver::query()->where('is_active', true)->whereDoesntHave('activeOrders')->firstOrFail();
+        $driver->forceFill(['availability' => Driver::AVAILABILITY_AVAILABLE, 'last_location_at' => now(), 'city_id' => $order->city_id])->save();
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $admin->assignRole(Admin::SUPER_ADMIN_ROLE);
+
+        $before = $driver->notifications()->where('type', 'driver.order_assigned')->count();
+        $this->unreachableReverb();
+        Bus::fake([SendPushMessage::class]);
+
+        app(OrderAdminService::class)->assignDriver($order, $driver, $admin);
+
+        $this->assertSame(OrderStatus::Assigned, $order->fresh()->status);
+        $this->assertSame($driver->id, (int) $order->fresh()->driver_id);
+        $this->assertSame($before + 1, $driver->notifications()->where('type', 'driver.order_assigned')->count());
+    }
+
+    /** Every admin who may act gets the bell alert, even when Reverb is down. */
+    public function test_a_realtime_outage_still_alerts_every_admin(): void
+    {
+        $admins = Admin::factory()->count(2)->create(['is_active' => true]);
+        $admins->each->assignRole(Admin::SUPER_ADMIN_ROLE);
+        $order = Order::query()->firstOrFail();
+
+        $this->unreachableReverb();
+        AdminAlerts::send('order.placed', (int) $order->id, $order->order_number);
+
+        foreach ($admins as $admin) {
+            $this->assertSame(1, $admin->notifications()->count(), "admin #{$admin->id} lost the alert");
+        }
     }
 }
