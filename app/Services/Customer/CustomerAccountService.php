@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Services\Audit\AdminAudit;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Localization\Label;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -103,25 +104,25 @@ class CustomerAccountService
         $blockers = [];
 
         if (! $user->trashed()) {
-            $blockers[] = __('admin.customers.blockers.not_deleted');
+            $blockers[] = Label::text('admin.customers.blockers.not_deleted');
         }
         if ($user->anonymized_at) {
-            $blockers[] = __('admin.customers.blockers.already_anonymized');
+            $blockers[] = Label::text('admin.customers.blockers.already_anonymized');
         }
         if ($user->recovery_until && $user->recovery_until->isFuture()) {
-            $blockers[] = __('admin.customers.blockers.recovery_window', ['until' => $user->recovery_until->toDateTimeString()]);
+            $blockers[] = Label::text('admin.customers.blockers.recovery_window', ['until' => $user->recovery_until->toDateTimeString()]);
         }
         if (Order::query()->where('user_id', $user->id)->whereNotIn('status', [OrderStatus::Delivered->value, OrderStatus::Cancelled->value])->exists()) {
-            $blockers[] = __('admin.customers.blockers.open_orders');
+            $blockers[] = Label::text('admin.customers.blockers.open_orders');
         }
         if (OrderPayment::query()->whereHas('order', fn ($q) => $q->where('user_id', $user->id))->where('status', OrderPayment::STATUS_PENDING)->exists()) {
-            $blockers[] = __('admin.customers.blockers.pending_payments');
+            $blockers[] = Label::text('admin.customers.blockers.pending_payments');
         }
         if (OrderCancellationRequest::query()->whereHas('order', fn ($q) => $q->where('user_id', $user->id))->where('status', OrderCancellationRequest::STATUS_PENDING)->exists()) {
-            $blockers[] = __('admin.customers.blockers.open_cancellation_requests');
+            $blockers[] = Label::text('admin.customers.blockers.open_cancellation_requests');
         }
         if (Wallet::query()->where('user_id', $user->id)->where('balance', '>', 0)->exists()) {
-            $blockers[] = __('admin.customers.blockers.wallet_balance');
+            $blockers[] = Label::text('admin.customers.blockers.wallet_balance');
         }
 
         return $blockers;

@@ -91,7 +91,7 @@ class CustomerOrderService
             'id' => $order->id,
             'order_number' => $order->order_number,
             'status' => $order->status->value,
-            'status_label' => $order->status->label(),
+            'status_label' => $order->status->publicLabel(),
             'type' => $order->type,
             'type_label' => Label::of('order_type', $order->type),
             'scheduled_for' => $order->scheduled_for?->toIso8601String(),
@@ -133,7 +133,7 @@ class CustomerOrderService
             ],
             'driver' => $active && $order->driver ? ['first_name' => strtok((string) $order->driver->name, ' '), 'vehicle_type' => $order->driver->vehicle_type] : null,
             'realtime_channel' => $active || $order->status === OrderStatus::Pending || $order->status === OrderStatus::Accepted ? 'order.'.$order->id : null,
-            'status_history' => $order->statusHistories->sortBy('id')->map(fn ($h) => ['from' => $h->from_status, 'from_label' => $h->from_status ? OrderStatus::tryFrom($h->from_status)?->label() : null, 'to' => $h->to_status, 'to_label' => OrderStatus::tryFrom((string) $h->to_status)?->label(), 'at' => $h->created_at?->toIso8601String()])->values(),
+            'status_history' => $order->statusHistories->sortBy('id')->map(fn ($h) => ['from' => $h->from_status, 'from_label' => $h->from_status ? OrderStatus::tryFrom($h->from_status)?->publicLabel() : null, 'to' => $h->to_status, 'to_label' => OrderStatus::tryFrom((string) $h->to_status)?->publicLabel(), 'at' => $h->created_at?->toIso8601String()])->values(),
             'cancellation' => $order->cancellation ? ['by' => $order->cancellation->cancelled_by, 'by_label' => Label::of('order_actor', $order->cancellation->cancelled_by), 'reason' => $order->cancellation->reason_code, 'reason_label' => Label::of('cancellation_reason', $order->cancellation->reason_code), 'at' => $order->cancellation->created_at?->toIso8601String()] : null,
             'cancellation_requests' => $order->cancellationRequests->map(fn ($r) => ['status' => $r->status, 'status_label' => Label::of('request_status', $r->status), 'note' => $r->customer_note, 'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String()])->values(),
         ];

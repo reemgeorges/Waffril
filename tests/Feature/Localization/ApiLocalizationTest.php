@@ -30,17 +30,17 @@ class ApiLocalizationTest extends CustomerTestCase
 
         $this->assertSame('picked_up', $ar['status']);
         $this->assertSame($ar['status'], $en['status'], 'Machine values never change with the language.');
-        $this->assertSame(__('admin.order_status.picked_up', [], 'ar'), $ar['status_label']);
-        $this->assertSame(__('admin.order_status.picked_up', [], 'en'), $en['status_label']);
+        $this->assertSame(__('api_labels.order_status.picked_up', [], 'ar'), $ar['status_label']);
+        $this->assertSame(__('api_labels.order_status.picked_up', [], 'en'), $en['status_label']);
         $this->assertNotSame($ar['status_label'], $en['status_label']);
-        $this->assertSame(__('admin.orders.type_'.$ar['type'], [], 'ar'), $ar['type_label']);
+        $this->assertSame(__('api_labels.orders.type_'.$ar['type'], [], 'ar'), $ar['type_label']);
         $this->assertSame(array_keys($ar), array_keys($en), 'Same property names in both languages.');
         foreach ($ar['payments'] as $i => $payment) {
-            $this->assertSame(__('admin.payments.status_'.$payment['status'], [], 'ar'), $payment['status_label']);
+            $this->assertSame(__('api_labels.payments.status_'.$payment['status'], [], 'ar'), $payment['status_label']);
             $this->assertSame($payment['status'], $en['payments'][$i]['status']);
         }
         foreach ($ar['status_history'] as $row) {
-            $this->assertSame(__('admin.order_status.'.$row['to'], [], 'ar'), $row['to_label']);
+            $this->assertSame(__('api_labels.order_status.'.$row['to'], [], 'ar'), $row['to_label']);
         }
     }
 
@@ -50,11 +50,11 @@ class ApiLocalizationTest extends CustomerTestCase
         foreach (['ar', 'en'] as $locale) {
             $tx = $this->as($locale, $token)->getJson('/api/v1/customer/wallet/transactions')->assertOk()->json('data.transactions.0');
             if ($tx) {
-                $this->assertSame(__('admin.wallets.type_'.$tx['type'], [], $locale), $tx['type_label']);
-                $this->assertSame(__('admin.wallets.direction_'.$tx['direction'], [], $locale), $tx['direction_label']);
+                $this->assertSame(__('api_labels.wallets.type_'.$tx['type'], [], $locale), $tx['type_label']);
+                $this->assertSame(__('api_labels.wallets.direction_'.$tx['direction'], [], $locale), $tx['direction_label']);
             }
             $me = $this->as($locale, $token)->getJson('/api/v1/customer/me')->assertOk()->json('data.user');
-            $this->assertSame(__('admin.customers.status_active', [], $locale), $me['account_status_label']);
+            $this->assertSame(__('api_labels.customers.status_active', [], $locale), $me['account_status_label']);
 
             $plus = $this->as($locale, $token)->getJson('/api/v1/customer/plus/eligible-discounts')->assertOk()->json('data');
             $this->assertSame(__('messages.customer.plus_priority_note', [], $locale), $plus['note']);
@@ -92,10 +92,10 @@ class ApiLocalizationTest extends CustomerTestCase
 
         foreach (['ar', 'en'] as $locale) {
             $me = $this->as($locale, $token)->getJson('/api/v1/driver/me')->assertOk()->json('data.driver');
-            $this->assertSame(__('admin.drivers.availability_'.$me['availability']['status'], [], $locale), $me['availability']['status_label']);
+            $this->assertSame(__('api_labels.drivers.availability_'.$me['availability']['status'], [], $locale), $me['availability']['status_label']);
             $order = $this->as($locale, $token)->getJson('/api/v1/driver/orders/active')->assertOk()->json('data.orders.0');
-            $this->assertSame(__('admin.order_status.'.$order['status'], [], $locale), $order['status_label']);
-            $this->assertSame(__('admin.orders.type_'.$order['type'], [], $locale), $order['type_label']);
+            $this->assertSame(__('api_labels.order_status.'.$order['status'], [], $locale), $order['status_label']);
+            $this->assertSame(__('api_labels.orders.type_'.$order['type'], [], $locale), $order['type_label']);
         }
     }
 }

@@ -9,6 +9,7 @@ use App\Models\MarketingBroadcast;
 use App\Models\User;
 use App\Notifications\MarketingMessage;
 use App\Services\Audit\AdminAudit;
+use App\Services\Realtime\Notify;
 use App\Support\Auth\AdminPermissions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Notification;
@@ -70,7 +71,9 @@ class MarketingBroadcastService
         $count = 0;
         try {
             $this->audience($broadcast)->select('users.*')->chunkById((int) config('waffrli.push.marketing_chunk', 500), function ($users) use ($broadcast, &$count) {
-                Notification::send($users, new MarketingMessage($broadcast));
+                // Per recipient and channel (notification audit, 2026-11-13): one
+                // failing channel no longer stops the rest of the audience.
+                Notify::send($users, new MarketingMessage($broadcast));
                 $count += $users->count();
             });
         } catch (\Throwable $e) {

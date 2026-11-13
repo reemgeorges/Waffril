@@ -27,7 +27,7 @@ class DriverAvailabilityController extends Controller
             'is_active' => (bool) $driver->is_active,
             'has_active_delivery' => $active->isNotEmpty(),
             'can_go_offline' => $active->isEmpty(),
-            'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status_label' => $o->status->label(), 'status' => $o->status->value])->values(),
+            'active_orders' => $active->map(fn ($o) => ['id' => $o->id, 'order_number' => $o->order_number, 'status_label' => $o->status->publicLabel(), 'status' => $o->status->value])->values(),
         ];
     }
 

@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Lang;
  * locale. APIs return the stable value AND its label ("status": "picked_up",
  * "status_label": "تم استلام الطلب"); values are never translated.
  *
- * The vocabulary lives once in lang/{ar,en}/admin.php and is shared by the
- * admin panel and the APIs. An unknown value (e.g. a free-form refund
+ * The APIs read lang/{ar,en}/api_labels.php first and fall back to the
+ * admin.php key of the same name (API audit, 2026-11-13): the admin panel
+ * wording may change for staff without changing the text the customer and
+ * driver apps already show. An unknown value (e.g. a free-form refund
  * reason code) is returned as-is rather than as a raw translation key.
  */
 final class Label
@@ -43,6 +45,27 @@ final class Label
         }
         $key = sprintf(self::FAMILIES[$family], $value);
 
-        return Lang::has($key) ? __($key) : $value;
+        return Lang::has($key) || Lang::has(self::apiKey($key) ?? $key) ? self::text($key) : $value;
+    }
+
+    /**
+     * API text for an admin.* translation key: the api_labels.* override when
+     * it exists, otherwise the shared admin.* text. Other keys pass through.
+     *
+     * @param  array<string, mixed>  $replace
+     */
+    public static function text(string $key, array $replace = [], ?string $locale = null): string
+    {
+        $apiKey = self::apiKey($key);
+        if ($apiKey !== null && Lang::has($apiKey, $locale)) {
+            return __($apiKey, $replace, $locale);
+        }
+
+        return __($key, $replace, $locale);
+    }
+
+    private static function apiKey(string $key): ?string
+    {
+        return str_starts_with($key, 'admin.') ? 'api_labels.'.substr($key, 6) : null;
     }
 }

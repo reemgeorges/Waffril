@@ -49,9 +49,10 @@ class OrderStateMachine
         $previousDriverId = $order->driver_id !== null ? (int) $order->driver_id : null;
 
         if (! self::allowed($from, $to)) {
+            // API vocabulary: drivers and customers receive this message.
             throw new BusinessRuleException(__('admin.errors.illegal_transition', [
-                'from' => $from->label(),
-                'to' => $to->label(),
+                'from' => $from->publicLabel(),
+                'to' => $to->publicLabel(),
             ]));
         }
 

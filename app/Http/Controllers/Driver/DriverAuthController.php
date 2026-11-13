@@ -39,7 +39,7 @@ class DriverAuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            $this->accounts->logout($request->user('driver'));
+            $this->accounts->logout($request->user('driver'), is_string($request->input('device_id')) ? mb_substr($request->input('device_id'), 0, 191) : null);
 
             return $this->apiResponse(['message' => __('messages.driver.logged_out')]);
         } catch (\Exception $e) {

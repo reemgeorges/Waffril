@@ -46,6 +46,15 @@ class DeviceTokenService
                 'last_seen_at' => now(),
             ])->save();
 
+            // One live token per physical device (notification audit,
+            // 2026-11-13): a refreshed FCM token from the same device_id
+            // retires the old one, so the phone is not pushed twice and the
+            // stale row does not use up the driver's device limit.
+            if (filled($data['device_id'] ?? null)) {
+                $this->ownedBy($owner)->where('device_id', $data['device_id'])->where('is_active', true)
+                    ->whereKeyNot($token->id)->update(['is_active' => false, 'revoked_at' => now()]);
+            }
+
             $this->enforceDeviceLimit($owner, $token);
 
             return $token->fresh();

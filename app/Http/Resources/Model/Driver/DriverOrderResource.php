@@ -37,7 +37,7 @@ class DriverOrderResource extends BasicResource
             'id' => $order->id,
             'order_number' => $order->order_number,
             'status' => $order->status->value,
-            'status_label' => $order->status->label(),
+            'status_label' => $order->status->publicLabel(),
             'type' => $order->type,
             'type_label' => Label::of('order_type', $order->type),
             'scheduled_for' => $order->scheduled_for?->toIso8601String(),

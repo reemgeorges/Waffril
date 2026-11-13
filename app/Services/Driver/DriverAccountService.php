@@ -4,6 +4,7 @@ namespace App\Services\Driver;
 
 use App\Exceptions\BusinessRuleException;
 use App\Jobs\Delivery\RecoverDeliveryDispatch;
+use App\Models\DeviceToken;
 use App\Models\Driver;
 use App\Services\Delivery\DeliveryOfferService;
 use Illuminate\Support\Facades\DB;
@@ -42,9 +43,18 @@ class DriverAccountService
         return ['token' => $token, 'driver' => $driver->fresh(['city'])];
     }
 
-    public function logout(Driver $driver): void
+    /**
+     * Signs out this session and stops push to the device (notification
+     * audit, 2026-11-13; same rule as customers): the device's tokens when
+     * the app sends its device_id, otherwise all of this driver's tokens.
+     */
+    public function logout(Driver $driver, ?string $deviceId = null): void
     {
         $driver->currentAccessToken()?->delete();
+        DeviceToken::query()->where('tokenable_type', $driver->getMorphClass())->where('tokenable_id', $driver->id)
+            ->when(filled($deviceId), fn ($query) => $query->where('device_id', $deviceId))
+            ->where('is_active', true)
+            ->update(['is_active' => false, 'revoked_at' => now()]);
     }
 
     /** Changes the password and revokes every OTHER token of this driver. */

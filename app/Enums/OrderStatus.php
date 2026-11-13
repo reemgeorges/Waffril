@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Localization\Label;
+
 /**
  * WAFFRLI (2026-10-31) — order lifecycle. Allowed transitions are
  * enforced by App\Services\Order\OrderStateMachine.
@@ -18,6 +20,12 @@ enum OrderStatus: string
     public function label(): string
     {
         return __('admin.order_status.'.$this->value);
+    }
+
+    /** The label the customer and driver APIs return (api_labels vocabulary). */
+    public function publicLabel(?string $locale = null): string
+    {
+        return Label::text('admin.order_status.'.$this->value, [], $locale);
     }
 
     /** Admin-panel badge colour (display only): waiting, confirmed, on the road, done, cancelled. */

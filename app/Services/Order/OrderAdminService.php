@@ -181,9 +181,11 @@ class OrderAdminService
             AdminAudit::log($auditAction, $order, ['driver_id' => $driver->id] + array_filter($auditExtra, fn ($v) => $v !== null), $admin);
 
             // WAFFRLI driver API (2026-11-02): stored driver notifications.
-            $driver->notify(new DriverOrderUpdate('assigned', $order));
+            Notify::send($driver, new DriverOrderUpdate('assigned', $order), storeWhenMuted: true);
             if ($previousDriverId && $previousDriverId !== $driver->id) {
-                Driver::find($previousDriverId)?->notify(new DriverOrderUpdate('unassigned', $order));
+                if ($previous = Driver::find($previousDriverId)) {
+                    Notify::send($previous, new DriverOrderUpdate('unassigned', $order), storeWhenMuted: true);
+                }
             }
 
             return $order;
@@ -207,7 +209,9 @@ class OrderAdminService
 
             AdminAudit::log('order.driver_unassigned', $order, ['driver_id' => $previous], $admin);
             if ($previous) {
-                Driver::find($previous)?->notify(new DriverOrderUpdate('unassigned', $order));
+                if ($previousDriver = Driver::find($previous)) {
+                    Notify::send($previousDriver, new DriverOrderUpdate('unassigned', $order), storeWhenMuted: true);
+                }
             }
 
             return $order;
@@ -364,7 +368,9 @@ class OrderAdminService
             }
 
             if ($order->driver_id) {
-                Driver::find($order->driver_id)?->notify(new DriverOrderUpdate('cancelled', $order));
+                if ($assigned = Driver::find($order->driver_id)) {
+                    Notify::send($assigned, new DriverOrderUpdate('cancelled', $order), storeWhenMuted: true);
+                }
             }
 
             if ($admin) {
