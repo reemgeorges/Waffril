@@ -72,7 +72,7 @@ class ProductRatingResource extends AdminResource
                     ->hidden($in(ProductRatingsRelationManager::class)),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
                     ->state(fn (ProductRating $record) => $record->user?->fullName())
-                    ->description(fn (ProductRating $record) => $record->user?->phone)
+                    ->description(fn (ProductRating $record) => Fields::ltr($record->user?->phone))
                     ->searchable(query: Fields::searchCustomer('user'))
                     ->hidden($in(CustomerRatingsRelationManager::class)),
                 TextColumn::make('rating')->label(__('admin.table.score'))->sortable()

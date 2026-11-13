@@ -48,7 +48,7 @@ class WalletTransactionResource extends AdminResource
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()
                     ->description(fn ($record) => '#'.$record->id),
                 TextColumn::make('wallet.user.phone')->label(__('admin.fields.customer'))->placeholder('—')
-                    ->formatStateUsing(fn ($state, $record) => $record->wallet?->user?->fullName() ?? $state)->description(fn ($record) => $record->wallet?->user?->phone)
+                    ->formatStateUsing(fn ($state, $record) => $record->wallet?->user?->fullName() ?? $state)->description(fn ($record) => Fields::ltr($record->wallet?->user?->phone))
                     ->searchable(query: Fields::searchCustomer('wallet.user'))
                     ->hidden(fn ($livewire) => $livewire instanceof TransactionsRelationManager),
                 TextColumn::make('type')->label(__('admin.fields.type'))->badge()->color('gray')

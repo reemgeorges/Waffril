@@ -86,7 +86,7 @@ class PlusCycleResource extends AdminResource
             ->columns([
                 TextColumn::make('user.phone')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, PlusCycle $record) => $record->user?->fullName())
-                    ->description(fn (PlusCycle $record) => $record->user?->phone)
+                    ->description(fn (PlusCycle $record) => Fields::ltr($record->user?->phone))
                     ->searchable(query: Fields::searchCustomer('user'))
                     ->hidden(fn ($livewire) => $livewire instanceof RelationManager),
                 TextColumn::make('cycle_number')->label(__('admin.fields.plan'))

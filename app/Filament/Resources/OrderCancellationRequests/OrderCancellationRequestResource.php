@@ -6,6 +6,7 @@ use App\Filament\Resources\OrderCancellationRequests\Pages\ListOrderCancellation
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\OrderCancellationRequest;
@@ -62,7 +63,7 @@ class OrderCancellationRequestResource extends AdminResource
             ->modifyQueryUsing(fn ($query) => $query->with(['order.user', 'resolvedBy']))
             ->columns([
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => collect([$record->order?->user?->fullName(), $record->order?->user?->phone])->filter()->implode(' · '))
+                    ->description(fn ($record) => collect([$record->order?->user?->fullName(), Fields::ltr($record->order?->user?->phone)])->filter()->implode(' · '))
                     ->searchable(query: fn ($query, string $search) => $query->whereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$search}%"))
                         ->orWhereHas('order.user', fn ($u) => $u->where('phone', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")))
                     ->url(fn (OrderCancellationRequest $record) => OrderResource::getUrl('view', ['record' => $record->order_id])),

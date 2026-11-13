@@ -62,7 +62,7 @@ class PendingOrdersTable extends TableWidget
                     ->description(fn (Order $record) => $record->scheduled_for?->translatedFormat('j M، H:i')),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
                     ->state(fn (Order $record) => $record->user?->fullName())
-                    ->description(fn (Order $record) => $record->user?->phone),
+                    ->description(fn (Order $record) => Fields::ltr($record->user?->phone)),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn (Order $record) => $record->branch?->store?->name)->visibleFrom('md'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)

@@ -7,6 +7,7 @@ use App\Filament\Resources\Customers\RelationManagers\PlusRequestsRelationManage
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Filament\Support\PlusPolicyFields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
@@ -64,7 +65,7 @@ class PlusRequestResource extends AdminResource
             ->columns([
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->state(fn (PlusRequest $record) => $record->user?->fullName())
-                    ->description(fn (PlusRequest $record) => collect([$record->user?->phone, $record->created_at ? __('admin.table.requested_ago', ['time' => $record->created_at->diffForHumans()]) : null])->filter()->implode(' · '))
+                    ->description(fn (PlusRequest $record) => collect([Fields::ltr($record->user?->phone), $record->created_at ? __('admin.table.requested_ago', ['time' => $record->created_at->diffForHumans()]) : null])->filter()->implode(' · '))
                     ->tooltip(fn (PlusRequest $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
                     ->url(fn (PlusRequest $record) => $record->user && CustomerResource::canViewAny() ? CustomerResource::getUrl('view', ['record' => $record->user]) : null)
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $user) => $user

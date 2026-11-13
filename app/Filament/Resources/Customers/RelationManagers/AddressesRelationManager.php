@@ -40,8 +40,8 @@ class AddressesRelationManager extends RelationManager
                     ->description(fn ($record) => $record->city?->name),
                 TextColumn::make('address_line')->label(__('admin.fields.address'))->wrap()
                     ->description(fn ($record) => $record->details),
-                TextColumn::make('is_default')->label(__('admin.fields.is_default'))->badge()
-                    ->formatStateUsing(fn ($state) => $state ? __('admin.table.default_address') : null)
+                TextColumn::make('default_badge')->label(__('admin.fields.is_default'))->badge()
+                    ->state(fn ($record) => $record->is_default ? __('admin.table.default_address') : null)
                     ->icon('heroicon-m-star')->color('primary')->placeholder(null),
             ])
             ->defaultSort('is_default', 'desc');

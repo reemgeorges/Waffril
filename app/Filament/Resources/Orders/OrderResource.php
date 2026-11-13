@@ -169,7 +169,7 @@ class OrderResource extends AdminResource
                         ? __('admin.table.scheduled_for', ['date' => $record->scheduled_for->translatedFormat('j M، H:i')]) : null),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
                     ->state(fn (Order $record) => $record->user?->fullName())
-                    ->description(fn (Order $record) => $record->user?->phone)
+                    ->description(fn (Order $record) => Fields::ltr($record->user?->phone))
                     ->searchable(query: Fields::searchCustomer('user')),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn (Order $record) => collect([$record->branch?->store?->name, $record->city?->name])->filter()->implode(' · '))

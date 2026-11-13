@@ -68,8 +68,9 @@ class CurrencyResource extends AdminResource
                 TextColumn::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->sortable()
                     ->formatStateUsing(fn ($state) => Fields::formatDecimal($state))
                     ->description(fn ($record) => $record->rate_updated_at ? __('admin.table.rate_updated', ['time' => $record->rate_updated_at->diffForHumans()]) : null),
-                TextColumn::make('is_default')->label(__('admin.fields.is_default'))->badge()->color('gold')->icon('heroicon-m-star')
-                    ->formatStateUsing(fn ($state) => $state ? __('admin.table.default_currency') : null)->placeholder(null),
+                // Only the default currency shows a badge; the others show nothing.
+                TextColumn::make('default_badge')->label(__('admin.fields.is_default'))->badge()->color('gold')->icon('heroicon-m-star')
+                    ->state(fn ($record) => $record->is_default ? __('admin.table.default_currency') : null)->placeholder(null),
                 Columns::status(),
             ])
             ->searchPlaceholder(__('admin.table.search_currencies'))

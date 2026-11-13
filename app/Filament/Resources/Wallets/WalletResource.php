@@ -63,7 +63,7 @@ class WalletResource extends AdminResource
             ->columns([
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->state(fn (Wallet $record) => $record->user?->fullName())
-                    ->description(fn (Wallet $record) => $record->user?->phone)
+                    ->description(fn (Wallet $record) => Fields::ltr($record->user?->phone))
                     ->searchable(query: Fields::searchCustomer('user')),
                 TextColumn::make('currency.code')->label(__('admin.fields.currency'))->badge()->color('gray'),
                 TextColumn::make('balance')->label(__('admin.fields.balance'))->sortable()->weight(FontWeight::SemiBold)

@@ -1281,6 +1281,7 @@ return [
         'plus_request' => ['singular' => 'PLUS request', 'plural' => 'PLUS requests'],
     ],
     'table' => [
+        'all' => 'All',
         'qty_x_price' => ':qty × :price',
         'discount_note' => 'Offer discount −:amount',
         'from_status' => 'from :status',

@@ -11,6 +11,7 @@ use App\Filament\Resources\PlusMemberships\PlusMembershipResource;
 use App\Filament\Resources\PlusRequests\PlusRequestResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Columns;
+use App\Filament\Support\Fields;
 use App\Filament\Support\PlusStatus;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
@@ -120,7 +121,7 @@ class CustomerResource extends AdminResource
             ->columns([
                 TextColumn::make('first_name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, User $record) => $record->fullName())
-                    ->description(fn (User $record) => $record->phone)
+                    ->description(fn (User $record) => Fields::ltr($record->phone))
                     ->searchable(query: fn (Builder $query, string $search) => $query->where(fn ($q) => $q
                         ->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%")

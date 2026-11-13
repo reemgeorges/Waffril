@@ -1281,6 +1281,7 @@ return [
         'plus_request' => ['singular' => 'طلب بلس', 'plural' => 'طلبات بلس'],
     ],
     'table' => [
+        'all' => 'الكل',
         'qty_x_price' => ':qty × :price',
         'discount_note' => 'خصم العرض −:amount',
         'from_status' => 'من :status',

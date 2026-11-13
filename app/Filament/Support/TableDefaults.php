@@ -12,6 +12,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 /**
@@ -104,6 +105,9 @@ final class TableDefaults
                 // separate badge (which also showed "0") is hidden in the theme.
                 ->label(fn () => __('admin.table.filters').(((int) $action->getBadge()) > 0 ? ' · '.$action->getBadge() : '')))
             ->columnManagerTriggerAction(fn (Action $action) => $action->tooltip(__('admin.table.columns'))));
+
+        // A yes / no filter offers "All" (not a bare dash) as its empty choice.
+        TernaryFilter::configureUsing(fn (TernaryFilter $filter) => $filter->placeholder(__('admin.table.all')));
 
         TextColumn::configureUsing(function (TextColumn $column): void {
             $name = (string) $column->getName();

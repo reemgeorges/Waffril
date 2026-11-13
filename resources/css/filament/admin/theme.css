@@ -2392,3 +2392,20 @@ a > .wf-stat-link .fi-badge::after,
 .fi-ta-filters-trigger-action-ctn .fi-btn-badge-ctn {
     display: none;
 }
+
+/* An empty header-actions slot must not take a line of its own when the
+   toolbar wraps on phones. */
+.fi-ta-header-toolbar > .fi-ta-actions:not(:has(*)) {
+    display: none;
+}
+
+/* "Filters · 2" stays on one line next to the search field. */
+.fi-ta-filters-dropdown,
+.fi-ta-filters-trigger-action-ctn {
+    flex-shrink: 0;
+}
+
+.fi-ta-filters-dropdown .fi-btn,
+.fi-ta-filters-trigger-action-ctn .fi-btn {
+    white-space: nowrap;
+}

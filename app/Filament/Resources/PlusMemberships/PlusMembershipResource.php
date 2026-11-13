@@ -76,7 +76,7 @@ class PlusMembershipResource extends AdminResource
             ->columns([
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->state(fn (PlusMembership $record) => $record->user?->fullName())
-                    ->description(fn (PlusMembership $record) => $record->user?->phone)
+                    ->description(fn (PlusMembership $record) => Fields::ltr($record->user?->phone))
                     ->searchable(query: Fields::searchCustomer('user')),
                 TextColumn::make('plan.name')->label(__('admin.fields.plan'))
                     ->description(fn (PlusMembership $record) => self::policyLabel($record->renewal_policy, $record->custom_duration_days)),

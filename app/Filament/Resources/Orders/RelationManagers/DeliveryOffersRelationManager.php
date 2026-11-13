@@ -63,7 +63,7 @@ class DeliveryOffersRelationManager extends RelationManager
                     ->description(fn (DeliveryOffer $record) => $record->responded_at ? __('admin.table.responded_at', ['time' => $record->responded_at->format('H:i:s')]) : null)
                     ->tooltip(fn (DeliveryOffer $record) => $record->offered_at?->translatedFormat(TableDefaults::dateTimeFormat()))
                     ->extraAttributes(['class' => 'wf-ltr wf-num']),
-                TextColumn::make('selection_meta')->label(__('admin.dispatch.selection'))->placeholder('—')->wrap()->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('selection_meta')->label(__('admin.dispatch.selection'))->placeholder('—')->wrap()->toggleable()->visibleFrom('lg')
                     ->state(fn (DeliveryOffer $record) => self::selection($record->selection_meta)),
             ])
             ->defaultSort('id');

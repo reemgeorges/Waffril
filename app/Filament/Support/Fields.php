@@ -142,6 +142,16 @@ final class Fields
      * the currency's own decimals, thousands separator, ISO code
      * ("USD 4.58", "SYP 66,127"). Display only: stored values are untouched.
      */
+    /**
+     * Wraps a left-to-right value (phone, e-mail, code) in Unicode direction
+     * isolates, so "+963 9…" stays "+963 9…" inside Arabic text (table UX
+     * overhaul 2026-11-12). Display only; null stays null.
+     */
+    public static function ltr(?string $value): ?string
+    {
+        return filled($value) ? "\u{2066}{$value}\u{2069}" : null;
+    }
+
     public static function formatMoney(mixed $amount, ?Currency $currency): string
     {
         if ($amount === null || $amount === '') {
