@@ -8,6 +8,7 @@ use App\Filament\Support\InitialsAvatarProvider;
 use App\Filament\Support\LocalizedNotification;
 use App\Filament\Support\TableDefaults;
 use App\Http\Middleware\SetAdminPanelLocale;
+use Filament\Auth\Pages\Login;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
@@ -83,7 +84,11 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand.head'))
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.brand.locale-switcher'))
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.brand.sidebar-footer'))
-            ->renderHook(PanelsRenderHook::SIMPLE_LAYOUT_START, fn () => view('filament.brand.locale-switcher', ['floating' => true]))
+            // 2026-11-15: no language switch on the login page (only there);
+            // other simple-layout pages, if enabled later, keep it.
+            ->renderHook(PanelsRenderHook::SIMPLE_LAYOUT_START, fn (array $scopes = []) => in_array(Login::class, $scopes, true)
+                ? ''
+                : view('filament.brand.locale-switcher', ['floating' => true]))
             ->renderHook(PanelsRenderHook::SIMPLE_PAGE_START, fn () => view('filament.brand.login-hero'))
             // WAFFRLI (2026-11-03): operational alerts in the bell. Live over the
             // shared Reverb server when configured (config/filament.php echo,

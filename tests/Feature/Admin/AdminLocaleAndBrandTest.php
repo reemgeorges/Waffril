@@ -52,11 +52,14 @@ class AdminLocaleAndBrandTest extends AdminPanelTestCase
         $this->assertStringContainsString('مطلوب', (string) $message, 'Arabic validation message in the panel.');
     }
 
-    public function test_login_page_is_branded_and_offers_the_language_switch(): void
+    public function test_login_page_is_branded_without_the_language_switch(): void
     {
         $page = $this->get('/admin/login')->assertOk();
+        // 2026-11-15: the AR | EN switch is not shown on the login page (both buttons).
         $page->assertSee('images/brand/waffrli-logo-256.webp', false)
-            ->assertSee('data-testid="locale-switcher"', false)
+            ->assertDontSee('data-testid="locale-switcher"', false)
+            ->assertDontSee('data-locale="ar"', false)
+            ->assertDontSee('data-locale="en"', false)
             ->assertSee('css/filament/admin/theme.css', false)
             ->assertSee('fonts/ibm-plex-sans-arabic/font.css', false)
             ->assertSee('images/brand/favicon-32.png', false)
@@ -70,7 +73,8 @@ class AdminLocaleAndBrandTest extends AdminPanelTestCase
     {
         config(['broadcasting.connections.reverb.secret' => 'server-only-secret']);
         $html = $this->actingAsAdmin($this->superAdmin())->get('/admin')->assertOk()
-            ->assertSee('wf-brand', false)->assertSee('وفرلي')->assertSee('data-locale="ar"', false)
+            ->assertSee('wf-brand', false)->assertSee('وفرلي')
+            ->assertSee('data-testid="locale-switcher"', false)->assertSee('data-locale="ar"', false)->assertSee('data-locale="en"', false)
             ->getContent();
         $this->assertStringNotContainsString('server-only-secret', $html);
     }
