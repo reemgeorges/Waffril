@@ -22,6 +22,7 @@ use App\Services\Catalog\BranchHoursService;
 use App\Services\Currency\CurrencyPolicy;
 use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
 use Brick\Math\BigDecimal;
@@ -128,7 +129,7 @@ class CheckoutService
             throw new BusinessRuleException(__('messages.customer.delivery_not_covered'), 422);
         }
         if (! $priced['meets_min_order']) {
-            throw new BusinessRuleException(__('messages.customer.below_min_order', ['amount' => $priced['min_order_amount'].' '.$currency->code]), 422);
+            throw new BusinessRuleException(__('messages.customer.below_min_order', ['amount' => Denomination::presentString($priced['min_order_amount'], $currency).' '.$currency->code]), 422);
         }
 
         if ($priced['free_delivery_applied'] && ! $this->plus->consumeFreeDelivery($priced['plus_cycle'])) {
@@ -287,13 +288,15 @@ class CheckoutService
         if ($requested === null || $requested === '' || ($requested !== 'max' && BigDecimal::of($requested)->isZero())) {
             return BigDecimal::zero();
         }
+        // $requested is in STORED units (old SYP). The customer API converts
+        // the typed new-SYP amount once, in CustomerCartController::checkout.
         $decimals = (int) $currency->decimals;
         if ($requested !== 'max' && ! BigDecimal::of($requested)->isEqualTo(Money::roundTo($requested, $decimals))) {
-            // SYP has 0 decimals: a fractional wallet part would leave fractional cash to collect.
-            throw new BusinessRuleException(__('validation.decimal', ['attribute' => 'wallet_amount', 'decimal' => $decimals]), 422);
+            // A fraction of the smallest stored unit would leave uncollectable cash.
+            throw new BusinessRuleException(__('validation.decimal', ['attribute' => 'wallet_amount', 'decimal' => Denomination::decimals($currency)]), 422);
         }
         $amount = $requested === 'max'
-            // Whole units of the order currency only, so the cash part stays collectable.
+            // Whole stored units of the order currency only, so the cash part stays collectable.
             ? BigDecimal::of((string) (Wallet::query()->where('user_id', $user->id)->where('currency_id', $currency->id)->value('balance') ?? '0'))->toScale($decimals, RoundingMode::FLOOR)
             : BigDecimal::of($requested);
         $amount = $amount->isGreaterThan($total) ? $total : $amount;
@@ -302,7 +305,7 @@ class CheckoutService
         }
         $balance = BigDecimal::of((string) (Wallet::query()->where('user_id', $user->id)->where('currency_id', $currency->id)->lockForUpdate()->value('balance') ?? '0'));
         if ($amount->isGreaterThan($balance)) {
-            throw new BusinessRuleException(__('messages.customer.wallet_insufficient', ['currency' => $currency->code, 'balance' => (string) Money::roundTo($balance, $currency->decimals)]), 422);
+            throw new BusinessRuleException(__('messages.customer.wallet_insufficient', ['currency' => $currency->code, 'balance' => Denomination::presentString(Money::roundTo($balance, $currency->decimals), $currency)]), 422);
         }
 
         return Money::roundTo($amount, 4);

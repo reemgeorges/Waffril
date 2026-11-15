@@ -4,6 +4,7 @@ namespace App\Filament\Support;
 
 use App\Models\Currency;
 use App\Services\Currency\OperationalMoney;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Closure;
 use Filament\Forms\Components\Textarea;
@@ -153,11 +154,12 @@ final class Fields
         $operational = OperationalMoney::currency();
 
         return $input
-            ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.(int) $operational->decimals : 'decimal:0,4')
+            // Typed in the DISPLAYED denomination (new SYP: up to 2 decimals = qirsh).
+            ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.(int) Denomination::decimals($operational) : 'decimal:0,4')
             ->suffix(fn (Get $get) => $monetary($get) ? self::currencyLabel($operational) : null)
             ->afterStateHydrated(function (TextInput $component, $state, Get $get) use ($monetary): void {
                 if ($state !== null && $state !== '' && $monetary($get)) {
-                    $component->state((string) OperationalMoney::fromBase((string) $state));
+                    $component->state(Denomination::presentString(OperationalMoney::fromBase((string) $state), OperationalMoney::currency()));
                 }
             })
             ->rule(fn (Get $get) => function (string $attribute, mixed $value, Closure $fail) use ($get, $monetary): void {
@@ -177,7 +179,7 @@ final class Fields
                 $original = $record?->getRawOriginal($name);
                 $sameType = $fixedWhen === null || $record?->getRawOriginal($fixedWhen) === 'fixed';
                 if ($original !== null && $sameType) {
-                    $shown = OperationalMoney::fromBase((string) $original);
+                    $shown = Denomination::present(OperationalMoney::fromBase((string) $original), OperationalMoney::currency());
                     if ($shown !== null && $shown->isEqualTo((string) $state)) {
                         return $original;
                     }
@@ -189,6 +191,30 @@ final class Fields
             ->hintIcon('heroicon-m-information-circle', tooltip: fn (Get $get, ?Model $record) => $monetary($get) && $record?->getRawOriginal($name) !== null
                 ? self::storedTooltip($record->getRawOriginal($name))
                 : null);
+    }
+
+    /**
+     * An amount typed in a RECORD's own currency (refunds, settlements,
+     * cancellation cash): typed in the displayed denomination (new SYP, up
+     * to 2 decimals) and handed to the services in stored units (old SYP),
+     * converted exactly once here. Use presentedDefault()/presentedMax()
+     * for stored defaults and limits.
+     */
+    public static function recordMoney(string $name, ?Currency $currency): TextInput
+    {
+        return TextInput::make($name)->label(__("admin.fields.{$name}"))
+            ->numeric()
+            ->rule('decimal:0,'.(int) Denomination::decimals($currency, 4))
+            ->suffix(self::currencyLabel($currency))
+            ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' || ! is_numeric($state)
+                ? $state
+                : (string) (Denomination::toStored((string) $state, $currency) ?? throw new \LogicException('validated amount has too many decimals')));
+    }
+
+    /** A stored amount as the value of a recordMoney() input. */
+    public static function presentedDefault(mixed $stored, ?Currency $currency): string
+    {
+        return Denomination::presentString((string) ($stored ?? '0'), $currency) ?? '0';
     }
 
     /** "≈ 15,001 ل.س · rate not confirmed" for a base amount being typed. */
@@ -257,7 +283,8 @@ final class Fields
 
         return __('admin.money.stored_as', [
             'amount' => trim(($base?->code ?? '').' '.self::formatDecimal((string) $baseAmount)),
-            'rate' => $rate !== null ? self::formatDecimal((string) $rate) : '—',
+            // In the displayed denomination (130 new SYP per USD, stored as 13,000 old).
+            'rate' => $rate !== null ? self::formatDecimal(Denomination::presentRate((string) $rate, OperationalMoney::currency())) : '—',
             'status' => OperationalMoney::rateApproved() ? __('admin.money.rate_approved') : __('admin.money.rate_unconfirmed'),
         ]);
     }
@@ -351,13 +378,34 @@ final class Fields
         if ($amount === null || $amount === '') {
             return '—';
         }
-        $decimals = $currency?->decimals ?? 2;
-        $value = (string) Money::roundTo((string) $amount, $decimals);
+        // Stored units → displayed denomination (old → new SYP), exactly once.
+        $presented = Denomination::present((string) $amount, $currency);
+        $decimals = (int) Denomination::decimals($currency);
+        $value = (string) Money::roundTo($presented, $decimals);
         [$int, $fraction] = array_pad(explode('.', ltrim($value, '-')), 2, '');
         $grouped = strrev(implode(',', str_split(strrev($int), 3)));
         $negative = str_starts_with($value, '-') && ! Money::of($value)->isZero();
+        // A redenominated currency shows its fraction (qirsh) only when there is one.
+        $showFraction = $decimals > 0 && ! (Denomination::converts($currency) && trim($fraction, '0') === '');
 
-        return ($negative ? '−' : '').$grouped.($decimals > 0 ? '.'.str_pad($fraction, $decimals, '0') : '');
+        return ($negative ? '−' : '').$grouped.($showFraction ? '.'.str_pad($fraction, $decimals, '0') : '');
+    }
+
+    /**
+     * Audit note for a stored amount whose stored denomination differs from
+     * the displayed one: "Stored as 32,500 old SYP". Null otherwise.
+     */
+    public static function storedDenominationNote(mixed $amount, ?Currency $currency): ?string
+    {
+        if ($amount === null || $amount === '' || ! Denomination::converts($currency)) {
+            return null;
+        }
+
+        return __('admin.money.stored_denomination', [
+            'amount' => self::formatDecimal((string) $amount),
+            'code' => $currency->code,
+            'denomination' => __('admin.money.denomination_'.Denomination::storedName($currency)),
+        ]);
     }
 
     /**

@@ -118,12 +118,28 @@ return [
         'redenomination_enabled' => (bool) env('WAFFRLI_CURRENCY_SWITCH_ENABLED', false),
         'operational_default' => env('WAFFRLI_OPERATIONAL_CURRENCY', 'SYP'),
         'customer_currencies' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAFFRLI_CUSTOMER_CURRENCIES', 'SYP'))))),
-        // The operational rate (units per 1 accounting-base unit) an operator
-        // has explicitly approved, e.g. "13000". Admin amounts are typed in
+        // The operational rate an operator has explicitly approved, in the
+        // DISPLAYED denomination (new SYP per 1 accounting-base unit; the
+        // stored 13000 old SYP equals 130 new). Admin amounts are typed in
         // the operational currency only while the stored rate equals it;
         // empty = not approved (admins keep typing base amounts). A changed
         // stored rate revokes the approval. See OperationalMoney.
         'approved_operational_rate' => env('WAFFRLI_APPROVED_OPERATIONAL_RATE'),
+        // Denominations (2026-11-15, App\Support\Money\Denomination). The
+        // owner adopted the NEW Syrian pound: 100 old SYP = 1 new SYP (a
+        // fixed legal ratio, not an exchange rate). The SYP row and every
+        // stored SYP amount are in OLD pounds (rate 13000 per USD, 0
+        // decimals); people see and type NEW pounds with 2 decimals (qirsh).
+        // If the stored data is ever redenominated, set stored to "new" so
+        // the factor becomes 1 and nothing is converted twice.
+        'denominations' => [
+            'SYP' => [
+                'stored' => env('WAFFRLI_SYP_STORED_DENOMINATION', 'old'),
+                'display' => env('WAFFRLI_SYP_DISPLAY_DENOMINATION', 'new'),
+                'units' => ['old' => 1, 'new' => 100],
+                'decimals' => ['old' => 0, 'new' => 2],
+            ],
+        ],
         // Arabic display symbols for codes whose stored symbol is Latin.
         'arabic_symbols' => ['SYP' => 'ل.س'],
     ],

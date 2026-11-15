@@ -18,6 +18,7 @@ use App\Services\Currency\CurrencyPolicy;
 use App\Services\Functional\Currency\CurrencyConverter;
 use App\Support\Database\JsonSearch;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Builder;
@@ -288,7 +289,8 @@ class CustomerCatalogService
         $converted = app(CurrencyConverter::class)->convert($value, $this->default, $display);
 
         return [
-            'amount' => (string) $converted,
+            // Stored SYP units (old) → displayed denomination (new), once.
+            'amount' => Denomination::presentString($converted, $display),
             'currency' => $display->code,
             'display' => null,
         ];

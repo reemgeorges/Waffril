@@ -9,6 +9,7 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\Currency\CurrencyPolicy;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,7 @@ class CustomerWalletController extends CustomerController
     {
         return $this->respond(fn () => ['wallets' => Wallet::query()->where('user_id', $this->customer($request)->id)->with('currency')->get()->map(fn ($w) => [
             'currency' => $w->currency->code, 'symbol' => $w->currency->symbol,
-            'balance' => (string) Money::roundTo((string) $w->balance, $w->currency->decimals),
+            'balance' => Denomination::presentString((string) $w->balance, $w->currency),
         ])->values()]);
     }
 
@@ -37,7 +38,7 @@ class CustomerWalletController extends CustomerController
             return $this->paginated($page, 'transactions', fn ($t) => [
                 'id' => $t->id, 'type' => $t->type, 'type_label' => Label::of('wallet_type', $t->type),
                 'direction' => $t->direction, 'direction_label' => Label::of('wallet_direction', $t->direction), 'currency' => $t->wallet->currency->code,
-                'amount' => (string) $t->amount, 'balance_after' => (string) $t->balance_after,
+                'amount' => Denomination::presentString((string) $t->amount, $t->wallet->currency), 'balance_after' => Denomination::presentString((string) $t->balance_after, $t->wallet->currency),
                 'order_number' => $t->order?->order_number, 'created_at' => $t->created_at?->toIso8601String(),
             ]);
         });
@@ -51,8 +52,8 @@ class CustomerWalletController extends CustomerController
 
             return $this->paginated($page, 'payments', fn ($p) => [
                 'order_number' => $p->order->order_number, 'method' => $p->method->code, 'method_label' => $p->method->name, 'currency' => $p->currency->code,
-                'amount' => (string) $p->amount, 'status' => $p->status, 'status_label' => Label::of('payment_status', $p->status), 'collected' => (string) $p->collected_amount,
-                'reversed' => (string) $p->reversed_amount, 'refunded' => (string) $p->refunded_amount, 'paid_at' => $p->paid_at?->toIso8601String(),
+                'amount' => Denomination::presentString((string) $p->amount, $p->currency), 'status' => $p->status, 'status_label' => Label::of('payment_status', $p->status), 'collected' => Denomination::presentString((string) $p->collected_amount, $p->currency),
+                'reversed' => Denomination::presentString((string) $p->reversed_amount, $p->currency), 'refunded' => Denomination::presentString((string) $p->refunded_amount, $p->currency), 'paid_at' => $p->paid_at?->toIso8601String(),
             ]);
         });
     }
@@ -64,7 +65,7 @@ class CustomerWalletController extends CustomerController
                 ->with(['order', 'currency'])->orderByDesc('id')->paginate($this->perPage($request));
 
             return $this->paginated($page, 'refunds', fn ($r) => [
-                'order_number' => $r->order->order_number, 'currency' => $r->currency->code, 'amount' => (string) $r->amount,
+                'order_number' => $r->order->order_number, 'currency' => $r->currency->code, 'amount' => Denomination::presentString((string) $r->amount, $r->currency),
                 'reason' => $r->reason_code, 'reason_label' => Label::of('cancellation_reason', $r->reason_code), 'credited_to' => 'wallet', 'created_at' => $r->created_at?->toIso8601String(),
             ]);
         });
@@ -74,8 +75,8 @@ class CustomerWalletController extends CustomerController
     {
         // Only the currencies offered to customers (CurrencyPolicy).
         return $this->respond(fn () => ['currencies' => CurrencyPolicy::customerCurrencies()->map(fn ($c) => [
-            'id' => $c->id, 'code' => $c->code, 'name' => $c->name, 'symbol' => $c->symbol, 'decimals' => $c->decimals,
-            'exchange_rate' => (string) $c->exchange_rate, 'is_default' => $c->code === strtoupper((string) config('waffrli.currency.operational_default', 'SYP')),
+            'id' => $c->id, 'code' => $c->code, 'name' => $c->name, 'symbol' => $c->symbol, 'decimals' => Denomination::decimals($c),
+            'denomination' => Denomination::displayName($c), 'exchange_rate' => Denomination::presentRate((string) $c->exchange_rate, $c), 'is_default' => $c->code === strtoupper((string) config('waffrli.currency.operational_default', 'SYP')),
         ])->values()]);
     }
 }

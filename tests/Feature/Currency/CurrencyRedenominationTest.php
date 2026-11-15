@@ -10,6 +10,7 @@ use App\Models\BranchProduct;
 use App\Models\Currency;
 use App\Models\CurrencyRedenomination;
 use App\Services\Currency\CurrencyRedenominationService;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -159,7 +160,8 @@ class CurrencyRedenominationTest extends CustomerTestCase
         $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
             ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout")->assertOk()->json('data.order');
         $this->assertSame('SYP', $order['currency']['code'], 'The new default is the order currency.');
-        $this->assertSame(0, BigDecimal::of((string) $bp->price)->multipliedBy(3)->compareTo($order['amounts']['subtotal']), 'Converted catalog price, rate 1.');
+        // The switch keeps SYP in its stored (old) unit; the API shows new SYP (÷ 100).
+        $this->assertSame(0, Denomination::present(BigDecimal::of((string) $bp->price)->multipliedBy(3), 'SYP')->compareTo($order['amounts']['subtotal']), 'Converted catalog price, rate 1.');
 
         // Paying in the former default converts with the re-based rate.
         $usd = Currency::where('code', 'USD')->firstOrFail();

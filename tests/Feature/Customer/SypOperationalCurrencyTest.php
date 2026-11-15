@@ -20,6 +20,7 @@ use App\Services\Functional\Currency\CurrencyConverter;
 use App\Services\Order\OrderAdminService;
 use App\Services\Order\OrderPricingService;
 use App\Services\Order\RefundService;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +53,9 @@ class SypOperationalCurrencyTest extends CustomerTestCase
         $target = Currency::where('code', 'SYP')->firstOrFail();
         $price = app(CustomerCatalogService::class)->price('2.50', $this->demoCustomer(1));
         $this->assertSame('SYP', $price['currency']);
-        $this->assertSame((string) app(CurrencyConverter::class)->convert('2.50', $source, $target), $price['amount']);
+        // 2.50 USD × 13000 = 32,500 old SYP, shown as 325.00 new SYP (converted once).
+        $this->assertSame(Denomination::presentString(app(CurrencyConverter::class)->convert('2.50', $source, $target), $target), $price['amount']);
+        $this->assertSame('325.00', $price['amount']);
         $this->assertNotSame('2.50', $price['amount']);
         $target->update(['exchange_rate' => '0']);
         $this->expectException(BusinessRuleException::class);
@@ -140,17 +143,38 @@ class SypOperationalCurrencyTest extends CustomerTestCase
         DB::table('wallets')->where('user_id', $user->id)->where('currency_id', $syp->id)->update(['balance' => '1000.5000']);
         $cart = $this->cartFor($user, $token);
 
+        // Typed in NEW SYP: a third decimal (below one qirsh = one old pound) is refused.
         $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
-            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => '10.5'])->assertStatus(422);
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => '10.555'])->assertStatus(422);
 
         $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
             ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => 'max'])->assertOk()->json('data.order');
         $payments = Order::findOrFail($order['id'])->payments()->with('method')->get();
         $wallet = $payments->firstWhere('method.kind', '!=', 'cash');
         $cash = $payments->firstWhere('method.kind', 'cash');
-        $this->assertTrue(Money::of($wallet->amount)->isEqualTo('1000'), 'whole pounds only from the wallet');
+        $this->assertTrue(Money::of($wallet->amount)->isEqualTo('1000'), 'whole stored (old) pounds only from the wallet');
+        $this->assertSame('10.00', collect($order['payments'])->firstWhere('method', 'wallet')['amount'], '1,000 old SYP = 10 new SYP');
         $this->assertTrue(Money::of($cash->amount)->isEqualTo(Money::roundTo($cash->amount, 0)), 'cash due has no fraction');
-        $this->assertTrue(Money::of($wallet->amount)->plus($cash->amount)->isEqualTo($order['amounts']['total']));
+        $this->assertTrue(Denomination::present(Money::of($wallet->amount)->plus($cash->amount), $syp)->isEqualTo($order['amounts']['total']));
+    }
+
+    public function test_a_typed_wallet_amount_is_new_syp_converted_once(): void
+    {
+        $user = $this->demoCustomer(9); // 5,000 old SYP = 50 new SYP in the wallet
+        $token = $this->loginCustomer($user);
+        $cart = $this->cartFor($user, $token);
+
+        // 10.50 new SYP = 1,050 old SYP stored.
+        $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => '10.50'])->assertOk()->json('data.order');
+        $wallet = Order::findOrFail($order['id'])->payments()->whereHas('method', fn ($q) => $q->where('kind', '!=', 'cash'))->sole();
+        $this->assertTrue(Money::of($wallet->amount)->isEqualTo('1050'));
+        $this->assertSame('10.50', collect($order['payments'])->firstWhere('method', 'wallet')['amount']);
+
+        // The stored (old) number typed as new SYP is 100× more and is refused, not silently divided.
+        $cart = $this->cartFor($user, $token);
+        $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => '3950'])->assertStatus(422);
     }
 
     public function test_plus_cycle_amounts_recorded_in_syp_are_not_converted_again(): void

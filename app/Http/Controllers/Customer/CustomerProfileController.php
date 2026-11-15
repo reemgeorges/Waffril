@@ -10,6 +10,7 @@ use App\Http\Resources\Model\Customer\CustomerProfileResource;
 use App\Services\Currency\CurrencyPolicy;
 use App\Services\Customer\Auth\CustomerAuthService;
 use App\Services\Customer\CustomerProfileService;
+use App\Support\Money\Denomination;
 use Illuminate\Http\Request;
 
 /** WAFFRLI customer API (2026-11-03) — profile, avatar, email, deletion, delivery context. */
@@ -73,8 +74,8 @@ class CustomerProfileController extends CustomerController
             return [
                 'selected_address' => $address ? CustomerAddressResource::make($address) : null,
                 'delivery_city' => $address?->city ? ['id' => $address->city->id, 'name' => $address->city->name] : null,
-                'default_currency' => $default ? ['id' => $default->id, 'code' => $default->code, 'symbol' => $default->symbol, 'decimals' => $default->decimals] : null,
-                'display_currency' => $display && $display->id !== $default?->id ? ['id' => $display->id, 'code' => $display->code, 'exchange_rate' => (string) $display->exchange_rate] : null,
+                'default_currency' => $default ? ['id' => $default->id, 'code' => $default->code, 'symbol' => $default->symbol, 'decimals' => Denomination::decimals($default), 'denomination' => Denomination::displayName($default)] : null,
+                'display_currency' => $display && $display->id !== $default?->id ? ['id' => $display->id, 'code' => $display->code, 'exchange_rate' => Denomination::presentRate((string) $display->exchange_rate, $display)] : null,
             ];
         });
     }

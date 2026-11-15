@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Currency;
 use App\Models\User;
 use App\Services\Functional\Currency\CurrencyConverter;
+use App\Support\Money\Denomination;
 use Illuminate\Support\Collection;
 
 /** Operational currencies are independent of the accounting base currency. */
@@ -22,7 +23,9 @@ class CurrencyPolicy
             throw new BusinessRuleException(__('messages.customer.currency_not_payable'), 422);
         }
 
-        return (string) app(CurrencyConverter::class)->convert($amount, $source, $target);
+        // API amount: converted to the operational currency, then shown in its
+        // displayed denomination (new SYP), exactly once.
+        return Denomination::presentString(app(CurrencyConverter::class)->convert($amount, $source, $target), $target);
     }
 
     /** Active currencies offered to customers, the default first. */

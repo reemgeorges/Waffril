@@ -61,3 +61,19 @@ No schema, stored amount, rate or base currency was changed. `App\Services\Curre
 - **Pricing fixes.** PLUS cycle amounts are converted from their recorded `op_currency_id` (never assumed to be in the base, so no double conversion). The wallet part of a checkout is kept in whole units of the order currency, so the cash due is always collectable.
 
 **Still required from an operator:** confirm the real SYP rate and denomination (13000 is a demonstration rate and implies pre-redenomination pounds). Then either set `WAFFRLI_APPROVED_OPERATIONAL_RATE` or run the audited base switch.
+
+## New Syrian pound denomination — 2026-11-15
+
+The owner adopted the NEW Syrian pound (100 old SYP = 1 new SYP). This is a fixed legal ratio, not an exchange rate.
+
+- **What is stored is OLD.** The SYP row has rate 13000 per USD and 0 decimals, so every stored SYP amount (catalog conversions, orders, items, payments, wallets and ledger, refunds, settlements, PLUS `op_*` in SYP, rates) is in old pounds. Nothing was rewritten.
+- **One boundary.** `App\Support\Money\Denomination` (config `waffrli.currency.denominations.SYP`: stored `old`, display `new`, factor 100, 2 display decimals):
+  - divides once on the way out (customer and driver API serializers, Filament `Fields::formatMoney`/`formatAmount`);
+  - multiplies once on the way in (customer `wallet_amount` in `CustomerCartController`, driver `cash_collected` in `DriverOrderController`, Filament `Fields::money` and `Fields::recordMoney`).
+  - Services and the pricing engine work only in stored units.
+- **Exact.** 1 old pound = 1 qirsh, so every stored integer is an exact new amount with 2 decimals; nothing is rounded. A typed amount with more than 2 decimals is refused. Typing the old-unit number is 100× too much and is refused by the exact cash check, never silently divided.
+- **API.** SYP amounts are new pounds. Currency objects report `decimals: 2` and `denomination: "new"`, and SYP rates are restated (13000 → 130). The apps only format: qirsh are shown only when present.
+- **Rates.** `WAFFRLI_APPROVED_OPERATIONAL_RATE` is given in new SYP per USD (for example 130 for the stored 13000). It is not set: the 13000/130 value is still a demonstration rate, so admin SYP input stays disabled.
+- **History.** USD records stay USD. Old-pound SYP records are shown in new pounds by the fixed ratio, and the order view keeps "Recorded as … SYP (old pounds)" for audit.
+- **After a future redenomination of the stored data,** set `WAFFRLI_SYP_STORED_DENOMINATION=new`. The factor then becomes 1 and nothing is converted twice.
+- **Not updated:** the static examples in `docs/waffrli/openapi/examples.json` still show old-unit SYP numbers.

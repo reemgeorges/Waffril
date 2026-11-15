@@ -17,6 +17,7 @@ use App\Services\Order\OrderAdminService;
 use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use App\Support\Realtime\ChannelAccess;
 use Brick\Math\BigDecimal;
@@ -104,13 +105,15 @@ class DriverDeliveryService
         }
 
         $due = self::cashDue($order);
+        // $cashCollected is in STORED units (old SYP); the driver API converts
+        // the typed new-SYP amount once, in DriverOrderController::deliver.
         $collected = BigDecimal::of($cashCollected !== null && $cashCollected !== '' ? $cashCollected : '0');
         if ($due->isZero() && ! $collected->isZero()) {
             throw new BusinessRuleException(__('messages.driver.cash_not_due'), 422);
         }
         if (! $collected->isEqualTo($due)) {
             throw new BusinessRuleException(__('messages.driver.cash_amount_mismatch', [
-                'collected' => (string) $collected, 'due' => Money::roundTo($due, $currency->decimals), 'currency' => $currency->code,
+                'collected' => Denomination::presentString((string) $collected, $currency), 'due' => Denomination::presentString(Money::roundTo($due, $currency->decimals), $currency), 'currency' => $currency->code,
             ]), 422);
         }
 

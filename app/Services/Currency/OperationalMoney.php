@@ -4,6 +4,7 @@ namespace App\Services\Currency;
 
 use App\Models\Currency;
 use App\Services\Functional\Currency\CurrencyConverter;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -81,7 +82,9 @@ final class OperationalMoney
             return false;
         }
         try {
-            return BigDecimal::of($approved)->isEqualTo($rate);
+            // Approved in the DISPLAYED denomination (130 new SYP), stored in
+            // the stored one (13000 old SYP): compared through the fixed ratio.
+            return BigDecimal::of($approved)->multipliedBy(Denomination::factor(self::currency()))->isEqualTo($rate);
         } catch (Throwable) {
             return false;
         }
@@ -132,7 +135,10 @@ final class OperationalMoney
     }
 
     /**
-     * Exact inverse of fromBase().
+     * Exact inverse of fromBase() for an amount TYPED in the displayed
+     * denomination (new SYP): converted to stored units by the fixed
+     * denomination ratio first, then to the base. lower/upper are in STORED
+     * units (format them with Fields::formatMoney, which presents them).
      *
      * @return array{exact: ?string, lower: ?BigDecimal, upper: ?BigDecimal}
      *                                                                       exact: storable base amount (4 decimals) when one converts back to $amount;
@@ -142,13 +148,18 @@ final class OperationalMoney
     {
         $operational = self::currency();
         $rate = self::rate();
-        $target = Money::of((string) $amount);
-        if ($operational === null || $rate === null || $target->isNegative()) {
+        $typed = Money::of((string) $amount);
+        if ($operational === null || $rate === null || $typed->isNegative()) {
             return ['exact' => null, 'lower' => null, 'upper' => null];
         }
-        if (! $target->isEqualTo(Money::roundTo($target, (int) $operational->decimals))) {
-            // More decimals than the operational currency has: never storable as typed.
-            return ['exact' => null, 'lower' => $target->toScale((int) $operational->decimals, RoundingMode::FLOOR), 'upper' => $target->toScale((int) $operational->decimals, RoundingMode::CEILING)];
+        $target = Denomination::toStored($typed, $operational);
+        if ($target === null || ! $target->isEqualTo(Money::roundTo($target, (int) $operational->decimals))) {
+            // More decimals than the displayed denomination has: never storable as typed.
+            $decimals = (int) Denomination::decimals($operational);
+
+            return ['exact' => null,
+                'lower' => Denomination::toStored($typed->toScale($decimals, RoundingMode::FLOOR), $operational),
+                'upper' => Denomination::toStored($typed->toScale($decimals, RoundingMode::CEILING), $operational)];
         }
         if (self::sameAsBase()) {
             return ['exact' => Money::toStorage($target), 'lower' => null, 'upper' => null];

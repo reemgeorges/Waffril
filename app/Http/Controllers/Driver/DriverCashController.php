@@ -11,6 +11,7 @@ use App\Models\DriverCashSettlement;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Services\Driver\DriverDeliveryService;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
@@ -55,7 +56,8 @@ class DriverCashController extends Controller
                 }
             }
 
-            $rows = array_values(array_map(fn ($row) => array_map(fn ($v) => $v instanceof BigDecimal ? Money::toStorage($v) : $v, $row), $rows));
+            // Per currency, never summed across currencies; SYP in its displayed denomination (new).
+            $rows = array_values(array_map(fn ($row) => array_map(fn ($v) => $v instanceof BigDecimal ? Denomination::presentString(Money::toStorage($v), $row['currency']) : $v, $row), $rows));
 
             return $this->apiResponse(['currencies' => $rows]);
         } catch (\Exception $e) {

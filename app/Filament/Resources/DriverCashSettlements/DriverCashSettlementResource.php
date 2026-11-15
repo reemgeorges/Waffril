@@ -12,7 +12,6 @@ use App\Services\Driver\DriverCashSettlementService;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -87,8 +86,9 @@ class DriverCashSettlementResource extends AdminResource
             ->recordActions([
                 RowActions::primary(Action::make('settle')->label(__('admin.table.settle'))->icon('heroicon-m-banknotes')
                     ->visible(fn (DriverCashSettlement $record) => $record->status === DriverCashSettlement::STATUS_OPEN && $can())
-                    ->schema([
-                        TextInput::make('received_amount')->label(__('admin.fields.received_amount'))->required()->numeric()->minValue(0)->rule('decimal:0,4'),
+                    ->schema(fn (DriverCashSettlement $record) => [
+                        // New SYP typed, old SYP stored (Fields::recordMoney).
+                        Fields::recordMoney('received_amount', $record->currency)->required()->minValue(0),
                         Textarea::make('note')->label(__('admin.fields.note'))->helperText(__('admin.settlements.note_required_on_difference'))->maxLength(500),
                     ])
                     ->requiresConfirmation()

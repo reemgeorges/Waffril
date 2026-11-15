@@ -10,6 +10,7 @@ use App\Models\Currency;
 use App\Models\User;
 use App\Services\Currency\CurrencyPolicy;
 use App\Services\Order\OrderPricingService;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -113,7 +114,8 @@ class CartService
                 // reserved; the cycle is locked and the delivery consumed only
                 // when the order is placed (CheckoutService).
                 $priced = $this->pricing->price($user, $cart->branch, $lines, $currency, $address, true);
-                $fmt = fn ($v) => (string) Money::roundTo($v, $currency->decimals);
+                // Displayed denomination (new SYP), converted once here.
+                $fmt = fn ($v) => Denomination::presentString(Money::roundTo($v, $currency->decimals), $currency);
                 $delivery = fn (array $p) => [
                     'delivery_fee' => $fmt($p['delivery_fee']),
                     'delivery_fee_original' => $fmt($p['delivery_fee_original']),

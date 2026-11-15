@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Models\DeliveryOffer;
 use App\Models\Driver;
 use App\Models\Order;
@@ -230,15 +231,17 @@ class ViewOrder extends ViewRecord
                     Select::make('driver_handling')->label(__('admin.fields.driver_handling'))->required()
                         ->options(collect(OrderCancellation::DRIVER_HANDLING)->reject(fn ($h) => $h === 'not_applicable')
                             ->mapWithKeys(fn ($h) => [$h => __("admin.orders.handling_{$h}")])),
-                    TextInput::make('cash_collected_amount')->label(__('admin.fields.cash_collected_amount'))->numeric()->minValue(0)
-                        ->maxValue(fn () => (float) ($cashPayment($record)?->amount ?? 0))->default(0)->rule('decimal:0,4')
+                    // Typed in the order currency's displayed denomination (new SYP);
+                    // Fields::recordMoney hands stored units (old SYP) to the service.
+                    Fields::recordMoney('cash_collected_amount', $record->currency)->minValue(0)
+                        ->maxValue(fn () => (float) Fields::presentedDefault($cashPayment($record)?->amount, $record->currency))->default(0)
                         ->visible(fn () => $cashPayment($record) !== null),
-                    TextInput::make('wallet_reversal_amount')->label(__('admin.fields.wallet_reversal_amount'))->numeric()->minValue(0)
-                        ->maxValue(fn () => (float) (string) ($walletPayment($record)?->returnableAmount() ?? 0))
-                        ->default(fn () => (string) ($walletPayment($record)?->returnableAmount() ?? 0))->rule('decimal:0,4')
+                    Fields::recordMoney('wallet_reversal_amount', $record->currency)->minValue(0)
+                        ->maxValue(fn () => (float) Fields::presentedDefault((string) ($walletPayment($record)?->returnableAmount() ?? 0), $record->currency))
+                        ->default(fn () => Fields::presentedDefault((string) ($walletPayment($record)?->returnableAmount() ?? 0), $record->currency))
                         ->visible(fn () => $walletPayment($record) !== null),
-                    TextInput::make('refund_collected_cash_amount')->label(__('admin.fields.refund_collected_cash_amount'))->numeric()->minValue(0)->default(0)
-                        ->rule('decimal:0,4')->lte('cash_collected_amount')
+                    Fields::recordMoney('refund_collected_cash_amount', $record->currency)->minValue(0)->default(0)
+                        ->lte('cash_collected_amount')
                         ->helperText(__('admin.orders.refund_cash_help'))
                         ->visible(fn () => $cashPayment($record) !== null && AdminPermissions::currentAllows('refunds.create')),
                     Toggle::make('restore_free_delivery')->label(__('admin.fields.restore_free_delivery'))
@@ -259,8 +262,8 @@ class ViewOrder extends ViewRecord
                 Select::make('order_payment_id')->label(__('admin.fields.payment'))->required()
                     ->options($record->payments()->with('method')->get()
                         ->filter(fn (OrderPayment $p) => $p->returnableAmount()->isGreaterThan(0))
-                        ->mapWithKeys(fn (OrderPayment $p) => [$p->id => $p->method?->name.' — '.__('admin.orders.refundable_up_to', ['amount' => (string) $p->returnableAmount()])])),
-                TextInput::make('amount')->label(__('admin.fields.amount'))->required()->numeric()->gt(0)->rule('decimal:0,4'),
+                        ->mapWithKeys(fn (OrderPayment $p) => [$p->id => $p->method?->name.' — '.__('admin.orders.refundable_up_to', ['amount' => Fields::formatMoney((string) $p->returnableAmount(), $record->currency)])])),
+                Fields::recordMoney('amount', $record->currency)->required()->gt(0),
                 TextInput::make('reason_code')->label(__('admin.fields.reason'))->required()->maxLength(32)->alphaDash(),
                 Textarea::make('note')->label(__('admin.fields.note'))->maxLength(500),
             ])

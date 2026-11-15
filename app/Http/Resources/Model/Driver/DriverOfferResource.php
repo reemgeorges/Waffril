@@ -6,6 +6,7 @@ use App\Enums\DeliveryOfferStatus;
 use App\Models\DeliveryOffer;
 use App\Services\Driver\DriverDeliveryService;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,7 +35,8 @@ class DriverOfferResource extends JsonResource
         $offer = $this->resource;
         $order = $offer->order;
         $currency = $order->currency;
-        $format = fn ($amount) => (string) Money::roundTo((string) $amount, $currency->decimals);
+        // Stored units (old SYP) → displayed denomination (new SYP), once.
+        $format = fn ($amount) => Denomination::presentString(Money::roundTo((string) $amount, $currency->decimals), $currency);
         $now = now();
         $open = $offer->status === DeliveryOfferStatus::Pending && $now->lessThan($offer->expires_at);
 
@@ -68,7 +70,7 @@ class DriverOfferResource extends JsonResource
                 'distance_km' => (float) $order->delivery_distance_km,
             ],
             'payment' => [
-                'currency' => ['code' => $currency->code, 'symbol' => $currency->symbol, 'decimals' => $currency->decimals],
+                'currency' => Denomination::currencyPayload($currency),
                 'order_total' => $format($order->total),
                 'prepaid_amount' => $format(DriverDeliveryService::prepaid($order)),
                 'cash_to_collect' => $format(DriverDeliveryService::cashDue($order)),

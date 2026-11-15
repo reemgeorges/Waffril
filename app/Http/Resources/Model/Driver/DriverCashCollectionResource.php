@@ -5,6 +5,7 @@ namespace App\Http\Resources\Model\Driver;
 use App\Http\Resources\Basic\BasicResource;
 use App\Models\DriverCashSettlement;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use Illuminate\Http\Request;
 
 /** WAFFRLI driver API (2026-11-02) — one cash payment this driver collected. */
@@ -20,7 +21,7 @@ class DriverCashCollectionResource extends BasicResource
             'order_id' => $payment->order_id,
             'order_number' => $payment->order?->order_number,
             'currency' => $payment->currency?->code,
-            'amount_collected' => (string) $payment->collected_amount,
+            'amount_collected' => Denomination::presentString((string) $payment->collected_amount, $payment->currency),
             'collected_at' => $payment->paid_at?->toIso8601String(),
             'settlement' => $settlement ? [
                 'id' => $settlement->id,

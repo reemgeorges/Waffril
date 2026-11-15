@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Driver;
 
 use App\Enums\OrderStatus;
+use App\Exceptions\BusinessRuleException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Model\Driver\DriverDeliverRequest;
 use App\Http\Requests\Model\Driver\DriverProblemRequest;
@@ -10,6 +11,7 @@ use App\Http\Resources\Model\Driver\DriverOrderResource;
 use App\Http\Traits\GeneralTrait;
 use App\Models\Order;
 use App\Services\Driver\DriverDeliveryService;
+use App\Support\Money\Denomination;
 use Illuminate\Http\Request;
 
 /**
@@ -82,9 +84,21 @@ class DriverOrderController extends Controller
     public function deliver(DriverDeliverRequest $request, string $order)
     {
         try {
+            $driver = $request->user('driver');
+            // cash_collected is typed in the DISPLAYED denomination (new SYP, up
+            // to 2 decimals) of the ORDER's frozen currency; the service compares
+            // stored units (old SYP). Converted exactly once, here.
+            $cash = null;
+            if ($request->filled('cash_collected')) {
+                $currency = $this->deliveries->ownOrder($driver, $order)->currency;
+                $cash = Denomination::toStored((string) $request->input('cash_collected'), $currency);
+                if ($cash === null) {
+                    throw new BusinessRuleException(__('validation.decimal', ['attribute' => 'cash_collected', 'decimal' => Denomination::decimals($currency)]), 422);
+                }
+            }
             $model = $this->deliveries->deliver(
-                $request->user('driver'), $order,
-                $request->filled('cash_collected') ? (string) $request->input('cash_collected') : null,
+                $driver, $order,
+                $cash !== null ? (string) $cash : null,
                 $request->input('currency'),
                 $request->file('photo'),
             )->load(self::WITH);

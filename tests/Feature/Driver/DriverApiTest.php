@@ -11,6 +11,7 @@ use App\Models\OrderPayment;
 use App\Models\User;
 use App\Services\Driver\DriverDeliveryService;
 use App\Services\Order\OrderAdminService;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Database\Seeders\AdminAccessSeeder;
 use Database\Seeders\Demo\DemoPeopleSeeder;
@@ -280,20 +281,27 @@ class DriverApiTest extends TestCase
 
         $data = $this->api($token)->getJson("/api/v1/driver/orders/{$order->id}")->json('data.order.payment');
         $this->assertSame('SYP', $data['currency']['code']);
-        $this->assertSame(0, $data['currency']['decimals']);
-        $this->assertStringNotContainsString('.', $data['cash_to_collect']);
+        // NEW Syrian pounds (2026-11-15): 2 decimals (qirsh), stored old pounds ÷ 100.
+        $this->assertSame(2, $data['currency']['decimals']);
+        $this->assertSame('new', $data['currency']['denomination']);
+        $this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $data['cash_to_collect']);
+        $this->assertSame(Denomination::presentString(DriverDeliveryService::cashDue($order), $order->currency), $data['cash_to_collect']);
 
         $before = collect($this->api($token)->getJson('/api/v1/driver/cash/summary')->assertOk()->json('data.currencies'))->keyBy('currency');
-        $this->assertSame(Money::toStorage($data['cash_to_collect']), $before['SYP']['to_collect_on_active_deliveries']);
+        $this->assertTrue(Money::of($data['cash_to_collect'])->isEqualTo($before['SYP']['to_collect_on_active_deliveries']));
 
         $this->api($token)->postJson("/api/v1/driver/orders/{$order->id}/pickup")->assertOk();
+        // The stored OLD-pound number is 100× the new amount: refused (no silent division).
+        $this->api($token)->postJson("/api/v1/driver/orders/{$order->id}/deliver", ['cash_collected' => (string) DriverDeliveryService::cashDue($order), 'currency' => 'SYP'])->assertStatus(422);
+        // A third decimal is below one qirsh: refused.
+        $this->api($token)->postJson("/api/v1/driver/orders/{$order->id}/deliver", ['cash_collected' => $data['cash_to_collect'].'1', 'currency' => 'SYP'])->assertStatus(422);
+        // Exactly the new-SYP amount shown: converted once, collected.
         $this->api($token)->postJson("/api/v1/driver/orders/{$order->id}/deliver", ['cash_collected' => $data['cash_to_collect'], 'currency' => 'SYP'])->assertOk();
 
         $after = collect($this->api($token)->getJson('/api/v1/driver/cash/summary')->assertOk()->json('data.currencies'))->keyBy('currency');
-        $this->assertSame('0.0000', $after['SYP']['to_collect_on_active_deliveries']);
-        $this->assertSame(
-            Money::toStorage(Money::of($before['SYP']['collected_unsettled'])->plus($data['cash_to_collect'])),
-            $after['SYP']['collected_unsettled'],
+        $this->assertSame('0.00', $after['SYP']['to_collect_on_active_deliveries']);
+        $this->assertTrue(
+            Money::of($before['SYP']['collected_unsettled'])->plus($data['cash_to_collect'])->isEqualTo($after['SYP']['collected_unsettled']),
             'Collected cash moves from "to collect" to "unsettled" exactly, in SYP.'
         );
         $collections = $this->api($token)->getJson('/api/v1/driver/cash/collections')->assertOk()->json('data.collections');

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Exceptions\BusinessRuleException;
+use App\Services\Currency\CurrencyPolicy;
 use App\Services\Customer\CartService;
 use App\Services\Customer\CustomerOrderService;
 use App\Services\Order\CheckoutService;
+use App\Support\Money\Denomination;
 use Illuminate\Http\Request;
 
 /** WAFFRLI customer API (2026-11-03) — carts (one per branch) and checkout. */
@@ -85,7 +87,18 @@ class CustomerCartController extends CustomerController
             if (! $key || ! preg_match('/^[0-9a-fA-F-]{36}$/', $key)) {
                 throw new BusinessRuleException(__('validation.required', ['attribute' => 'Idempotency-Key (uuid)']), 422);
             }
-            $result = app(CheckoutService::class)->checkoutCart($this->customer($request), $cart, ['checkout_key' => strtolower($key)] + $data);
+            $user = $this->customer($request);
+            // wallet_amount is typed in the DISPLAYED denomination (new SYP, up
+            // to 2 decimals); the services work in stored units (old SYP).
+            if (isset($data['wallet_amount']) && $data['wallet_amount'] !== 'max' && $data['wallet_amount'] !== '') {
+                $currency = CurrencyPolicy::paymentCurrency($user, isset($data['currency_id']) ? (int) $data['currency_id'] : null);
+                $stored = Denomination::toStored($data['wallet_amount'], $currency);
+                if ($stored === null) {
+                    throw new BusinessRuleException(__('validation.decimal', ['attribute' => 'wallet_amount', 'decimal' => Denomination::decimals($currency)]), 422);
+                }
+                $data['wallet_amount'] = (string) $stored;
+            }
+            $result = app(CheckoutService::class)->checkoutCart($user, $cart, ['checkout_key' => strtolower($key)] + $data);
 
             return [
                 'message' => __('messages.customer.order_placed'),

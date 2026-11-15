@@ -18,6 +18,7 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\Order\OrderAdminService;
 use App\Services\Wallet\WalletLedger;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Database\Seeders\AdminAccessSeeder;
@@ -190,8 +191,10 @@ class CustomerCommerceTest extends CustomerTestCase
 
         $this->assertSame('scheduled', $order['type']);
         $this->assertSame('SYP', $order['currency']['code']);
-        $this->assertStringNotContainsString('.', $order['total'], 'SYP has 0 decimals.');
+        // Stored in old pounds (0 decimals); shown in new pounds with qirsh.
+        $this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $order['total'], 'New SYP has 2 decimals.');
         $model = Order::findOrFail($order['id']);
+        $this->assertSame(Denomination::presentString((string) $model->total, $model->currency), $order['total']);
         $this->assertSame('13000.000000000000', (string) $model->exchange_rate);
         // Accepting before the window opens is refused by the admin service.
         $admin = Admin::factory()->create();
@@ -250,7 +253,7 @@ class CustomerCommerceTest extends CustomerTestCase
         $token = $this->loginCustomer($user);
         $wallets = $this->api($token)->getJson('/api/v1/customer/wallet')->assertOk()->json('data.wallets');
         $this->assertSame('SYP', $wallets[0]['currency']);
-        $this->assertSame('5000', $wallets[0]['balance']);
+        $this->assertSame('50.00', $wallets[0]['balance'], '5,000 old SYP = 50 new SYP');
 
         $tx = $this->api($token)->getJson('/api/v1/customer/wallet/transactions?currency=SYP')->assertOk()->json('data.transactions');
         $this->assertNotEmpty($tx);

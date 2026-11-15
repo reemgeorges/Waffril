@@ -7,6 +7,7 @@ use App\Http\Resources\Basic\BasicResource;
 use App\Models\Order;
 use App\Services\Driver\DriverDeliveryService;
 use App\Support\Localization\Label;
+use App\Support\Money\Denomination;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
@@ -30,7 +31,8 @@ class DriverOrderResource extends BasicResource
         $order = $this->resource;
         $active = in_array($order->status, [OrderStatus::Assigned, OrderStatus::PickedUp], true);
         $currency = $order->currency;
-        $format = fn ($amount) => (string) Money::roundTo((string) $amount, $currency->decimals);
+        // Stored units (old SYP) → displayed denomination (new SYP), once.
+        $format = fn ($amount) => Denomination::presentString(Money::roundTo((string) $amount, $currency->decimals), $currency);
         $address = (array) $order->delivery_address;
 
         return [
@@ -79,7 +81,7 @@ class DriverOrderResource extends BasicResource
                 ])->values(),
             ])->values(),
             'payment' => [
-                'currency' => ['code' => $currency->code, 'symbol' => $currency->symbol, 'decimals' => $currency->decimals],
+                'currency' => Denomination::currencyPayload($currency),
                 'order_total' => $format($order->total),
                 'prepaid_amount' => $format(DriverDeliveryService::prepaid($order)),
                 'cash_to_collect' => $format(DriverDeliveryService::cashDue($order)),

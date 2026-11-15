@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Filament\Support\Fields;
 use App\Models\Currency;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /** WAFFRLI (2026-11-04) — admin money display uses each currency's own decimals. */
 class MoneyDisplayTest extends TestCase
@@ -19,8 +19,10 @@ class MoneyDisplayTest extends TestCase
         $this->assertSame('4.58', Fields::formatAmount('4.5800', $usd));
         $this->assertSame('1,234,567.56', Fields::formatAmount('1234567.555', $usd));
         $this->assertSame('−2.50', Fields::formatAmount('-2.5', $usd));
-        $this->assertSame('66,127', Fields::formatAmount('66127.0000', $syp));
-        $this->assertSame('123,456,789,012,345', Fields::formatAmount('123456789012345.4', $syp));
+        // SYP is stored in OLD pounds and shown in NEW pounds (÷ 100, qirsh only when present).
+        $this->assertSame('661.27', Fields::formatAmount('66127.0000', $syp));
+        $this->assertSame('661', Fields::formatAmount('66100.0000', $syp));
+        $this->assertSame('1,234,567,890,123.45', Fields::formatAmount('123456789012345', $syp));
         $this->assertSame('0', Fields::formatAmount('-0.2', $syp));
         $this->assertSame('—', Fields::formatAmount(null, $usd));
         $this->assertSame('—', Fields::formatMoney(null, $usd));

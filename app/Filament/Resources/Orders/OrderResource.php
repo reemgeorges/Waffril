@@ -70,7 +70,9 @@ class OrderResource extends AdminResource
         $money = fn (string $field) => TextEntry::make($field)->label(__("admin.fields.{$field}"))->inlineLabel()
             ->alignEnd()->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency))
             // A non-operational (historical) currency is stated once, on the total.
-            ->helperText(fn (Order $record) => $field === 'total' ? Fields::historicalCurrencyNote($record->currency) : null);
+            ->helperText(fn (Order $record) => $field === 'total'
+                ? (Fields::historicalCurrencyNote($record->currency) ?? Fields::storedDenominationNote($record->total, $record->currency))
+                : null);
 
         return $schema->components([
             // Dispatch B4 (2026-11-10): live delivery-offer status.

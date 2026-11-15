@@ -10,7 +10,7 @@ use App\Models\OrderCancellationRequest;
 use App\Models\User;
 use App\Services\Order\OrderAdminService;
 use App\Support\Localization\Label;
-use App\Support\Money\Money;
+use App\Support\Money\Denomination;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -84,7 +84,8 @@ class CustomerOrderService
     public function present(Order $order, bool $detailed = true): array
     {
         $c = $order->currency;
-        $fmt = fn ($v) => (string) Money::roundTo((string) $v, $c->decimals);
+        // Stored units (old SYP) → displayed denomination (new SYP), once.
+        $fmt = fn ($v) => Denomination::presentString((string) $v, $c);
         $active = in_array($order->status, [OrderStatus::Assigned, OrderStatus::PickedUp], true);
 
         $data = [
@@ -96,7 +97,7 @@ class CustomerOrderService
             'type_label' => Label::of('order_type', $order->type),
             'scheduled_for' => $order->scheduled_for?->toIso8601String(),
             'branch' => ['id' => $order->branch?->id, 'name' => $order->branch?->name, 'store' => ['id' => $order->branch?->store?->id, 'name' => $order->branch?->store?->name]],
-            'currency' => ['code' => $c->code, 'symbol' => $c->symbol, 'decimals' => $c->decimals],
+            'currency' => Denomination::currencyPayload($c),
             'total' => $fmt($order->total),
             'created_at' => $order->created_at?->toIso8601String(),
             'can_cancel' => $order->status === OrderStatus::Pending,
