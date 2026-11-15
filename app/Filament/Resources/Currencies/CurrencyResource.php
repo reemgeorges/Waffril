@@ -11,9 +11,12 @@ use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Currency;
 use App\Services\Currency\CurrencyManagement;
+use App\Support\Money\Denomination;
+use Brick\Math\BigDecimal;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -47,10 +50,29 @@ class CurrencyResource extends AdminResource
                 ->disabled(fn (?Currency $record) => $record !== null),
             Fields::translatable('name'),
             TextInput::make('symbol')->label(__('admin.fields.symbol'))->required()->maxLength(10),
-            TextInput::make('decimals')->label(__('admin.fields.decimals'))->required()->integer()->minValue(0)->maxValue(4)->default(2),
+            // A redenominated currency (SYP: stored in OLD pounds, shown in NEW)
+            // keeps its stored decimals: they define the stored unit.
+            TextInput::make('decimals')->label(__('admin.fields.decimals'))->required()->integer()->minValue(0)->maxValue(4)->default(2)
+                ->disabled(fn (?Currency $record) => Denomination::converts($record))
+                ->helperText(fn (?Currency $record) => Denomination::converts($record)
+                    ? __('admin.currencies.stored_decimals_locked', ['decimals' => Denomination::decimals($record)])
+                    : null),
+            // The rate is typed in the DISPLAYED denomination (e.g. NEW SYP per
+            // 1 USD = 130) and stored in the stored one (13000 old), converted
+            // exactly once here, so an approved rate cannot be entered 100× off.
             TextInput::make('exchange_rate')->label(__('admin.fields.exchange_rate'))
                 ->required()->numeric()->gt(0)->rule('decimal:0,12')
-                ->helperText(__('admin.help.exchange_rate'))
+                ->helperText(fn (?Currency $record, Get $get) => Denomination::converts($record ?? (string) $get('code'))
+                    ? __('admin.currencies.rate_in_display_denomination', ['code' => $record?->code ?? strtoupper((string) $get('code')), 'default' => Fields::defaultCurrency()?->code])
+                    : __('admin.help.exchange_rate'))
+                ->afterStateHydrated(function (TextInput $component, $state, ?Currency $record): void {
+                    if ($record !== null && $state !== null && Denomination::converts($record)) {
+                        $component->state(Denomination::presentRate((string) $state, $record));
+                    }
+                })
+                ->dehydrateStateUsing(fn ($state, ?Currency $record, Get $get) => $state !== null && $state !== '' && Denomination::converts($record ?? (string) $get('code'))
+                    ? (string) BigDecimal::of((string) $state)->multipliedBy(Denomination::factor($record ?? (string) $get('code')))
+                    : $state)
                 ->disabled(fn (?Currency $record) => (bool) $record?->is_default),
         ]);
     }
@@ -64,10 +86,19 @@ class CurrencyResource extends AdminResource
                 TextColumn::make('code')->label(__('admin.fields.code'))->searchable()->sortable()->badge()->color('gray')
                     ->width(TableDefaults::COMPACT_WIDTH),
                 TextColumn::make('name')->label(__('admin.fields.name'))->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => collect([$record->symbol, trans_choice('admin.table.decimals_n', (int) $record->decimals, ['count' => (int) $record->decimals])])->filter()->implode(' · ')),
+                    ->description(fn ($record) => collect([
+                        $record->symbol,
+                        trans_choice('admin.table.decimals_n', (int) Denomination::decimals($record), ['count' => (int) Denomination::decimals($record)]),
+                        Denomination::converts($record) ? __('admin.currencies.denomination_label', ['display' => __('admin.money.denomination_'.Denomination::displayName($record)), 'stored' => __('admin.money.denomination_'.Denomination::storedName($record))]) : null,
+                    ])->filter()->implode(' · ')),
+                // In the displayed denomination (SYP: 130 new per USD), with the
+                // stored value (13,000 old) stated for audit.
                 TextColumn::make('exchange_rate')->label(__('admin.fields.exchange_rate'))->sortable()
-                    ->formatStateUsing(fn ($state) => Fields::formatDecimal($state))
-                    ->description(fn ($record) => $record->rate_updated_at ? __('admin.table.rate_updated', ['time' => $record->rate_updated_at->diffForHumans()]) : null),
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatDecimal(Denomination::presentRate((string) $state, $record)))
+                    ->description(fn ($record) => collect([
+                        Denomination::converts($record) ? __('admin.currencies.rate_stored_as', ['rate' => Fields::formatDecimal((string) $record->exchange_rate)]) : null,
+                        $record->rate_updated_at ? __('admin.table.rate_updated', ['time' => $record->rate_updated_at->diffForHumans()]) : null,
+                    ])->filter()->implode(' · ') ?: null),
                 // Only the default currency shows a badge; the others show nothing.
                 TextColumn::make('default_badge')->label(__('admin.fields.is_default'))->badge()->color('gold')->icon('heroicon-m-star')
                     ->state(fn ($record) => $record->is_default ? __('admin.table.default_currency') : null)->placeholder(null),
@@ -99,7 +130,7 @@ class CurrencyResource extends AdminResource
                     Action::make('switchDefault')->label(__('admin.currencies.switch_default'))->icon('heroicon-o-arrows-right-left')
                         ->visible(fn (Currency $record) => CurrencyManagement::hasDefault() && ! $record->is_default)
                         ->disabled()
-                        ->tooltip(__('admin.currencies.switch_default_unavailable')),
+                        ->tooltip(__('admin.currencies.switch_default_via_redenomination')),
                 ]),
             ])
             ->defaultSort('code');

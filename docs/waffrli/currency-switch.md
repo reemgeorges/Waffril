@@ -63,3 +63,40 @@ No policy for remaining wallet funds is involved: wallets stay in their own curr
 Result (2026-11-03, MySQL 8, `waffrli_test`): 10 of 10 passed.
 
 The tests passed, so the switch may be enabled per environment by setting `WAFFRLI_CURRENCY_SWITCH_ENABLED=true`. It stays off by default. Run the same test classes against the target MySQL version first, and take a database backup before the first real switch.
+
+## Making NEW SYP the primary currency (2026-11-15)
+
+**Target.** SYP becomes the accounting default. Its row keeps storing **old** pounds (`decimals` 0; 1 old pound = 1 qirsh). People see and type **new** pounds (`Denomination`, ×100 / ÷100 exactly once). After the switch:
+
+- the catalog, fee rules, fixed offers and PLUS amounts are stored as whole old pounds;
+- every new-pound amount an admin types is stored exactly (no 0.0001-USD step, no rounding);
+- the APIs and Filament show new pounds;
+- orders are priced with base = SYP (rate 1);
+- USD and EUR stay in the database with re-based rates (USD = 1 / rate) for a future re-enable.
+
+**Rate entry.** Currencies → SYP → *Exchange rate* is typed in **new** pounds per USD (e.g. `130`) and stored ×100 (13000 old). The switch screen shows both values and a preview of what 1 USD of catalog becomes.
+
+**Rehearsal (2026-11-15).** A copy of the local database was switched in a separate database with the DEMO rate 13000 (130 new), then dropped. The real database was not touched.
+
+- **Run:** completed. Default USD → SYP. Rates after the switch: USD 0.000076923077, EUR 0.000070769231, SYP 1.
+- **Converted (121 values):**
+  - 47 branch prices (e.g. 2.50 USD → 32,500 old = 325.00 new);
+  - 54 option deltas;
+  - 2 minimum orders (3.00 → 390.00);
+  - 8 fee rules (base 1.00 → 130.00; per km 0.15 → 19.50);
+  - 1 fixed offer (0.30 → 39.00);
+  - 1 PLUS display price (1.00 → 130.00).
+- **Rounding:** nothing rounded to zero.
+- **History:** orders, items, options, payments, refunds, wallets, ledger, settlements and PLUS cycles were byte-identical. Only `plus_cycle_discounts.op_*` was converted, by design; its `snapshot_*` columns were unchanged.
+
+**To execute (needs the owner's explicit approval of the rate):**
+
+1. Back up MySQL.
+2. In Currencies, set the SYP rate to the APPROVED new-pound rate per USD.
+3. Set `WAFFRLI_CURRENCY_SWITCH_ENABLED=true` and restart the queue worker.
+4. As a super admin, go to Platform → Currency re-denominations → *Switch default currency* → SYP, check the preview, type `SYP`.
+5. Wait for *Completed*.
+6. Set the flag back to `false`.
+7. Verify: the default is SYP; a price shows correctly in Filament and in the app; WF261113-UMOLKC is still 3.34 USD.
+
+**Rollback:** restore the backup taken in step 1. The run itself is atomic: any error leaves everything as it was.

@@ -364,6 +364,11 @@ return [
         'section_orders' => 'استقبال الطلبات',
     ],
     'currencies' => [
+        'switch_default_via_redenomination' => 'تغيير العملة الافتراضية يتم فقط من المنصة ← إعادة تسمية العملة (تحويل ذرّي مدقَّق بسعر معتمد).',
+        'stored_decimals_locked' => 'وحدة التخزين: الليرة القديمة بدون منازل عشرية (ثابتة). تُعرض وتُدخل بالليرة الجديدة بـ :decimals منزلة.',
+        'rate_in_display_denomination' => 'بالليرة الجديدة: :code لكل 1 :default (مثلاً 130). تُخزَّن بالليرة القديمة (×100) تلقائياً.',
+        'rate_stored_as' => 'مخزّن بقيمة :rate (ليرة قديمة)',
+        'denomination_label' => 'يُعرض :display ويُخزَّن :stored',
         'initialize_default' => 'تعيينها كعملة أساسية',
         'initialize_default_warning' => 'ستصبح هذه العملة الأساسية للمنصة (بسعر صرف 1). يتم ذلك مرة واحدة فقط، وتغييرها لاحقاً يتم عبر «تبديل العملة الأساسية».',
         'redenomination_unavailable' => 'تغيير العملة الأساسية غير متاح حالياً.',
@@ -985,6 +990,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
+        'preview' => 'كل 1 :base من أسعار الكتالوج يصبح :example. تُحوَّل كل مبالغ الكتالوج الحالية بهذا السعر في خطوة ذرّية واحدة؛ تأكد أنه السعر المعتمد.',
         'status_pending' => 'بالانتظار',
         'status_running' => 'قيد التنفيذ',
         'status_completed' => 'مكتمل',

@@ -364,6 +364,11 @@ return [
         'section_orders' => 'Taking orders',
     ],
     'currencies' => [
+        'switch_default_via_redenomination' => 'The default currency is switched only through Platform → Currency re-denominations (an audited, atomic conversion with an approved rate).',
+        'stored_decimals_locked' => 'Stored unit: old pounds with 0 decimals (fixed). Shown and typed as new pounds with :decimals decimals.',
+        'rate_in_display_denomination' => 'In NEW pounds: :code per 1 :default (e.g. 130). Stored as old pounds (×100) automatically.',
+        'rate_stored_as' => 'stored as :rate (old pounds)',
+        'denomination_label' => 'shown in :display, stored in :stored',
         'initialize_default' => 'Set as first default',
         'initialize_default_warning' => 'This sets the platform default currency (rate 1). It can only be done once; switching later requires the controlled re-denomination process.',
         'redenomination_unavailable' => 'Changing the default currency is not available right now.',
@@ -985,6 +990,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
+        'preview' => '1 :base of catalog prices becomes :example. Every current catalog amount is converted with this rate in one atomic step; check that the rate is the APPROVED one.',
         'status_pending' => 'Waiting',
         'status_running' => 'Running',
         'status_completed' => 'Completed',

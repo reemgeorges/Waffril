@@ -4,10 +4,13 @@ namespace App\Filament\Resources\CurrencyRedenominations\Pages;
 
 use App\Filament\Resources\CurrencyRedenominations\CurrencyRedenominationResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\Fields;
 use App\Jobs\Currency\RunCurrencyRedenomination;
 use App\Models\Currency;
 use App\Services\Currency\CurrencyRedenominationService;
 use App\Support\Auth\PlatformPermissions;
+use App\Support\Money\Denomination;
+use Brick\Math\BigDecimal;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -34,8 +37,19 @@ class ListCurrencyRedenominations extends ListRecords
                 ->modalDescription(__('admin.redenomination.warning'))
                 ->schema([
                     Select::make('to_currency_id')->label(__('admin.fields.to_currency'))->required()
+                        // The rate in the target's DISPLAYED denomination (SYP: 130 new
+                        // per USD), with the stored value it converts with (13,000 old).
                         ->options(fn () => Currency::query()->where('is_active', true)->where('is_default', false)->orderBy('code')->get()
-                            ->mapWithKeys(fn (Currency $c) => [$c->id => $c->code.' — 1 '.Currency::query()->default()->value('code').' = '.$c->exchange_rate.' '.$c->code])),
+                            ->mapWithKeys(fn (Currency $c) => [$c->id => $c->code.' — 1 '.Currency::query()->default()->value('code').' = '
+                                .Fields::formatDecimal(Denomination::presentRate((string) $c->exchange_rate, $c)).' '.$c->code
+                                .(Denomination::converts($c) ? ' ('.__('admin.currencies.rate_stored_as', ['rate' => Fields::formatDecimal((string) $c->exchange_rate)]).')' : '')]))
+                        ->live()
+                        ->helperText(fn ($get) => ($c = Currency::find($get('to_currency_id')))
+                            ? __('admin.redenomination.preview', [
+                                'base' => Currency::query()->default()->value('code'),
+                                'example' => Fields::formatMoney((string) BigDecimal::of('1')->multipliedBy((string) $c->exchange_rate), $c),
+                            ])
+                            : null),
                     TextInput::make('confirm_code')->label(__('admin.redenomination.confirm_code'))->required()
                         ->rule(fn ($get) => function (string $attribute, $value, $fail) use ($get) {
                             if (strtoupper((string) $value) !== strtoupper((string) Currency::query()->whereKey($get('to_currency_id'))->value('code'))) {
