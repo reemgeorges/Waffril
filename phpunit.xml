@@ -31,6 +31,8 @@
         <!-- WAFFRLI (2026-11-05): tests never depend on a developer's local .env -->
         <env name="WAFFRLI_PUSH_ENABLED" value="false"/>
         <env name="WAFFRLI_PUSH_DRIVER" value="fake"/>
+        <!-- Pin the default: a developer's local .env (e.g. false for device tests) must not leak into the suite. -->
+        <env name="WAFFRLI_PUSH_SKIP_WHEN_ONLINE" value="true"/>
         <env name="WAFFRLI_SMS_DRIVER" value="fake"/>
         <env name="WAFFRLI_DEV_OTP_PEEK_TOKEN" value=""/>
         <env name="WAFFRLI_CURRENCY_SWITCH_ENABLED" value="false"/>

@@ -236,8 +236,12 @@ class PushNotificationsTest extends CustomerTestCase
 
     public function test_fcm_http_v1_transport_signs_and_maps_answers(): void
     {
-        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        openssl_pkey_export($key, $pem);
+        // Windows PHP builds (Laragon) have no default openssl.cnf unless OPENSSL_CONF is set:
+        // use the one PHP ships in extras/ssl so key export works there too.
+        $bundled = dirname(PHP_BINARY).'/extras/ssl/openssl.cnf';
+        $sslConfig = ! getenv('OPENSSL_CONF') && is_file($bundled) ? ['config' => $bundled] : [];
+        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA] + $sslConfig);
+        $this->assertTrue(openssl_pkey_export($key, $pem, null, $sslConfig), 'Test RSA key export');
         config(['waffrli.push.fcm' => ['credentials' => null, 'project_id' => 'demo-project', 'client_email' => 'push@demo-project.iam.gserviceaccount.com', 'private_key' => $pem, 'timeout' => 5]]);
 
         $mode = 'ok';

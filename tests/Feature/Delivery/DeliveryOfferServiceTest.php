@@ -248,6 +248,9 @@ class DeliveryOfferServiceTest extends AdminPanelTestCase
 
     public function test_expired_offers_can_no_longer_be_accepted_or_rejected(): void
     {
+        // Deterministic clock: the 89 s / 90 s boundary below must not depend on how
+        // long the machine takes between creating the offer and travelling.
+        $this->freezeSecond();
         $order = $this->acceptedOrder();
         $driver = $this->newDriver();
         $offer = $this->service()->offerByAdmin($order, $driver, $this->admin);

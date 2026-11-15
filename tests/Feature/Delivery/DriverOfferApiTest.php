@@ -99,6 +99,8 @@ class DriverOfferApiTest extends AdminPanelTestCase
 
     public function test_current_offer_is_privacy_limited_and_timed_by_the_server(): void
     {
+        // Deterministic clock: remaining_seconds must not shrink while a slow full run is busy.
+        $this->freezeSecond();
         $order = $this->acceptedOrder();
         $driver = $this->newDriver();
         $token = $this->tokenFor($driver);
