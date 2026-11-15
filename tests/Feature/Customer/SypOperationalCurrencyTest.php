@@ -4,17 +4,21 @@ namespace Tests\Feature\Customer;
 
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\BranchProduct;
 use App\Models\Currency;
 use App\Models\Driver;
 use App\Models\Order;
+use App\Models\PlusCycle;
 use App\Models\PlusPlan;
+use App\Models\User;
 use App\Services\Currency\CurrencyPolicy;
 use App\Services\Customer\CustomerCatalogService;
 use App\Services\Driver\DriverCashSettlementService;
 use App\Services\Driver\DriverDeliveryService;
 use App\Services\Functional\Currency\CurrencyConverter;
 use App\Services\Order\OrderAdminService;
+use App\Services\Order\OrderPricingService;
 use App\Services\Order\RefundService;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
@@ -111,6 +115,63 @@ class SypOperationalCurrencyTest extends CustomerTestCase
         $refund = app(RefundService::class)->refund($payment, '100', 'syp_test', null, $admin, (string) Str::uuid());
         $this->assertSame($order->currency_id, $refund->currency_id);
         $this->assertTrue(Money::of($refund->amount)->isEqualTo('100'));
+    }
+
+    /** A cart in the customer's city with one product that needs no options. */
+    protected function cartFor(User $user, string $token): array
+    {
+        $cityId = $user->addresses()->where('is_default', true)->firstOrFail()->city_id;
+        $product = BranchProduct::where('is_available', true)
+            ->whereHas('branch', fn ($query) => $query->where('city_id', $cityId)->where('is_active', true))
+            ->whereHas('product', fn ($query) => $query->where('is_active', true))
+            ->whereDoesntHave('product.optionGroups', fn ($query) => $query->where('min_select', '>', 0))->firstOrFail();
+
+        return $this->api($token)->postJson('/api/v1/customer/cart/items', [
+            'branch_id' => $product->branch_id, 'product_id' => $product->product_id, 'quantity' => 3,
+        ])->assertOk()->json('data.cart');
+    }
+
+    public function test_wallet_part_stays_in_whole_syp_so_cash_due_is_collectable(): void
+    {
+        $user = $this->demoCustomer(9); // SYP wallet from a refund
+        $token = $this->loginCustomer($user);
+        $syp = Currency::where('code', 'SYP')->firstOrFail();
+        // A fractional balance (e.g. from an old 4-decimal record).
+        DB::table('wallets')->where('user_id', $user->id)->where('currency_id', $syp->id)->update(['balance' => '1000.5000']);
+        $cart = $this->cartFor($user, $token);
+
+        $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => '10.5'])->assertStatus(422);
+
+        $order = $this->api($token)->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
+            ->postJson("/api/v1/customer/carts/{$cart['id']}/checkout", ['wallet_amount' => 'max'])->assertOk()->json('data.order');
+        $payments = Order::findOrFail($order['id'])->payments()->with('method')->get();
+        $wallet = $payments->firstWhere('method.kind', '!=', 'cash');
+        $cash = $payments->firstWhere('method.kind', 'cash');
+        $this->assertTrue(Money::of($wallet->amount)->isEqualTo('1000'), 'whole pounds only from the wallet');
+        $this->assertTrue(Money::of($cash->amount)->isEqualTo(Money::roundTo($cash->amount, 0)), 'cash due has no fraction');
+        $this->assertTrue(Money::of($wallet->amount)->plus($cash->amount)->isEqualTo($order['amounts']['total']));
+    }
+
+    public function test_plus_cycle_amounts_recorded_in_syp_are_not_converted_again(): void
+    {
+        $user = $this->demoCustomer(1); // demo PLUS member with an active cycle
+        $cycle = PlusCycle::query()->where('user_id', $user->id)->where('status', PlusCycle::STATUS_ACTIVE)->firstOrFail();
+        $rule = $cycle->discounts()->firstOrFail();
+        $syp = Currency::where('code', 'SYP')->firstOrFail();
+        // Test-only: a fixed cycle benefit whose operational value is already in SYP.
+        DB::table('plus_cycle_discounts')->where('id', $rule->id)->update([
+            'discount_type' => 'fixed', 'op_currency_id' => $syp->id, 'op_discount_value' => '1000',
+            'op_min_order_amount' => null, 'op_max_discount_amount' => null, 'max_uses_per_cycle' => null,
+        ]);
+        $branch = Branch::query()->where('store_id', $rule->store_id)->whereHas('branchProducts', fn ($q) => $q->where('is_available', true))->firstOrFail();
+        $line = BranchProduct::query()->where('branch_id', $branch->id)->where('is_available', true)
+            ->whereDoesntHave('product.optionGroups', fn ($q) => $q->where('min_select', '>', 0))->firstOrFail();
+
+        $priced = app(OrderPricingService::class)->price($user, $branch, [['branch_product_id' => $line->id, 'quantity' => 5]], $syp, $user->addresses()->where('is_default', true)->first(), false);
+
+        $this->assertTrue($priced['subtotal']->isGreaterThan(1000));
+        $this->assertTrue($priced['plus_discount_amount']->isEqualTo('1000'), 'SYP benefit applied as 1,000 SYP, not converted a second time');
     }
 
     public function test_api_exposes_only_syp_and_converts_plus_prices(): void

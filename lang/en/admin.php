@@ -5,6 +5,16 @@
  * bilingual table so English and Arabic always have identical keys.
  */
 return [
+    'money' => [
+        'no_operational_rate' => 'SYP equivalent unavailable: the operational currency or its exchange rate is missing or invalid.',
+        'rate_unconfirmed' => 'exchange rate not confirmed',
+        'rate_approved' => 'approved rate',
+        'stored_as' => 'Stored as :amount · rate :rate (:status)',
+        'not_storable' => 'This exact amount cannot be stored at the current exchange rate without rounding. Use :options.',
+        'snapshot' => 'At cycle confirmation: :amount',
+        'separate_currency' => 'Separate currency, never added to SYP',
+        'historical_currency' => 'Recorded in :code (no SYP equivalent was recorded)',
+    ],
     'nav' => [
         'operations' => 'Orders & delivery',
         'catalog' => 'Stores & products',

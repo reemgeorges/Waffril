@@ -50,7 +50,8 @@ class OrdersRelationManager extends RelationManager
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn ($record) => $record->branch?->store?->name)->visibleFrom('md'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
             ])
             ->filters([
                 SelectFilter::make('status')->label(__('admin.fields.status'))->options(OrderStatus::options())->multiple(),

@@ -56,7 +56,8 @@ class DriverCashSettlementResource extends AdminResource
                 TextColumn::make('business_date')->label(__('admin.fields.business_date'))->date()->sortable()->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => $record->driver?->name)
                     ->searchable(query: fn ($query, string $search) => $query->whereHas('driver', fn ($d) => $d->where('name', 'like', "%{$search}%"))),
-                TextColumn::make('expected_amount')->label(__('admin.fields.expected_amount'))->formatStateUsing($money),
+                TextColumn::make('expected_amount')->label(__('admin.fields.expected_amount'))->formatStateUsing($money)
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
                 TextColumn::make('received_amount')->label(__('admin.fields.received_amount'))->placeholder('—')->weight(FontWeight::SemiBold)
                     ->formatStateUsing($money)
                     ->description(fn ($record) => $record->received_amount !== null && bccomp((string) $record->received_amount, (string) $record->expected_amount, 4) !== 0

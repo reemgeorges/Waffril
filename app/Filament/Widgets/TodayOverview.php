@@ -8,6 +8,7 @@ use App\Filament\Support\Fields;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Services\Currency\OperationalMoney;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
@@ -53,7 +54,7 @@ class TodayOverview extends Widget
             $sum = $orders->reduce(fn ($carry, Order $order) => $carry->plus((string) $order->total), Money::of('0'));
 
             return ['code' => $currencies[$currencyId]?->code ?? '', 'amount' => Fields::formatMoney((string) $sum, $currencies[$currencyId] ?? null)];
-        })->sortBy('code')->values()->all();
+        })->sortBy(fn ($row) => [$row['code'] === OperationalMoney::currency()?->code ? 0 : 1, $row['code']])->values()->all();
 
         return [
             'series' => self::series(),

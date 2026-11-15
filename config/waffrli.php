@@ -118,6 +118,14 @@ return [
         'redenomination_enabled' => (bool) env('WAFFRLI_CURRENCY_SWITCH_ENABLED', false),
         'operational_default' => env('WAFFRLI_OPERATIONAL_CURRENCY', 'SYP'),
         'customer_currencies' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAFFRLI_CUSTOMER_CURRENCIES', 'SYP'))))),
+        // The operational rate (units per 1 accounting-base unit) an operator
+        // has explicitly approved, e.g. "13000". Admin amounts are typed in
+        // the operational currency only while the stored rate equals it;
+        // empty = not approved (admins keep typing base amounts). A changed
+        // stored rate revokes the approval. See OperationalMoney.
+        'approved_operational_rate' => env('WAFFRLI_APPROVED_OPERATIONAL_RATE'),
+        // Arabic display symbols for codes whose stored symbol is Latin.
+        'arabic_symbols' => ['SYP' => 'ل.س'],
     ],
 
     'dev' => [

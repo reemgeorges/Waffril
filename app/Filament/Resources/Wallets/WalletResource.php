@@ -68,6 +68,7 @@ class WalletResource extends AdminResource
                 TextColumn::make('currency.code')->label(__('admin.fields.currency'))->badge()->color('gray'),
                 TextColumn::make('balance')->label(__('admin.fields.balance'))->sortable()->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency))
                     ->color(fn ($state) => (float) $state > 0 ? null : 'gray'),
                 TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->since()->sortable()->color('gray')
                     ->tooltip(fn ($record) => $record->updated_at?->translatedFormat(TableDefaults::dateTimeFormat()))->visibleFrom('md'),

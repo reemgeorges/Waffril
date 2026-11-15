@@ -60,6 +60,7 @@ class OrderPaymentResource extends AdminResource
                     ->visibleFrom('md'),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))->weight(FontWeight::SemiBold)->formatStateUsing($money)
                     ->description(fn ($record) => collect([
+                        Fields::historicalCurrencyNote($record->currency),
                         (float) $record->collected_amount > 0 && $record->collected_amount != $record->amount ? __('admin.table.collected_note', ['amount' => $money($record->collected_amount, $record)]) : null,
                         (float) $record->reversed_amount > 0 ? __('admin.table.reversed_note', ['amount' => $money($record->reversed_amount, $record)]) : null,
                         (float) $record->refunded_amount > 0 ? __('admin.table.refunded_note', ['amount' => $money($record->refunded_amount, $record)]) : null,

@@ -5,6 +5,16 @@
  * bilingual table so English and Arabic always have identical keys.
  */
 return [
+    'money' => [
+        'no_operational_rate' => 'المعادل بالليرة السورية غير متاح: العملة التشغيلية أو سعر صرفها مفقود أو غير صالح.',
+        'rate_unconfirmed' => 'سعر الصرف غير مؤكد',
+        'rate_approved' => 'سعر معتمد',
+        'stored_as' => 'مخزّن بقيمة :amount · سعر الصرف :rate (:status)',
+        'not_storable' => 'لا يمكن تخزين هذا المبلغ بدقة بسعر الصرف الحالي دون تقريب. استخدم :options.',
+        'snapshot' => 'عند تأكيد الدورة: :amount',
+        'separate_currency' => 'عملة منفصلة، لا تُجمع مع الليرة السورية',
+        'historical_currency' => 'مسجّل بعملة :code (لم يُسجَّل معادل بالليرة السورية)',
+    ],
     'nav' => [
         'operations' => 'الطلبات والتوصيل',
         'catalog' => 'المتاجر والمنتجات',

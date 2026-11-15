@@ -42,10 +42,13 @@ class DiscountsRelationManager extends RelationManager
                     ->description(fn ($record) => $record->op_redenomination_id ? __('admin.table.converted_run', ['id' => $record->op_redenomination_id]) : null),
                 TextColumn::make('source')->label(__('admin.fields.source'))->badge()->color('gray')->formatStateUsing(fn ($state) => __("admin.plus.discount_source_{$state}")),
                 TextColumn::make('snapshot_discount_value')->label(__('admin.fields.discount_value'))->badge()->color('gold')
-                    ->formatStateUsing(fn ($state, $record) => '−'.($record->discount_type === 'percent' ? Fields::formatDecimal($state).'%' : Fields::formatDecimal($state).' '.$record->cycle?->snapshotCurrency?->code))
+                    // Current operational benefit (op_* in op_currency, converted for display);
+                    // the immutable snapshot stays visible in the tooltip.
+                    ->formatStateUsing(fn ($state, $record) => '−'.($record->discount_type === 'percent' ? Fields::formatDecimal($record->op_discount_value ?? $state).'%' : Fields::catalogMoney($record->op_discount_value ?? $state, $record->op_currency_id)))
+                    ->tooltip(fn ($record) => $record->discount_type === 'percent' ? null : __('admin.money.snapshot', ['amount' => trim(Fields::formatDecimal($record->snapshot_discount_value).' '.$record->cycle?->snapshotCurrency?->code)]))
                     ->description(fn ($record) => collect([
-                        $record->snapshot_max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::formatDecimal($record->snapshot_max_discount_amount)]) : null,
-                        $record->snapshot_min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::formatDecimal($record->snapshot_min_order_amount)]) : null,
+                        $record->op_max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::catalogMoney($record->op_max_discount_amount, $record->op_currency_id)]) : null,
+                        $record->op_min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::catalogMoney($record->op_min_order_amount, $record->op_currency_id)]) : null,
                         $record->max_uses_per_cycle ? trans_choice('admin.table.uses_per_cycle', (int) $record->max_uses_per_cycle, ['count' => (int) $record->max_uses_per_cycle]) : null,
                     ])->filter()->implode(' · ') ?: null),
             ]);

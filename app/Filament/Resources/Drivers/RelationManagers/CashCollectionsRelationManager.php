@@ -42,7 +42,8 @@ class CashCollectionsRelationManager extends RelationManager
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => $record->paid_at?->translatedFormat(TableDefaults::dateTimeFormat())),
                 TextColumn::make('collected_amount')->label(__('admin.fields.collected_amount'))->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
+                    ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
                 TextColumn::make('settlement.business_date')->label(__('admin.fields.business_date'))->date()->badge()
                     ->color(fn ($state) => $state ? 'success' : 'warning')
                     ->placeholder(__('admin.drivers.unsettled')),

@@ -105,7 +105,7 @@ class BranchesRelationManager extends RelationManager
                             ->url(fn (Branch $record) => $edit($record, 'products'))->tooltip(__('admin.stores.priced_products_help'))
                             ->extraAttributes(['class' => 'wf-stat-link']),
                         TextColumn::make('min_order_badge')->label(__('admin.fields.min_order_amount'))->grow(false)
-                            ->state(fn (Branch $record) => (float) $record->min_order_amount > 0 ? __('admin.table.min_order', ['amount' => Fields::formatDecimal($record->min_order_amount)]) : null)
+                            ->state(fn (Branch $record) => (float) $record->min_order_amount > 0 ? __('admin.table.min_order', ['amount' => Fields::catalogMoney($record->min_order_amount)]) : null)
                             ->badge()->color('gray')->icon('heroicon-m-receipt-percent')->placeholder(null),
                     ])->extraAttributes(['class' => 'wf-card-stats']),
                 ])->space(3),

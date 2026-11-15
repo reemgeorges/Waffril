@@ -8,6 +8,7 @@ use App\Models\OrderPayment;
 use App\Models\OrderRefund;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\Currency\OperationalMoney;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Money\Money;
 use Filament\Widgets\Widget;
@@ -36,7 +37,11 @@ class FinanceOverview extends Widget
     /** @return list<array<string, mixed>> */
     public static function rows(): array
     {
-        return Currency::query()->orderByDesc('is_default')->orderBy('code')->get()->map(function (Currency $currency) {
+        // Never summed across currencies. The operational currency (SYP) comes
+        // first; any other row is a historical or future currency of its own.
+        $operationalId = OperationalMoney::currency()?->id;
+
+        return Currency::query()->orderBy('code')->get()->sortBy(fn (Currency $c) => $c->id === $operationalId ? 0 : 1)->values()->map(function (Currency $currency) use ($operationalId) {
             $balances = (string) (Wallet::query()->where('currency_id', $currency->id)->sum('balance') ?: '0');
             $credits = (string) (WalletTransaction::query()->where('direction', 'credit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
             $debits = (string) (WalletTransaction::query()->where('direction', 'debit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
@@ -44,6 +49,7 @@ class FinanceOverview extends Widget
 
             return [
                 'code' => $currency->code,
+                'historical' => $operationalId !== null && $currency->id !== $operationalId,
                 'wallets' => Wallet::query()->where('currency_id', $currency->id)->where('balance', '>', 0)->count(),
                 'wallet_balances' => Money::toStorage($balances),
                 'ledger_consistent' => Money::of($credits)->minus($debits)->isEqualTo($balances),
@@ -66,12 +72,8 @@ class FinanceOverview extends Widget
         return ['rows' => array_map(function (array $row) use ($currencies) {
             $currency = $currencies[$row['code']] ?? null;
             $row['display'] = collect(['wallet_balances', 'collected', 'pending_cash', 'refunded', 'unsettled_cash'])
-                ->mapWithKeys(function ($key) use ($row, $currency) {
-                    $text = Fields::formatMoney($row[$key], $currency);
-
-                    // The currency code is its own column.
-                    return [$key => $currency && str_starts_with($text, $currency->code.' ') ? substr($text, strlen($currency->code) + 1) : $text];
-                })->all();
+                // The currency is its own column: the numbers only.
+                ->mapWithKeys(fn ($key) => [$key => Fields::formatAmount($row[$key], $currency)])->all();
 
             return $row;
         }, self::rows())];

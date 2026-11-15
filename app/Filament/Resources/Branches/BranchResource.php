@@ -102,7 +102,7 @@ class BranchResource extends AdminResource
                             ->helperText(__('admin.help.branch_active')),
                         Toggle::make('is_accepting_orders')->label(__('admin.fields.is_accepting_orders'))->default(true)
                             ->helperText(__('admin.help.branch_accepting')),
-                        Fields::money('min_order_amount', required: false)->helperText(__('admin.help.default_currency_amount')),
+                        Fields::money('min_order_amount', required: false),
                     ]),
                 ]),
             ]),

@@ -68,7 +68,9 @@ class OrderResource extends AdminResource
     {
         // Display only (redesign 2026-11-11): stored values are untouched.
         $money = fn (string $field) => TextEntry::make($field)->label(__("admin.fields.{$field}"))->inlineLabel()
-            ->alignEnd()->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency));
+            ->alignEnd()->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency))
+            // A non-operational (historical) currency is stated once, on the total.
+            ->helperText(fn (Order $record) => $field === 'total' ? Fields::historicalCurrencyNote($record->currency) : null);
 
         return $schema->components([
             // Dispatch B4 (2026-11-10): live delivery-offer status.
@@ -189,7 +191,8 @@ class OrderResource extends AdminResource
                 IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
                     ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle')->falseIcon('heroicon-o-minus')->falseColor('gray'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
+                    ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

@@ -16,7 +16,6 @@ use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
@@ -65,7 +64,8 @@ class OfferResource extends AdminResource
             Grid::make(2)->schema([
                 Select::make('discount_type')->label(__('admin.fields.discount_type'))->required()->live()
                     ->options(['percent' => __('admin.discount.percent'), 'fixed' => __('admin.discount.fixed')]),
-                TextInput::make('discount_value')->label(__('admin.fields.discount_value'))->required()->numeric()->gt(0)->rule('decimal:0,4')
+                // A percentage, or a fixed amount typed in the operational currency (Fields::money).
+                Fields::money('discount_value', fixedWhen: 'discount_type')->gt(0)
                     ->maxValue(fn (Get $get) => $get('discount_type') === 'percent' ? 100 : null),
                 DateTimePicker::make('starts_at')->label(__('admin.fields.starts_at'))->required()->seconds(false)->default(now()),
                 DateTimePicker::make('ends_at')->label(__('admin.fields.ends_at'))->seconds(false)->after('starts_at'),
@@ -100,7 +100,8 @@ class OfferResource extends AdminResource
                     ])->implode(' · ')),
                 TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))
                     ->formatStateUsing(fn ($state, Offer $record) => $record->discount_type === 'percent'
-                        ? '−'.Fields::formatDecimal($state).'%' : '−'.Fields::formatDecimal($state))
+                        ? '−'.Fields::formatDecimal($state).'%' : '−'.Fields::catalogMoney($state))
+                    ->tooltip(fn (Offer $record) => $record->discount_type === 'fixed' ? Fields::storedTooltip($record->getRawOriginal('discount_value')) : null)
                     ->badge()->icon('heroicon-m-tag')->color(fn (Offer $record) => $record->discount_type === 'percent' ? 'success' : 'info')
                     ->alignCenter()->width(TableDefaults::COMPACT_WIDTH),
                 TextColumn::make('starts_at')->label(__('admin.table.offer_period'))->sortable()

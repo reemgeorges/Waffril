@@ -51,7 +51,7 @@ class ItemsRelationManager extends RelationManager
                     ->formatStateUsing(fn ($state) => self::translated($state))
                     ->description(fn (OrderItem $record) => collect([
                         $record->options->map(fn ($o) => self::translated($o->group_name).': '
-                            .self::translated($o->option_name).' ×'.$o->quantity.' (+'.Fields::formatDecimal($o->total_price_delta).')')->implode(' · '),
+                            .self::translated($o->option_name).' ×'.$o->quantity.' (+'.$money($o->total_price_delta).')')->implode(' · '),
                         $record->notes ? '“'.$record->notes.'”' : null,
                     ])->filter()->implode(' — ') ?: null),
                 TextColumn::make('quantity')->label(__('admin.fields.quantity'))

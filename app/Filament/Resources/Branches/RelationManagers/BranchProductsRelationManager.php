@@ -53,7 +53,7 @@ class BranchProductsRelationManager extends RelationManager
                 ->rule(fn (?BranchProduct $record) => Rule::unique('branch_products', 'product_id')
                     ->where('branch_id', $this->getOwnerRecord()->id)->ignore($record?->id))
                 ->disabled(fn (?BranchProduct $record) => $record !== null),
-            Fields::money('price')->helperText(__('admin.help.default_currency_amount')),
+            Fields::money('price'),
             Toggle::make('is_available')->label(__('admin.fields.is_available'))->default(true),
         ]);
     }
@@ -73,7 +73,7 @@ class BranchProductsRelationManager extends RelationManager
                 TextColumn::make('product.name')->label(__('admin.fields.product'))->weight(FontWeight::SemiBold)
                     ->description(fn (BranchProduct $record) => $record->product?->categories->map->name->implode(' · ') ?: null)
                     ->searchable(),
-                TextColumn::make('price')->label(__('admin.fields.price'))->sortable()->weight(FontWeight::SemiBold),
+                Fields::catalogMoneyColumn(TextColumn::make('price')->label(__('admin.fields.price'))->sortable()->weight(FontWeight::SemiBold)),
                 Columns::status('is_available', __('admin.table.available'), __('admin.table.unavailable'))->label(__('admin.table.availability')),
             ])
             ->searchPlaceholder(__('admin.table.search_product'))

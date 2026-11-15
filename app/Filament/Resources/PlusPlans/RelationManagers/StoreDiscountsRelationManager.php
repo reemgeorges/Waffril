@@ -46,9 +46,10 @@ class StoreDiscountsRelationManager extends RelationManager
             Grid::make(2)->schema([
                 Select::make('discount_type')->label(__('admin.fields.discount_type'))->required()->live()
                     ->options(['percent' => __('admin.discount.percent'), 'fixed' => __('admin.discount.fixed')]),
-                TextInput::make('discount_value')->label(__('admin.fields.discount_value'))->required()->numeric()->gt(0)->rule('decimal:0,4')
+                // A percentage, or a fixed amount typed in the operational currency (Fields::money).
+                Fields::money('discount_value', fixedWhen: 'discount_type')->gt(0)
                     ->maxValue(fn (Get $get) => $get('discount_type') === 'percent' ? 100 : null),
-                TextInput::make('max_discount_amount')->label(__('admin.fields.max_discount_amount'))->numeric()->gt(0)->rule('decimal:0,4'),
+                Fields::money('max_discount_amount', required: false)->gt(0),
                 Fields::money('min_order_amount', required: false),
                 TextInput::make('max_uses_per_cycle')->label(__('admin.fields.max_uses_per_cycle'))->integer()->minValue(1)->maxValue(1000),
             ]),
@@ -80,10 +81,10 @@ class StoreDiscountsRelationManager extends RelationManager
                 TextColumn::make('store.name')->label(__('admin.fields.store'))->weight(FontWeight::SemiBold)
                     ->searchable(query: fn ($query, string $search) => $query->whereHas('store', fn ($q) => $q->where('name', 'like', "%{$search}%"))),
                 TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))->badge()->color('gold')->icon('heroicon-m-tag')
-                    ->formatStateUsing(fn ($state, $record) => '−'.Fields::formatDecimal($state).($record->discount_type === 'percent' ? '%' : ''))
+                    ->formatStateUsing(fn ($state, $record) => '−'.($record->discount_type === 'percent' ? Fields::formatDecimal($state).'%' : Fields::catalogMoney($state)))
                     ->description(fn ($record) => collect([
-                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::formatDecimal($record->max_discount_amount)]) : null,
-                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::formatDecimal($record->min_order_amount)]) : null,
+                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::catalogMoney($record->max_discount_amount)]) : null,
+                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::catalogMoney($record->min_order_amount)]) : null,
                         $record->max_uses_per_cycle ? trans_choice('admin.table.uses_per_cycle', (int) $record->max_uses_per_cycle, ['count' => (int) $record->max_uses_per_cycle]) : null,
                     ])->filter()->implode(' · ') ?: null),
                 Columns::status(),

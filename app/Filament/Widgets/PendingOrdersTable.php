@@ -66,7 +66,8 @@ class PendingOrdersTable extends TableWidget
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))
                     ->description(fn (Order $record) => $record->branch?->store?->name)->visibleFrom('md'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency)),
+                    ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
             ])
             ->headerActions([
                 Action::make('all')->label(__('admin.dashboard.open_list'))->link()->icon('heroicon-m-arrow-top-right-on-square')

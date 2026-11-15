@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use App\Models\Currency;
+use App\Services\Currency\OperationalMoney;
 use App\Support\Money\Money;
 use Closure;
 use Filament\Forms\Components\Textarea;
@@ -11,6 +12,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -110,23 +112,183 @@ final class Fields
     }
 
     /**
-     * A catalog amount in the platform DEFAULT currency (prices, option
-     * deltas, minimum orders, delivery fees, PLUS display prices). The
-     * suffix names that currency (SYP at launch) and the input accepts at
-     * most its decimals (0 for SYP), so what an operator types is exactly
-     * what customers are charged.
+     * A catalog amount STORED in the accounting base currency (prices,
+     * option deltas, minimum orders, delivery fees, PLUS amounts, fixed
+     * discounts). The column and its currency never change.
+     *
+     * SYP operation (2026-11-15, OperationalMoney):
+     *  - rate approved: the admin types the OPERATIONAL amount (SYP). It is
+     *    shown converted with the customer catalog's own conversion, saved
+     *    as the exact base amount that converts back to the typed value, and
+     *    rejected (with the nearest storable values) when no such base
+     *    amount exists at 4 decimals. An unchanged value keeps the stored
+     *    base amount untouched, so reopening and saving never drifts.
+     *  - rate not approved (or missing): the admin types the base amount as
+     *    before, with a live hint of the operational equivalent marked as
+     *    unconfirmed.
+     *
+     * $fixedWhen: the name of a percent|fixed type field; the amount is
+     * monetary only while that field is "fixed" (percentages are untouched).
      */
-    public static function money(string $name, bool $required = true): TextInput
+    public static function money(string $name, bool $required = true, ?string $fixedWhen = null): TextInput
     {
-        $default = self::defaultCurrency();
-
-        return TextInput::make($name)
+        $monetary = fn (Get $get): bool => $fixedWhen === null || $get($fixedWhen) === 'fixed';
+        $input = TextInput::make($name)
             ->label(__("admin.fields.{$name}"))
             ->numeric()
             ->minValue(0)
-            ->rule('decimal:0,'.min(4, $default?->decimals ?? 4))
-            ->suffix($default?->code)
             ->required($required);
+
+        if (! OperationalMoney::inputEnabled()) {
+            $base = self::defaultCurrency();
+
+            return $input
+                ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.min(4, $base?->decimals ?? 4) : 'decimal:0,4')
+                ->suffix(fn (Get $get) => $monetary($get) ? $base?->code : null)
+                ->live(onBlur: true)
+                ->hint(fn (Get $get, $state) => $monetary($get) ? self::operationalPreview($state) : null)
+                ->hintColor('warning');
+        }
+
+        $operational = OperationalMoney::currency();
+
+        return $input
+            ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.(int) $operational->decimals : 'decimal:0,4')
+            ->suffix(fn (Get $get) => $monetary($get) ? self::currencyLabel($operational) : null)
+            ->afterStateHydrated(function (TextInput $component, $state, Get $get) use ($monetary): void {
+                if ($state !== null && $state !== '' && $monetary($get)) {
+                    $component->state((string) OperationalMoney::fromBase((string) $state));
+                }
+            })
+            ->rule(fn (Get $get) => function (string $attribute, mixed $value, Closure $fail) use ($get, $monetary): void {
+                if (! $monetary($get) || $value === null || $value === '' || ! is_numeric($value)) {
+                    return;
+                }
+                $result = OperationalMoney::toBase((string) $value);
+                if ($result['exact'] === null) {
+                    $fail(self::notStorableMessage($result));
+                }
+            })
+            ->dehydrateStateUsing(function ($state, Get $get, ?Model $record) use ($name, $fixedWhen, $monetary) {
+                if ($state === null || $state === '' || ! $monetary($get)) {
+                    return $state;
+                }
+                // Unchanged value (same type): keep the stored base amount as is.
+                $original = $record?->getRawOriginal($name);
+                $sameType = $fixedWhen === null || $record?->getRawOriginal($fixedWhen) === 'fixed';
+                if ($original !== null && $sameType) {
+                    $shown = OperationalMoney::fromBase((string) $original);
+                    if ($shown !== null && $shown->isEqualTo((string) $state)) {
+                        return $original;
+                    }
+                }
+
+                return OperationalMoney::toBase((string) $state)['exact']
+                    ?? throw new \LogicException('validated amount is not storable');
+            })
+            ->hintIcon('heroicon-m-information-circle', tooltip: fn (Get $get, ?Model $record) => $monetary($get) && $record?->getRawOriginal($name) !== null
+                ? self::storedTooltip($record->getRawOriginal($name))
+                : null);
+    }
+
+    /** "≈ 15,001 ل.س · rate not confirmed" for a base amount being typed. */
+    public static function operationalPreview(mixed $baseAmount): ?string
+    {
+        if (OperationalMoney::sameAsBase() || $baseAmount === null || $baseAmount === '' || ! is_numeric($baseAmount)) {
+            return null;
+        }
+        $converted = OperationalMoney::fromBase((string) $baseAmount);
+        if ($converted === null) {
+            return __('admin.money.no_operational_rate');
+        }
+        $text = '≈ '.self::formatMoney((string) $converted, OperationalMoney::currency());
+
+        return OperationalMoney::rateApproved() ? $text : $text.' · '.__('admin.money.rate_unconfirmed');
+    }
+
+    /**
+     * A base-stored catalog amount for tables and infolists: the operational
+     * amount customers are charged ("15,001 ل.س"), never the base amount
+     * relabelled. "—" for null; an explicit unavailable text without a rate.
+     */
+    public static function catalogMoney(mixed $baseAmount, ?int $sourceCurrencyId = null): string
+    {
+        if ($baseAmount === null || $baseAmount === '') {
+            return '—';
+        }
+        if (OperationalMoney::currency() === null) {
+            return __('admin.money.no_operational_rate');
+        }
+        $converted = $sourceCurrencyId !== null
+            ? OperationalMoney::fromCurrency((string) $baseAmount, Currency::find($sourceCurrencyId))
+            : OperationalMoney::fromBase((string) $baseAmount);
+
+        return $converted === null
+            ? __('admin.money.no_operational_rate')
+            : self::formatMoney((string) $converted, OperationalMoney::currency());
+    }
+
+    /**
+     * A table column for a base-stored catalog amount: the operational
+     * amount (what customers pay), with the stored base value and rate in a
+     * tooltip for audit. $signed adds "+" to positive amounts (option deltas).
+     */
+    public static function catalogMoneyColumn(TextColumn $column, bool $signed = false): TextColumn
+    {
+        $name = $column->getName();
+
+        return $column
+            ->formatStateUsing(fn ($state) => ($signed && is_numeric($state) && Money::of((string) $state)->isPositive() ? '+' : '').self::catalogMoney($state))
+            ->tooltip(fn (?Model $record) => self::storedTooltip($record?->getRawOriginal($name)));
+    }
+
+    /**
+     * Audit detail for a base-stored amount (tooltip): the stored base value
+     * and the rate used, with its approval state. Null when base and
+     * operational currencies are the same.
+     */
+    public static function storedTooltip(mixed $baseAmount): ?string
+    {
+        if ($baseAmount === null || $baseAmount === '' || OperationalMoney::sameAsBase()) {
+            return null;
+        }
+        $base = self::defaultCurrency();
+        $rate = OperationalMoney::rate();
+
+        return __('admin.money.stored_as', [
+            'amount' => trim(($base?->code ?? '').' '.self::formatDecimal((string) $baseAmount)),
+            'rate' => $rate !== null ? self::formatDecimal((string) $rate) : '—',
+            'status' => OperationalMoney::rateApproved() ? __('admin.money.rate_approved') : __('admin.money.rate_unconfirmed'),
+        ]);
+    }
+
+    /** @param array{exact: ?string, lower: mixed, upper: mixed} $result */
+    protected static function notStorableMessage(array $result): string
+    {
+        $currency = OperationalMoney::currency();
+        $options = collect([$result['lower'], $result['upper']])->filter(fn ($v) => $v !== null)
+            ->map(fn ($v) => self::formatMoney((string) $v, $currency))->implode(' / ');
+
+        return $options === ''
+            ? __('admin.money.no_operational_rate')
+            : __('admin.money.not_storable', ['options' => $options]);
+    }
+
+    /** "ل.س" in Arabic, the ISO code otherwise. */
+    public static function currencyLabel(?Currency $currency): string
+    {
+        if ($currency === null) {
+            return '';
+        }
+        if (app()->getLocale() === 'ar') {
+            if (preg_match('/\p{Arabic}/u', (string) $currency->symbol)) {
+                return (string) $currency->symbol;
+            }
+
+            return (string) (config('waffrli.currency.arabic_symbols.'.$currency->code) ?? $currency->code);
+        }
+
+        return (string) $currency->code;
     }
 
     /** The platform default currency (one query per request). */
@@ -168,7 +330,23 @@ final class Fields
         return filled($value) ? "\u{2066}{$value}\u{2069}" : null;
     }
 
+    /**
+     * A stored amount in ITS OWN currency (2026-11-15: "15,000 ل.س" in
+     * Arabic, "15,000 SYP" / "3.34 USD" in English), isolated left-to-right
+     * like the mobile apps. Never converts: a USD record stays USD.
+     */
     public static function formatMoney(mixed $amount, ?Currency $currency): string
+    {
+        if ($amount === null || $amount === '') {
+            return '—';
+        }
+        $label = self::currencyLabel($currency);
+
+        return "\u{2066}".trim(self::formatAmount($amount, $currency).' '.$label)."\u{2069}";
+    }
+
+    /** The number only, at the currency's decimals with thousands separators ("66,127", "−2.50"). */
+    public static function formatAmount(mixed $amount, ?Currency $currency): string
     {
         if ($amount === null || $amount === '') {
             return '—';
@@ -176,9 +354,30 @@ final class Fields
         $decimals = $currency?->decimals ?? 2;
         $value = (string) Money::roundTo((string) $amount, $decimals);
         [$int, $fraction] = array_pad(explode('.', ltrim($value, '-')), 2, '');
-        $text = number_format((float) $int, 0, '.', ',').($decimals > 0 ? '.'.str_pad($fraction, $decimals, '0') : '');
+        $grouped = strrev(implode(',', str_split(strrev($int), 3)));
+        $negative = str_starts_with($value, '-') && ! Money::of($value)->isZero();
 
-        return trim(($currency?->code ?? '').' '.(str_starts_with($value, '-') ? '−' : '').$text);
+        return ($negative ? '−' : '').$grouped.($decimals > 0 ? '.'.str_pad($fraction, $decimals, '0') : '');
+    }
+
+    /**
+     * True when a record's currency is not the operational one (e.g. a USD
+     * order placed before SYP operation): shown in its own currency with a
+     * note, never relabelled or converted without a recorded rate.
+     */
+    public static function isHistoricalCurrency(?Currency $currency): bool
+    {
+        $operational = OperationalMoney::currency();
+
+        return $currency !== null && $operational !== null && ! $currency->is($operational);
+    }
+
+    /** The table note for a record kept in a non-operational currency (null otherwise). */
+    public static function historicalCurrencyNote(?Currency $currency): ?string
+    {
+        return self::isHistoricalCurrency($currency)
+            ? __('admin.money.historical_currency', ['code' => $currency->code])
+            : null;
     }
 
     /**

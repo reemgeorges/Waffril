@@ -32,12 +32,12 @@ class ListDriverCashSettlements extends ListRecords
                     // Operational currencies (CurrencyPolicy: SYP at launch), plus any
                     // currency in which collected cash still awaits settlement (e.g.
                     // an order paid before the switch), so nothing is stranded.
+                    // SYP only in normal operation: the choice is shown only while
+                    // historical cash in another currency still awaits settlement.
                     Select::make('currency_id')->label(__('admin.fields.currency'))->required()
                         ->default(fn () => CurrencyPolicy::displayCurrency(null)?->id)
-                        ->options(fn () => Currency::query()
-                            ->whereIn('id', CurrencyPolicy::customerCurrencies()->pluck('id')
-                                ->merge(OrderPayment::query()->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->distinct()->pluck('currency_id')))
-                            ->orderByDesc('is_default')->orderBy('code')->pluck('code', 'id')),
+                        ->options(fn () => self::settlementCurrencies())
+                        ->hidden(fn () => count(self::settlementCurrencies()) <= 1)->dehydratedWhenHidden(),
                     // Business days are in the platform timezone (not UTC): just after local
                     // midnight "today" must already be the new day.
                     DatePicker::make('business_date')->label(__('admin.fields.business_date'))->required()
@@ -49,5 +49,22 @@ class ListDriverCashSettlements extends ListRecords
                     Carbon::parse($data['business_date'])->toDateString(), $admin,
                 ))),
         ];
+    }
+
+    /**
+     * Operational currencies, plus any currency in which collected cash still
+     * awaits settlement (e.g. cash taken before SYP operation), so nothing is
+     * stranded. The operational currency comes first.
+     *
+     * @return array<int, string>
+     */
+    public static function settlementCurrencies(): array
+    {
+        return once(fn () => Currency::query()
+            ->whereIn('id', CurrencyPolicy::customerCurrencies()->pluck('id')
+                ->merge(OrderPayment::query()->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->where('collected_amount', '>', 0)->distinct()->pluck('currency_id')))
+            ->get()
+            ->sortBy(fn (Currency $c) => [$c->id === CurrencyPolicy::displayCurrency(null)?->id ? 0 : 1, $c->code])
+            ->pluck('code', 'id')->all());
     }
 }

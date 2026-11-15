@@ -118,7 +118,12 @@ class OrderPricingService
         // PLUS: active cycle snapshot discount for this store.
         $cycle = PlusCycle::query()->where('user_id', $user->id)->where('status', PlusCycle::STATUS_ACTIVE)
             ->where('starts_at', '<=', now())->where('ends_at', '>', now())->first();
-        [$cycleDiscount, $plusDiscount] = $this->plusDiscount($cycle, $branch->store_id, $subtotal, $convert, $currency->decimals);
+        // Cycle amounts (op_*) are converted from THEIR recorded currency
+        // (op_currency_id), never assumed to be in the base: no double conversion.
+        $convertFrom = fn ($amount, ?int $currencyId) => $currencyId !== null && $currencyId !== $default->id
+            ? app(CurrencyConverter::class)->convert((string) $amount, Currency::query()->findOrFail($currencyId), $currency)
+            : $convert($amount);
+        [$cycleDiscount, $plusDiscount] = $this->plusDiscount($cycle, $branch->store_id, $subtotal, $convertFrom, $currency->decimals);
         $plusPercent = $cycleDiscount && $cycleDiscount->discount_type === 'percent' ? (string) $cycleDiscount->op_discount_value : null;
         // The store's general PLUS discount, only when the cycle snapshot has
         // no rule for this store and the member is not excluded from it.
@@ -271,12 +276,14 @@ class OrderPricingService
         return [(string) $percent->stripTrailingZeros(), $discount->isGreaterThan($base) ? $base : $discount];
     }
 
-    protected function plusDiscount(?PlusCycle $cycle, int $storeId, BigDecimal $base, callable $convert, int $decimals): array
+    /** @param  callable(mixed, ?int): BigDecimal  $convertFrom  amount, source currency id (null = base) */
+    protected function plusDiscount(?PlusCycle $cycle, int $storeId, BigDecimal $base, callable $convertFrom, int $decimals): array
     {
         $row = $cycle ? PlusCycleDiscount::query()->where('plus_cycle_id', $cycle->id)->where('store_id', $storeId)->first() : null;
         if (! $row) {
             return [null, BigDecimal::zero()];
         }
+        $convert = fn ($amount) => $convertFrom($amount, $row->op_currency_id !== null ? (int) $row->op_currency_id : null);
         if ($row->op_min_order_amount !== null && $base->isLessThan($convert((string) $row->op_min_order_amount))) {
             return [null, BigDecimal::zero()];
         }

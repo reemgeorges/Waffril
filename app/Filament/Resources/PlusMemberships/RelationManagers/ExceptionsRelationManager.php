@@ -53,12 +53,12 @@ class ExceptionsRelationManager extends RelationManager
                     ->description(fn ($record) => $record->note),
                 TextColumn::make('discount_value')->label(__('admin.fields.discount_value'))->badge()
                     ->state(fn ($record) => $record->is_excluded ? __('admin.table.excluded')
-                        : '−'.Fields::formatDecimal($record->discount_value).($record->discount_type === 'percent' ? '%' : ''))
+                        : '−'.($record->discount_type === 'percent' ? Fields::formatDecimal($record->discount_value).'%' : Fields::catalogMoney($record->discount_value)))
                     ->color(fn ($record) => $record->is_excluded ? 'danger' : 'gold')
                     ->icon(fn ($record) => $record->is_excluded ? 'heroicon-m-no-symbol' : 'heroicon-m-tag')
                     ->description(fn ($record) => $record->is_excluded ? null : (collect([
-                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::formatDecimal($record->max_discount_amount)]) : null,
-                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::formatDecimal($record->min_order_amount)]) : null,
+                        $record->max_discount_amount !== null ? __('admin.table.max_discount', ['amount' => Fields::catalogMoney($record->max_discount_amount)]) : null,
+                        $record->min_order_amount !== null ? __('admin.table.min_order_short', ['amount' => Fields::catalogMoney($record->min_order_amount)]) : null,
 
                     ])->filter()->implode(' · ') ?: null)),
                 TextColumn::make('approvedBy.name')->label(__('admin.fields.approved_by'))->placeholder('—')->color('gray')->visibleFrom('md'),

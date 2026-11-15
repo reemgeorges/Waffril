@@ -25,6 +25,7 @@ use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -286,8 +287,14 @@ class CheckoutService
         if ($requested === null || $requested === '' || ($requested !== 'max' && BigDecimal::of($requested)->isZero())) {
             return BigDecimal::zero();
         }
+        $decimals = (int) $currency->decimals;
+        if ($requested !== 'max' && ! BigDecimal::of($requested)->isEqualTo(Money::roundTo($requested, $decimals))) {
+            // SYP has 0 decimals: a fractional wallet part would leave fractional cash to collect.
+            throw new BusinessRuleException(__('validation.decimal', ['attribute' => 'wallet_amount', 'decimal' => $decimals]), 422);
+        }
         $amount = $requested === 'max'
-            ? BigDecimal::of((string) (Wallet::query()->where('user_id', $user->id)->where('currency_id', $currency->id)->value('balance') ?? '0'))
+            // Whole units of the order currency only, so the cash part stays collectable.
+            ? BigDecimal::of((string) (Wallet::query()->where('user_id', $user->id)->where('currency_id', $currency->id)->value('balance') ?? '0'))->toScale($decimals, RoundingMode::FLOOR)
             : BigDecimal::of($requested);
         $amount = $amount->isGreaterThan($total) ? $total : $amount;
         if ($amount->isZero()) {

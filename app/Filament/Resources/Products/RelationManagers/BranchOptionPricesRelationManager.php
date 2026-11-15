@@ -75,8 +75,7 @@ class BranchOptionPricesRelationManager extends RelationManager
                 TextColumn::make('option.name')->label(__('admin.fields.option'))->weight(FontWeight::SemiBold)
                     ->description(fn (BranchProductOption $record) => $record->option?->group?->name),
                 TextColumn::make('branchProduct.branch.name')->label(__('admin.fields.branch')),
-                TextColumn::make('price_delta')->label(__('admin.fields.price_delta'))
-                    ->formatStateUsing(fn ($state) => ((float) $state > 0 ? '+' : '').Fields::formatDecimal($state)),
+                Fields::catalogMoneyColumn(TextColumn::make('price_delta')->label(__('admin.fields.price_delta')), signed: true),
                 Columns::status('is_available', __('admin.table.available'), __('admin.table.unavailable'))->label(__('admin.table.availability')),
             ])
             ->filters([

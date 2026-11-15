@@ -45,7 +45,7 @@ class ManageDeliveryFeeRules extends ManageRecords
                     $body = __('admin.delivery.quote_result', [
                         'distance' => $quote->distanceKm,
                         'method' => $quote->distanceMethod,
-                        'fee' => $quote->fee ?? '—',
+                        'fee' => $quote->fee !== null ? Fields::catalogMoney((string) $quote->fee) : '—',
                         'scope' => $quote->ruleScope ? __('admin.delivery.scope_'.$quote->ruleScope) : '—',
                     ]);
                     Notification::make()

@@ -84,10 +84,12 @@ class DeliveryFeeRuleResource extends AdminResource
                     ->state(fn ($record) => Fields::formatDecimal($record->distance_from_km).' – '
                         .($record->distance_to_km !== null ? Fields::formatDecimal($record->distance_to_km) : '∞').' '.__('admin.delivery.km'))
                     ->extraAttributes(['class' => 'wf-num']),
+                // Operational amounts (what customers pay); stored base values in the tooltip.
                 TextColumn::make('base_fee')->label(__('admin.table.fee'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, DeliveryFeeRule $record) => (float) $record->per_km_fee > 0
-                        ? __('admin.table.fee_formula', ['base' => Fields::formatDecimal($record->base_fee), 'per_km' => Fields::formatDecimal($record->per_km_fee)])
-                        : Fields::formatDecimal($record->base_fee)),
+                        ? __('admin.table.fee_formula', ['base' => Fields::catalogMoney($record->base_fee), 'per_km' => Fields::catalogMoney($record->per_km_fee)])
+                        : Fields::catalogMoney($record->base_fee))
+                    ->tooltip(fn (DeliveryFeeRule $record) => collect([Fields::storedTooltip($record->base_fee), (float) $record->per_km_fee > 0 ? Fields::storedTooltip($record->per_km_fee) : null])->filter()->implode(' | ') ?: null),
                 Columns::status(),
             ])
             ->filters([

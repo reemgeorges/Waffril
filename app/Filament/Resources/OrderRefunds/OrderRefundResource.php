@@ -49,7 +49,8 @@ class OrderRefundResource extends AdminResource
                     ->description(fn (OrderRefund $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
                     ->searchable(),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))->weight(FontWeight::SemiBold)
-                    ->formatStateUsing(fn ($state, OrderRefund $record) => Fields::formatMoney($state, $record->currency)),
+                    ->formatStateUsing(fn ($state, OrderRefund $record) => Fields::formatMoney($state, $record->currency))
+                    ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
                 TextColumn::make('reason_code')->label(__('admin.table.reason'))->badge()->color('gray')
                     ->formatStateUsing(fn ($state) => Lang::has("admin.orders.reason_{$state}") ? __("admin.orders.reason_{$state}") : $state),
                 TextColumn::make('payment.method.name')->label(__('admin.table.method'))->visibleFrom('md'),

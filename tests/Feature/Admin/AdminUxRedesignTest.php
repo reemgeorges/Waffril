@@ -65,8 +65,9 @@ class AdminUxRedesignTest extends AdminPanelTestCase
         $today = TodayOverview::figures();
         $this->assertSame(3, $today['received']);
         $this->assertSame(1, $today['delivered']);
-        $this->assertSame('USD 7.00', $today['sales'][0]['amount']);
-        Livewire::test(TodayOverview::class)->assertSee('USD 7.00');
+        // A historical USD amount stays USD (2026-11-15 format: number, then currency).
+        $this->assertSame("\u{2066}7.00 USD\u{2069}", $today['sales'][0]['amount']);
+        Livewire::test(TodayOverview::class)->assertSee('7.00 USD');
 
         $series = OrdersTrendChart::series();
         $this->assertCount(OrdersTrendChart::DAYS, $series);

@@ -20,7 +20,12 @@
                 <tbody>
                     @forelse ($rows as $row)
                         <tr>
-                            <td><span class="wf-currency-code">{{ $row['code'] }}</span></td>
+                            <td>
+                                <span class="wf-currency-code">{{ $row['code'] }}</span>
+                                @if ($row['historical'] ?? false)
+                                    <span class="wf-cell-note">{{ __('admin.money.separate_currency') }}</span>
+                                @endif
+                            </td>
                             <td class="wf-end wf-num">{{ $row['display']['collected'] }}</td>
                             <td class="wf-end wf-num">{{ $row['display']['pending_cash'] }}</td>
                             <td class="wf-end wf-num" @if ($row['unsettled_cash'] !== '0.0000') data-tone="warning" @endif>{{ $row['display']['unsettled_cash'] }}</td>
