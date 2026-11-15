@@ -24,6 +24,9 @@ erDiagram
     delivery_fee_rules }o--o| cities : "city_id"
     delivery_fee_rules }o--o| delivery_areas : "delivery_area_id"
     delivery_fee_rules }o--o| admins : "updated_by_admin_id"
+    delivery_offers }o--|| drivers : "driver_id"
+    delivery_offers }o--o| admins : "offered_by_admin_id"
+    delivery_offers }o--|| orders : "order_id"
     driver_cash_settlements }o--|| currencies : "currency_id"
     driver_cash_settlements }o--|| drivers : "driver_id"
     driver_cash_settlements }o--o| admins : "settled_by_admin_id"
@@ -60,6 +63,7 @@ erDiagram
     order_status_histories }o--|| orders : "order_id"
     orders }o--o| admins : "accepted_by_admin_id"
     orders }o--o| admins : "assigned_by_admin_id"
+    orders }o--o| delivery_offers : "assigned_via_offer_id"
     orders }o--|| currencies : "base_currency_id"
     orders }o--|| branches : "branch_id"
     orders }o--|| cities : "city_id"
@@ -252,6 +256,27 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+    delivery_offers {
+        bigint id PK
+        bigint order_id FK
+        bigint driver_id FK
+        smallint round
+        smallint attempt
+        varchar_16 status
+        varchar_8 source
+        bigint offered_by_admin_id FK
+        timestamp offered_at
+        timestamp expires_at
+        timestamp responded_at
+        varchar_24 reject_reason
+        varchar_500 reject_note
+        varchar_24 cancel_reason
+        json selection_meta
+        bigint pending_order_marker
+        bigint pending_driver_marker
+        timestamp created_at
+        timestamp updated_at
+    }
     driver_cash_settlements {
         bigint id PK
         bigint driver_id FK
@@ -358,6 +383,8 @@ erDiagram
         decimal_18_4 line_subtotal
         bigint offer_id FK
         decimal_18_4 offer_discount_amount
+        varchar_10 offer_discount_type
+        decimal_7_4 offer_discount_percent
         decimal_18_4 line_total
         varchar_255 notes
         timestamp created_at
@@ -431,8 +458,11 @@ erDiagram
         decimal_18_4 subtotal
         decimal_18_4 offer_discount_total
         decimal_18_4 plus_discount_amount
+        decimal_5_2 plus_discount_percent
         decimal_18_4 delivery_fee_original
         decimal_18_4 delivery_fee
+        decimal_5_2 plus_delivery_discount_percent
+        decimal_18_4 plus_delivery_discount_amount
         decimal_18_4 total
         bigint plus_cycle_id FK
         bigint plus_cycle_discount_id FK
@@ -443,6 +473,12 @@ erDiagram
         bigint assigned_by_admin_id FK
         timestamp accepted_at
         timestamp assigned_at
+        varchar_16 dispatch_state
+        smallint dispatch_round
+        smallint dispatch_attempts
+        timestamp no_driver_since
+        timestamp no_driver_alerted_at
+        bigint assigned_via_offer_id FK
         timestamp picked_up_at
         timestamp delivered_at
         varchar_255 delivery_photo_path
@@ -493,6 +529,7 @@ erDiagram
         bigint snapshot_currency_id FK
         smallint free_deliveries_total
         smallint free_deliveries_used
+        decimal_5_2 delivery_discount_percent
         bigint confirmed_by_admin_id FK
         timestamp confirmed_at
         timestamp created_at
@@ -578,6 +615,7 @@ erDiagram
         varchar_16 contact_phone
         varchar_16 contact_whatsapp
         tinyint_1 is_active
+        decimal_5_2 plus_discount_percent
         int sort_order
         timestamp created_at
         timestamp updated_at

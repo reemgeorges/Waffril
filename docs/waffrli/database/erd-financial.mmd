@@ -185,8 +185,11 @@ erDiagram
         decimal_18_4 subtotal
         decimal_18_4 offer_discount_total
         decimal_18_4 plus_discount_amount
+        decimal_5_2 plus_discount_percent
         decimal_18_4 delivery_fee_original
         decimal_18_4 delivery_fee
+        decimal_5_2 plus_delivery_discount_percent
+        decimal_18_4 plus_delivery_discount_amount
         decimal_18_4 total
         bigint plus_cycle_id FK
         bigint plus_cycle_discount_id FK
@@ -197,6 +200,12 @@ erDiagram
         bigint assigned_by_admin_id FK
         timestamp accepted_at
         timestamp assigned_at
+        varchar_16 dispatch_state
+        smallint dispatch_round
+        smallint dispatch_attempts
+        timestamp no_driver_since
+        timestamp no_driver_alerted_at
+        bigint assigned_via_offer_id FK
         timestamp picked_up_at
         timestamp delivered_at
         varchar_255 delivery_photo_path

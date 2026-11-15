@@ -108,6 +108,7 @@ erDiagram
         bigint snapshot_currency_id FK
         smallint free_deliveries_total
         smallint free_deliveries_used
+        decimal_5_2 delivery_discount_percent
         bigint confirmed_by_admin_id FK
         timestamp confirmed_at
         timestamp created_at
@@ -185,6 +186,7 @@ erDiagram
         varchar_16 contact_phone
         varchar_16 contact_whatsapp
         tinyint_1 is_active
+        decimal_5_2 plus_discount_percent
         int sort_order
         timestamp created_at
         timestamp updated_at
