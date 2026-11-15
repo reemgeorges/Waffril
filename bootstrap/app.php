@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: ['127.0.0.1', '::1']);
         $middleware->alias([
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
