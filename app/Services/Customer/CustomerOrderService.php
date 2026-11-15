@@ -114,10 +114,11 @@ class CustomerOrderService
                 'product_id' => $i->product_id, 'name' => $i->product_name, 'quantity' => $i->quantity,
                 'unit_price' => $fmt($i->unit_price), 'line_total' => $fmt($i->line_total), 'notes' => $i->notes,
                 // 2026-11-15 (additive): the line before its offer, the exact offer
-                // discount, and the offer's type/percent only when verified
-                // against the stored discount (OrderItemDiscount), else null.
+                // discount, and the offer's type/percent: the immutable checkout
+                // snapshot, or for older items a verified fallback, else null
+                // (OrderItemDiscount::forItem).
                 'line_subtotal' => $fmt($i->line_subtotal), 'offer_discount' => $fmt($i->offer_discount_amount),
-                'offer' => OrderItemDiscount::verifiedOffer($i, $order),
+                'offer' => OrderItemDiscount::forItem($i, $order),
                 'options' => $i->options->map(fn ($o) => ['group' => $o->group_name, 'option' => $o->option_name, 'quantity' => $o->quantity, 'total_price_delta' => $fmt($o->total_price_delta)])->values(),
             ])->values(),
             'amounts' => [

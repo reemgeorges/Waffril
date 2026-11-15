@@ -59,6 +59,27 @@ The legacy email/password user routes (`routes/api/v1/user.php`) are **off** unl
 - **`version`:** increases whenever a published text is edited.
 - **Editing:** the admin panel (App content), permission `content.manage`.
 
+## Order money and line discounts (2026-11-15)
+
+Returned by `GET orders/{order}`, checkout and cancel (`data.order`). Real examples are in `openapi/examples.json`.
+
+- **Currency:** `currency {code, symbol, decimals, denomination}`. SYP amounts are NEW Syrian pounds (`decimals: 2`, `denomination: "new"`). The database stores old pounds and divides by 100 once on output.
+- **Items:** `items[]` keeps `unit_price`, `quantity` and `line_total`, and adds:
+
+| Field | Meaning |
+|---|---|
+| `line_subtotal` | quantity × unit price, before the offer (snapshot) |
+| `offer_discount` | the exact offer discount of the line (snapshot; `"0.00"` = none) |
+| `offer` | `null`, or `{type: "percent"\|"fixed", percent, source}` |
+
+`line_subtotal − offer_discount = line_total`. PLUS discounts are order-level: see `amounts.plus_discount` and `amounts.plus_discount_percent`.
+
+**Where `offer` comes from:**
+
+- **`source: "snapshot"`:** the offer type and its own percentage, recorded at checkout in `order_items.offer_discount_type` / `offer_discount_percent` from the pricing calculation, in the order transaction. Editing, disabling or deleting the offer later never changes it. `percent` is null for fixed offers.
+- **`source: "verified"`:** items placed before 2026-11-15 have no snapshot (never backfilled). The current offer is reported only when it reproduces the stored discount exactly with the order's frozen subtotal, decimals and rate. It is not a historical record.
+- **`null`:** no discount, or a legacy item whose offer no longer reproduces the amount. Show `offer_discount` without a percentage. A percentage is never derived from amounts.
+
 ## Endpoint inventory
 
 Generated from `php artisan route:list --path=api/v1/customer` (63 routes). "token" = `auth:user` + `guard.identity:user` + `customer.active` + `throttle:customer-api`.

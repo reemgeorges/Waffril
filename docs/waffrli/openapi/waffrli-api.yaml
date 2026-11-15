@@ -5252,7 +5252,7 @@ paths:
       tags:
         - Customer
       operationId: customer.cartsCartCheckout.post
-      summary: 'Checkout - client totals are ignored'
+      summary: 'Cash order: percent-offer item and item without offer (NEW SYP)'
       description: |-
         Requires a `user` token.
         Throttle: `customer-api`, `customer-checkout`.
@@ -5278,14 +5278,11 @@ paths:
             schema:
               type: object
               properties:
-                total:
-                  type: string
                 notes:
                   type: string
               description: 'Inferred from a real request (no FormRequest on this action).'
             example:
-              total: '0.01'
-              notes: 'Bruno test order'
+              notes: 'WAFFRLI NEW SYP E2E TEST (API docs capture)'
       responses:
         200:
           description: Success.
@@ -5298,51 +5295,83 @@ paths:
                   message: 'Order placed.'
                   replayed: false
                   order:
-                    id: 38
-                    order_number: WF261031-EE0XNT
+                    id: 8
+                    order_number: WF261115-JU96J2
                     status: pending
                     status_label: Pending
                     type: immediate
                     type_label: Immediate
                     scheduled_for: null
                     branch:
-                      id: 6
-                      name: 'Shaalan branch'
+                      id: 1
+                      name: 'Mazzeh branch'
                       store:
-                        id: 3
-                        name: 'Fresh Market'
+                        id: 1
+                        name: 'Shami Grill'
                     currency:
-                      code: USD
-                      symbol: $
+                      code: SYP
+                      symbol: ل.س
                       decimals: 2
-                    total: '4.49'
-                    created_at: '2026-10-31T18:52:18+00:00'
+                      denomination: new
+                    total: '1207.19'
+                    created_at: '2026-11-15T15:29:40+00:00'
                     can_cancel: true
                     can_request_cancellation: false
                     items:
                       -
-                        product_id: 10
+                        product_id: 2
                         name:
-                          ar: 'حليب ١ لتر'
-                          en: 'Milk 1 L'
-                        quantity: 3
-                        unit_price: '1.10'
-                        line_total: '3.30'
+                          ar: 'مشاوي مشكلة'
+                          en: 'Mixed grill platter'
+                        quantity: 1
+                        unit_price: '1040.00'
+                        line_total: '884.00'
                         notes: null
+                        line_subtotal: '1040.00'
+                        offer_discount: '156.00'
+                        offer:
+                          type: percent
+                          percent: '15'
+                          source: snapshot
+                        options:
+                          -
+                            group:
+                              ar: الحجم
+                              en: Size
+                            option:
+                              ar: صغير
+                              en: Small
+                            quantity: 1
+                            total_price_delta: '0.00'
+                      -
+                        product_id: 4
+                        name:
+                          ar: حمص
+                          en: Hummus
+                        quantity: 1
+                        unit_price: '195.00'
+                        line_total: '195.00'
+                        notes: null
+                        line_subtotal: '195.00'
+                        offer_discount: '0.00'
+                        offer: null
                         options: []
                     amounts:
-                      subtotal: '3.30'
-                      offer_discount: '0.00'
+                      subtotal: '1235.00'
+                      offer_discount: '156.00'
                       plus_discount: '0.00'
-                      delivery_fee_original: '1.19'
-                      delivery_fee: '1.19'
+                      plus_discount_percent: null
+                      delivery_fee_original: '128.19'
+                      delivery_fee: '128.19'
+                      plus_delivery_discount_percent: null
+                      plus_delivery_discount: '0.00'
                       free_delivery_applied: false
-                      total: '4.49'
+                      total: '1207.19'
                     payments:
                       -
                         method: cash
                         method_label: 'Cash on delivery'
-                        amount: '4.49'
+                        amount: '1207.19'
                         status: pending
                         status_label: Pending
                         collected: '0.00'
@@ -5351,22 +5380,22 @@ paths:
                     refunds: []
                     delivery:
                       address:
-                        line: 'Kafr Sousa / كفرسوسة'
-                        label: 'Home / البيت'
-                        details: 'Demo address'
-                      lat: 33.499
-                      lng: 36.27
-                      distance_km: 2.922
-                      notes: 'Bruno test order'
+                        line: 'WAFFRLI NEW SYP E2E TEST'
+                        label: E2E
+                        details: null
+                      lat: 33.517
+                      lng: 36.254
+                      distance_km: 1.574
+                      notes: 'WAFFRLI NEW SYP E2E TEST (API docs capture)'
                     driver: null
-                    realtime_channel: order.38
+                    realtime_channel: order.8
                     status_history:
                       -
                         from: null
                         from_label: null
                         to: pending
                         to_label: Pending
-                        at: '2026-10-31T18:52:18+00:00'
+                        at: '2026-11-15T15:29:40+00:00'
                     cancellation: null
                     cancellation_requests: []
                 status: true
@@ -6768,7 +6797,7 @@ paths:
       tags:
         - Customer
       operationId: customer.orders.get
-      summary: 'Find a delivered order'
+      summary: 'Orders (newest first)'
       description: |-
         Requires a `user` token.
         Throttle: `customer-api`.
@@ -6777,19 +6806,12 @@ paths:
         -
           $ref: '#/components/parameters/AcceptLanguage'
         -
-          name: scope
-          in: query
-          required: false
-          schema:
-            type: string
-          example: previous
-        -
           name: per_page
           in: query
           required: false
           schema:
             type: integer
-          example: '50'
+          example: 2
       security:
         -
           customerToken: []
@@ -6804,32 +6826,10 @@ paths:
                 data:
                   orders:
                     -
-                      id: 37
-                      order_number: WF261031-VMW4GH
+                      id: 9
+                      order_number: WF261115-U59EFU
                       status: cancelled
                       status_label: Cancelled
-                      type: immediate
-                      type_label: Immediate
-                      scheduled_for: null
-                      branch:
-                        id: 6
-                        name: 'Shaalan branch'
-                        store:
-                          id: 3
-                          name: 'Fresh Market'
-                      currency:
-                        code: USD
-                        symbol: $
-                        decimals: 2
-                      total: '4.49'
-                      created_at: '2026-10-31T18:43:57+00:00'
-                      can_cancel: false
-                      can_request_cancellation: false
-                    -
-                      id: 22
-                      order_number: DEMO-0022
-                      status: delivered
-                      status_label: Delivered
                       type: immediate
                       type_label: Immediate
                       scheduled_for: null
@@ -6840,17 +6840,41 @@ paths:
                           id: 2
                           name: 'Pizza Roma'
                       currency:
-                        code: USD
-                        symbol: $
+                        code: SYP
+                        symbol: ل.س
                         decimals: 2
-                      total: '2.76'
-                      created_at: '2026-10-31T15:36:00+00:00'
+                        denomination: new
+                      total: '732.89'
+                      created_at: '2026-11-15T15:29:41+00:00'
                       can_cancel: false
+                      can_request_cancellation: false
+                    -
+                      id: 8
+                      order_number: WF261115-JU96J2
+                      status: pending
+                      status_label: Pending
+                      type: immediate
+                      type_label: Immediate
+                      scheduled_for: null
+                      branch:
+                        id: 1
+                        name: 'Mazzeh branch'
+                        store:
+                          id: 1
+                          name: 'Shami Grill'
+                      currency:
+                        code: SYP
+                        symbol: ل.س
+                        decimals: 2
+                        denomination: new
+                      total: '1207.19'
+                      created_at: '2026-11-15T15:29:40+00:00'
+                      can_cancel: true
                       can_request_cancellation: false
                   pagination:
                     current_page: 1
-                    per_page: 50
-                    total: 5
+                    per_page: 2
+                    total: 2
                     last_page: 1
                 status: true
                 error: null
@@ -6870,7 +6894,7 @@ paths:
       tags:
         - Customer
       operationId: customer.ordersOrder.get
-      summary: 'Read delivered order items'
+      summary: 'Delivered order placed before the offer snapshot (legacy: verified offer)'
       description: |-
         Requires a `user` token.
         Throttle: `customer-api`.
@@ -6897,65 +6921,115 @@ paths:
               example:
                 data:
                   order:
-                    id: 22
-                    order_number: DEMO-0022
+                    id: 5
+                    order_number: WF261115-2UWWLG
                     status: delivered
                     status_label: Delivered
                     type: immediate
                     type_label: Immediate
                     scheduled_for: null
                     branch:
-                      id: 4
-                      name: 'West Mazzeh branch'
+                      id: 1
+                      name: 'Mazzeh branch'
                       store:
-                        id: 2
-                        name: 'Pizza Roma'
+                        id: 1
+                        name: 'Shami Grill'
                     currency:
-                      code: USD
-                      symbol: $
+                      code: SYP
+                      symbol: ل.س
                       decimals: 2
-                    total: '2.76'
-                    created_at: '2026-10-31T15:36:00+00:00'
+                      denomination: new
+                    total: '1753.19'
+                    created_at: '2026-11-15T12:36:32+00:00'
                     can_cancel: false
                     can_request_cancellation: false
                     items:
                       -
-                        product_id: 8
+                        product_id: 1
                         name:
-                          ar: 'خبز بالثوم'
-                          en: 'Garlic bread'
-                        quantity: 1
-                        unit_price: '1.80'
-                        line_total: '1.80'
+                          ar: 'شاورما دجاج'
+                          en: 'Chicken shawarma wrap'
+                        quantity: 2
+                        unit_price: '370.50'
+                        line_total: '741.00'
                         notes: null
-                        options: []
+                        line_subtotal: '741.00'
+                        offer_discount: '0.00'
+                        offer: null
+                        options:
+                          -
+                            group:
+                              ar: 'نوع الخبز'
+                              en: Bread
+                            option:
+                              ar: 'خبز تنور'
+                              en: 'Tannour bread'
+                            quantity: 1
+                            total_price_delta: '13.00'
+                          -
+                            group:
+                              ar: إضافات
+                              en: Extras
+                            option:
+                              ar: 'صلصة ثوم'
+                              en: 'Garlic sauce'
+                            quantity: 1
+                            total_price_delta: '32.50'
+                      -
+                        product_id: 2
+                        name:
+                          ar: 'مشاوي مشكلة'
+                          en: 'Mixed grill platter'
+                        quantity: 1
+                        unit_price: '1040.00'
+                        line_total: '884.00'
+                        notes: null
+                        line_subtotal: '1040.00'
+                        offer_discount: '156.00'
+                        offer:
+                          type: percent
+                          percent: '15'
+                          source: verified
+                        options:
+                          -
+                            group:
+                              ar: الحجم
+                              en: Size
+                            option:
+                              ar: صغير
+                              en: Small
+                            quantity: 1
+                            total_price_delta: '0.00'
                     amounts:
-                      subtotal: '1.80'
-                      offer_discount: '0.00'
-                      plus_discount: '0.09'
-                      delivery_fee_original: '1.05'
-                      delivery_fee: '1.05'
+                      subtotal: '1781.00'
+                      offer_discount: '156.00'
+                      plus_discount: '0.00'
+                      plus_discount_percent: null
+                      delivery_fee_original: '128.19'
+                      delivery_fee: '128.19'
+                      plus_delivery_discount_percent: null
+                      plus_delivery_discount: '0.00'
                       free_delivery_applied: false
-                      total: '2.76'
+                      total: '1753.19'
                     payments:
                       -
                         method: cash
                         method_label: 'Cash on delivery'
-                        amount: '2.76'
+                        amount: '1753.19'
                         status: paid
                         status_label: Paid
-                        collected: '2.76'
+                        collected: '1753.19'
                         reversed: '0.00'
                         refunded: '0.00'
                     refunds: []
                     delivery:
                       address:
-                        line: 'Kafr Sousa / كفرسوسة'
-                        label: 'Home / البيت'
-                        details: 'Demo address'
-                      lat: 33.499
-                      lng: 36.27
-                      distance_km: 3.247
+                        line: 'WAFFRLI NEW SYP E2E TEST Mazzeh'
+                        label: المنزل
+                        details: null
+                      lat: 33.517
+                      lng: 36.2539983
+                      distance_km: 1.574
                       notes: null
                     driver: null
                     realtime_channel: null
@@ -6965,13 +7039,31 @@ paths:
                         from_label: null
                         to: pending
                         to_label: Pending
-                        at: '2026-10-31T15:36:00+00:00'
+                        at: '2026-11-15T12:36:32+00:00'
                       -
                         from: pending
                         from_label: Pending
                         to: accepted
                         to_label: Accepted
-                        at: '2026-10-31T15:39:00+00:00'
+                        at: '2026-11-15T12:36:53+00:00'
+                      -
+                        from: accepted
+                        from_label: Accepted
+                        to: assigned
+                        to_label: 'Driver assigned'
+                        at: '2026-11-15T12:40:42+00:00'
+                      -
+                        from: assigned
+                        from_label: 'Driver assigned'
+                        to: picked_up
+                        to_label: 'Picked up'
+                        at: '2026-11-15T12:41:37+00:00'
+                      -
+                        from: picked_up
+                        from_label: 'Picked up'
+                        to: delivered
+                        to_label: Delivered
+                        at: '2026-11-15T12:44:54+00:00'
                     cancellation: null
                     cancellation_requests: []
                 status: true
@@ -7003,7 +7095,7 @@ paths:
       tags:
         - Customer
       operationId: customer.ordersOrderCancel.post
-      summary: 'Cancel before acceptance'
+      summary: 'Pending order cancelled: fixed-offer item'
       description: |-
         Requires a `user` token.
         Throttle: `customer-api`.
@@ -7031,7 +7123,7 @@ paths:
                   type: string
               description: 'Inferred from a real request (no FormRequest on this action).'
             example:
-              note: 'Bruno test cleanup'
+              note: 'WAFFRLI NEW SYP E2E TEST (API docs capture)'
       responses:
         200:
           description: Success.
@@ -7043,51 +7135,61 @@ paths:
                 data:
                   message: 'Order cancelled.'
                   order:
-                    id: 38
-                    order_number: WF261031-EE0XNT
+                    id: 9
+                    order_number: WF261115-U59EFU
                     status: cancelled
                     status_label: Cancelled
                     type: immediate
                     type_label: Immediate
                     scheduled_for: null
                     branch:
-                      id: 6
-                      name: 'Shaalan branch'
+                      id: 4
+                      name: 'West Mazzeh branch'
                       store:
-                        id: 3
-                        name: 'Fresh Market'
+                        id: 2
+                        name: 'Pizza Roma'
                     currency:
-                      code: USD
-                      symbol: $
+                      code: SYP
+                      symbol: ل.س
                       decimals: 2
-                    total: '4.49'
-                    created_at: '2026-10-31T18:52:18+00:00'
+                      denomination: new
+                    total: '732.89'
+                    created_at: '2026-11-15T15:29:41+00:00'
                     can_cancel: false
                     can_request_cancellation: false
                     items:
                       -
-                        product_id: 10
+                        product_id: 8
                         name:
-                          ar: 'حليب ١ لتر'
-                          en: 'Milk 1 L'
+                          ar: 'خبز بالثوم'
+                          en: 'Garlic bread'
                         quantity: 3
-                        unit_price: '1.10'
-                        line_total: '3.30'
+                        unit_price: '234.00'
+                        line_total: '585.00'
                         notes: null
+                        line_subtotal: '702.00'
+                        offer_discount: '117.00'
+                        offer:
+                          type: fixed
+                          percent: null
+                          source: snapshot
                         options: []
                     amounts:
-                      subtotal: '3.30'
-                      offer_discount: '0.00'
+                      subtotal: '702.00'
+                      offer_discount: '117.00'
                       plus_discount: '0.00'
-                      delivery_fee_original: '1.19'
-                      delivery_fee: '1.19'
+                      plus_discount_percent: null
+                      delivery_fee_original: '147.89'
+                      delivery_fee: '147.89'
+                      plus_delivery_discount_percent: null
+                      plus_delivery_discount: '0.00'
                       free_delivery_applied: false
-                      total: '4.49'
+                      total: '732.89'
                     payments:
                       -
                         method: cash
                         method_label: 'Cash on delivery'
-                        amount: '4.49'
+                        amount: '732.89'
                         status: cancelled
                         status_label: Cancelled
                         collected: '0.00'
@@ -7096,13 +7198,13 @@ paths:
                     refunds: []
                     delivery:
                       address:
-                        line: 'Kafr Sousa / كفرسوسة'
-                        label: 'Home / البيت'
-                        details: 'Demo address'
-                      lat: 33.499
-                      lng: 36.27
-                      distance_km: 2.922
-                      notes: 'Bruno test order'
+                        line: 'WAFFRLI NEW SYP E2E TEST'
+                        label: E2E
+                        details: null
+                      lat: 33.517
+                      lng: 36.254
+                      distance_km: 2.584
+                      notes: 'WAFFRLI NEW SYP E2E TEST (API docs capture)'
                     driver: null
                     realtime_channel: null
                     status_history:
@@ -7111,19 +7213,19 @@ paths:
                         from_label: null
                         to: pending
                         to_label: Pending
-                        at: '2026-10-31T18:52:18+00:00'
+                        at: '2026-11-15T15:29:41+00:00'
                       -
                         from: pending
                         from_label: Pending
                         to: cancelled
                         to_label: Cancelled
-                        at: '2026-10-31T18:52:18+00:00'
+                        at: '2026-11-15T15:29:42+00:00'
                     cancellation:
                       by: customer
                       by_label: Customer
                       reason: customer_request
                       reason_label: 'Customer request'
-                      at: '2026-10-31T18:52:18+00:00'
+                      at: '2026-11-15T15:29:42+00:00'
                     cancellation_requests: []
                 status: true
                 error: null

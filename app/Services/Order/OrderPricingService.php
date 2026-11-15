@@ -110,7 +110,8 @@ class OrderPricingService
                 'product_name' => $product->getTranslations('name'), 'product_image' => $product->image,
                 'base_unit_price' => $base, 'options_unit_price' => $optionsUnit, 'unit_price' => $unit,
                 'quantity' => $quantity, 'line_subtotal' => $lineSubtotal,
-                'offer_id' => null, 'offer_discount_amount' => BigDecimal::zero(), 'line_total' => $lineSubtotal,
+                'offer_id' => null, 'offer_discount_amount' => BigDecimal::zero(),
+                'offer_discount_type' => null, 'offer_discount_percent' => null, 'line_total' => $lineSubtotal,
                 'notes' => $line['notes'] ?? null, 'options' => $optionRows,
             ];
         }
@@ -140,6 +141,13 @@ class OrderPricingService
                 [$offer, $discount] = $this->bestOffer($offers->get($item['product_id'], collect()), $item['line_subtotal'], $item['quantity'], $convert, $currency->decimals);
                 $item['offer_id'] = $offer?->id;
                 $item['offer_discount_amount'] = $discount;
+                // Immutable snapshot of the offer that produced THIS discount
+                // (saved with the order item at checkout): its type, and its
+                // own percentage for percent offers. Never derived from amounts.
+                $applied = $offer !== null && $discount->isPositive();
+                $item['offer_discount_type'] = $applied ? $offer->discount_type : null;
+                $item['offer_discount_percent'] = $applied && $offer->discount_type === 'percent'
+                    ? (string) BigDecimal::of((string) $offer->discount_value)->toScale(4) : null;
                 $item['line_total'] = $item['line_subtotal']->minus($discount);
                 $offerTotal = $offerTotal->plus($discount);
             }

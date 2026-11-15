@@ -13,6 +13,14 @@ use Brick\Math\RoundingMode;
  * WAFFRLI (2026-11-15) — what kind of offer produced an order line's
  * discount, for display (receipts).
  *
+ * forItem() is the API entry point:
+ *  - items placed since the snapshot migration carry the IMMUTABLE offer
+ *    type/percentage recorded at checkout (source "snapshot"); editing,
+ *    disabling or deleting the offer later changes nothing;
+ *  - older items (no snapshot) fall back to verifiedOffer() below (source
+ *    "verified": the CURRENT offer reproduces the stored amount; it is not
+ *    a historical record), else null: the amount is shown alone.
+ *
  * An order item snapshots the offer id and the exact discount amount, but
  * NOT the offer's type or percentage; those live on the (editable) offer.
  * So the offer's CURRENT definition is reported only when it reproduces the
@@ -27,6 +35,26 @@ use Brick\Math\RoundingMode;
  */
 final class OrderItemDiscount
 {
+    /** @return array{type: 'percent'|'fixed', percent: ?string, source: 'snapshot'|'verified'}|null */
+    public static function forItem(OrderItem $item, Order $order): ?array
+    {
+        if (BigDecimal::of((string) $item->offer_discount_amount)->isZero()) {
+            return null;
+        }
+        if ($item->offer_discount_type !== null) {
+            return [
+                'type' => $item->offer_discount_type,
+                'percent' => $item->offer_discount_type === 'percent' && $item->offer_discount_percent !== null
+                    ? (string) BigDecimal::of((string) $item->offer_discount_percent)->stripTrailingZeros()
+                    : null,
+                'source' => 'snapshot',
+            ];
+        }
+        $verified = self::verifiedOffer($item, $order);
+
+        return $verified === null ? null : $verified + ['source' => 'verified'];
+    }
+
     /** @return array{type: 'percent'|'fixed', percent: ?string}|null */
     public static function verifiedOffer(OrderItem $item, Order $order): ?array
     {

@@ -25,6 +25,8 @@ class OrderItem extends BasePlatformModel
         'line_subtotal' => 'line_subtotal',
         'offer_id' => 'offer_id',
         'offer_discount_amount' => 'offer_discount_amount',
+        'offer_discount_type' => 'offer_discount_type',
+        'offer_discount_percent' => 'offer_discount_percent',
         'line_total' => 'line_total',
         'notes' => 'notes',
     ];
@@ -37,6 +39,7 @@ class OrderItem extends BasePlatformModel
         'quantity' => 'integer',
         'line_subtotal' => 'decimal:4',
         'offer_discount_amount' => 'decimal:4',
+        'offer_discount_percent' => 'decimal:4',
         'line_total' => 'decimal:4',
     ];
 
