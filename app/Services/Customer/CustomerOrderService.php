@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderCancellationRequest;
 use App\Models\User;
 use App\Services\Order\OrderAdminService;
+use App\Services\Order\OrderItemDiscount;
 use App\Support\Localization\Label;
 use App\Support\Money\Denomination;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CustomerOrderService
 {
-    public const WITH = ['branch.store', 'currency', 'items.options', 'payments.method', 'statusHistories', 'cancellation', 'cancellationRequests', 'refunds', 'driver'];
+    public const WITH = ['branch.store', 'currency', 'items.options', 'items.offer', 'payments.method', 'statusHistories', 'cancellation', 'cancellationRequests', 'refunds', 'driver'];
 
     public function own(User $user, int|string $orderId): Order
     {
@@ -112,6 +113,11 @@ class CustomerOrderService
             'items' => $order->items->map(fn ($i) => [
                 'product_id' => $i->product_id, 'name' => $i->product_name, 'quantity' => $i->quantity,
                 'unit_price' => $fmt($i->unit_price), 'line_total' => $fmt($i->line_total), 'notes' => $i->notes,
+                // 2026-11-15 (additive): the line before its offer, the exact offer
+                // discount, and the offer's type/percent only when verified
+                // against the stored discount (OrderItemDiscount), else null.
+                'line_subtotal' => $fmt($i->line_subtotal), 'offer_discount' => $fmt($i->offer_discount_amount),
+                'offer' => OrderItemDiscount::verifiedOffer($i, $order),
                 'options' => $i->options->map(fn ($o) => ['group' => $o->group_name, 'option' => $o->option_name, 'quantity' => $o->quantity, 'total_price_delta' => $fmt($o->total_price_delta)])->values(),
             ])->values(),
             'amounts' => [
