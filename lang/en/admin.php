@@ -1018,6 +1018,15 @@ return [
     'locale_switch' => [
         'label' => 'Interface language',
     ],
+    // Delivery areas: boundary quality (2026-11-16).
+    'delivery_areas' => [
+        'boundary_quality' => 'Boundary',
+        'quality_verified' => 'Verified boundary',
+        'quality_approximate' => 'Approximate boundary',
+        'quality_unverified' => 'Unverified boundary',
+        'quality_admin' => 'Drawn by an admin',
+        'sort_order_help' => 'Where areas overlap, the lowest number wins. A "whole service area" uses 1000 so named areas take precedence.',
+    ],
     'dispatch' => [
         'cancel_admin_withdrawn' => 'Withdrawn by an admin (dispatch paused)',
         'panel_title' => 'Delivery dispatch',

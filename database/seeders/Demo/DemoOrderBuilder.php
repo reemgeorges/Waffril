@@ -39,7 +39,6 @@ class DemoOrderBuilder
     public function submit(string $number, User $user, Branch $branch, string $storeSlug, array $lines, array $options = []): Order
     {
         return DB::transaction(function () use ($number, $user, $branch, $storeSlug, $lines, $options) {
-            $currency = isset($options['currency']) ? Currency::query()->where('code', $options['currency'])->firstOrFail() : Currency::query()->default()->firstOrFail();
             $addresses = UserAddress::query()->where('user_id', $user->id)->orderByDesc('is_default')->orderBy('id')->get();
             $address = $addresses[$options['address'] ?? 0] ?? $addresses->first();
             if (! $address) {
@@ -59,6 +58,22 @@ class DemoOrderBuilder
                 $checkoutLines[] = ['branch_product_id' => $branchProduct->id, 'quantity' => $quantity, 'options' => $optionIds, 'notes' => null];
             }
 
+            return $this->submitLines($number, $user, $branch, $checkoutLines, $options + ['address_id' => $address->id]);
+        });
+    }
+
+    /**
+     * The same real checkout for callers that already resolved their lines
+     * (e.g. the regional demo seeders, 2026-11-16).
+     *
+     * @param  list<array{branch_product_id: int, quantity: int, options: array<int, int>, notes?: ?string}>  $checkoutLines
+     * @param  array{currency?: string, wallet?: string, free_delivery?: bool, scheduled_for?: ?\DateTimeInterface, note?: ?string, address_id: int}  $options
+     */
+    public function submitLines(string $number, User $user, Branch $branch, array $checkoutLines, array $options): Order
+    {
+        return DB::transaction(function () use ($number, $user, $branch, $checkoutLines, $options) {
+            $currency = isset($options['currency']) ? Currency::query()->where('code', $options['currency'])->firstOrFail() : Currency::query()->default()->firstOrFail();
+
             // Demo choice: use at most the wallet balance the customer really has.
             $wallet = null;
             if (isset($options['wallet'])) {
@@ -69,7 +84,7 @@ class DemoOrderBuilder
             return $this->checkout->placeOrder($user, $branch, $checkoutLines, [
                 'checkout_key' => $this->uuid('order:'.$number),
                 'order_number' => $number,
-                'address_id' => $address->id,
+                'address_id' => $options['address_id'],
                 'currency_id' => $currency->id,
                 'wallet_amount' => $wallet,
                 'use_free_delivery' => (bool) ($options['free_delivery'] ?? false),

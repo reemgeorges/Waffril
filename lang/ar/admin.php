@@ -1018,6 +1018,15 @@ return [
     'locale_switch' => [
         'label' => 'لغة الواجهة',
     ],
+    // مناطق التوصيل: جودة الحدود (2026-11-16).
+    'delivery_areas' => [
+        'boundary_quality' => 'الحدود',
+        'quality_verified' => 'حدود موثّقة',
+        'quality_approximate' => 'حدود تقريبية',
+        'quality_unverified' => 'حدود غير موثّقة',
+        'quality_admin' => 'رسمها مشرف',
+        'sort_order_help' => 'عند تداخل المناطق تُعتمد المنطقة ذات الرقم الأصغر. «كامل منطقة الخدمة» تستخدم 1000 لتتقدّم عليها المناطق المسمّاة.',
+    ],
     'dispatch' => [
         'cancel_admin_withdrawn' => 'سحبه المسؤول (التوزيع متوقف)',
         'panel_title' => 'توزيع التوصيل',

@@ -12,6 +12,7 @@ use App\Models\DeliveryArea;
 use App\Support\Geo\Polygon;
 use Closure;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -62,7 +63,11 @@ class DeliveryAreaResource extends AdminResource
                         $fail($error);
                     }
                 }),
-            TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0),
+            TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0)
+                ->helperText(__('admin.delivery_areas.sort_order_help')),
+            Placeholder::make('boundary_quality_info')->label(__('admin.delivery_areas.boundary_quality'))
+                ->content(fn ($record) => $record ? __('admin.delivery_areas.quality_'.($record->boundary_quality ?? 'admin')).($record->boundary_source ? ' — '.$record->boundary_source : '') : __('admin.delivery_areas.quality_admin'))
+                ->visible(fn ($record) => $record !== null),
             Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
         ]);
     }
@@ -81,6 +86,14 @@ class DeliveryAreaResource extends AdminResource
                         Stack::make([
                             TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->weight(FontWeight::SemiBold)->size(TextSize::Large),
                             TextColumn::make('city.name')->label(__('admin.fields.city'))->color('gray')->size(TextSize::Small)->icon('heroicon-m-map-pin'),
+                            // 2026-11-16: how trustworthy the boundary is; the source is in the tooltip.
+                            TextColumn::make('boundary_quality')->label(__('admin.delivery_areas.boundary_quality'))->badge()->size(TextSize::Small)
+                                ->formatStateUsing(fn (?string $state) => __('admin.delivery_areas.quality_'.($state ?? 'admin')))
+                                ->color(fn (?string $state) => match ($state) {
+                                    'verified' => 'success', 'approximate' => 'warning', 'unverified' => 'danger', default => 'gray'
+                                })
+                                ->tooltip(fn ($record) => $record->boundary_source)
+                                ->placeholder(__('admin.delivery_areas.quality_admin')),
                         ])->space(1),
                         Columns::status()->grow(false),
                     ]),
@@ -95,7 +108,10 @@ class DeliveryAreaResource extends AdminResource
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 TernaryFilter::make('is_active')->label(__('admin.fields.status'))
                     ->trueLabel(__('admin.table.active'))->falseLabel(__('admin.table.inactive')),
+                SelectFilter::make('boundary_quality')->label(__('admin.delivery_areas.boundary_quality'))
+                    ->options(fn () => collect(['verified', 'approximate', 'unverified'])->mapWithKeys(fn ($q) => [$q => __("admin.delivery_areas.quality_{$q}")])->all()),
             ])
+            ->defaultSort('sort_order')
             ->recordActions([
                 RowActions::primary(EditAction::make()->label(__('admin.table.edit'))->mutateRecordDataUsing(Fields::withTranslations())),
                 RowActions::more(RowActions::activation(static::class)),

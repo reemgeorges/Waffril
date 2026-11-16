@@ -215,6 +215,7 @@ docker compose exec app php artisan db:seed --class=WaffrliDemoSeeder
   - re-running them adds nothing.
 
   Every person, phone and e-mail is fictional (`*@demo.waffrli.test`, `+1 202 555 01xx`), and nobody can log in with demo passwords. See `docs/waffrli/demo-data.md`.
+- **Hama** (the main demonstration city) and **Homs** come with complete delivery-area coverage from OpenStreetMap, fictional stores priced in Syrian pounds, demo customers, drivers and orders. See `docs/waffrli/demo-hama.md`.
 - Migrations and rollback tests run only against `waffrli_testing`, through the test suite. Never run `migrate:fresh` or `migrate:reset` on a database you care about.
 
 ## 8. Accounts: Super Admin, demo driver, customer OTP
@@ -395,6 +396,7 @@ The test bootstrap **refuses** to run against a MySQL database whose name does n
 | Realtime and push | `docs/waffrli/realtime-and-push.md` |
 | Currencies | `docs/waffrli/currency-switch.md` |
 | Demo data | `docs/waffrli/demo-data.md` |
+| Demo cities Hama and Homs (areas, sources, SYP prices) | `docs/waffrli/demo-hama.md` |
 | Database (as built) / design baseline | `docs/waffrli/database/` / `docs/waffrli/erd.md` |
 | API inventory, OpenAPI | `docs/waffrli/api-inventory.md`, `docs/waffrli/openapi/` |
 | Shared API workspace (Hoppscotch) | `docs/waffrli/api-portal.md` |

@@ -20,20 +20,26 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Database\Seeders\Demo\DemoContext;
+use Database\Seeders\Demo\DemoHamaSeeder;
+use Database\Seeders\Demo\DemoHomsSeeder;
+use Database\Seeders\Demo\DemoOrderSeeder;
 use Database\Seeders\Essential\AdminRoleTemplatesSeeder;
 use Database\Seeders\WaffrliDemoSeeder;
 use Database\Seeders\WaffrliEssentialSeeder;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
 
@@ -168,7 +174,7 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         $member = User::query()->where('email', DemoContext::email('customer-01'))->firstOrFail();
         [$current, $next] = PlusCycle::query()->where('user_id', $member->id)->orderBy('cycle_number')->get()->all();
         // 2026-11-12: new cycles get the platform allowance (plus.free_deliveries_limit).
-        $this->assertSame(\App\Services\Plus\PlusService::freeDeliveriesLimit(), $current->free_deliveries_total);
+        $this->assertSame(PlusService::freeDeliveriesLimit(), $current->free_deliveries_total);
         $this->assertSame(6, $next->free_deliveries_total, 'The override applies from the next cycle only.');
         $this->assertSame(3, PlusCycleDiscount::query()->where('plus_cycle_id', $current->id)->count());
         $this->assertSame(['exception', 'plan'], PlusCycleDiscount::query()->where('plus_cycle_id', $next->id)->orderBy('source')->pluck('source')->unique()->values()->all());
@@ -213,13 +219,16 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
      * land on a Friday 13:00 every Monday, when the Homs pharmacy is closed,
      * and the whole demo seed failed. Seed it once for every weekday.
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('everyWeekday')]
+    #[DataProvider('everyWeekday')]
     public function test_demo_data_seeds_on_every_day_of_the_week(string $localMoment): void
     {
         // Operations time zone (Asia/Damascus by default).
-        $this->travelTo(\Illuminate\Support\Carbon::parse($localMoment, 'Asia/Damascus')->utc());
+        $this->travelTo(Carbon::parse($localMoment, 'Asia/Damascus')->utc());
         $this->seedDemo();
-        $this->assertSame(35, Order::query()->where('order_number', 'like', 'DEMO-%')->count(), "All demo orders seeded at {$localMoment}");
+        $expected = count(DemoOrderSeeder::scenarios())
+            + count((new \ReflectionMethod(DemoHamaSeeder::class, 'scenarios'))->invoke(new DemoHamaSeeder))
+            + count((new \ReflectionMethod(DemoHomsSeeder::class, 'scenarios'))->invoke(new DemoHomsSeeder));
+        $this->assertSame($expected, Order::query()->where('order_number', 'like', 'DEMO-%')->count(), "All demo orders seeded at {$localMoment}");
         $this->travelBack();
     }
 
