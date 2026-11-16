@@ -133,6 +133,8 @@ class AdminPanelProvider extends PanelProvider
             // language after the first click.
             ->persistentMiddleware([SetAdminPanelLocale::class])
             ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
+            // 2026-11-16: open the table filter panel on wide screens (display only).
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.tables.filters-open'))
             ->authMiddleware([
                 Authenticate::class,
             ]);

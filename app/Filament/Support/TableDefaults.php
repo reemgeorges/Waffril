@@ -12,6 +12,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -94,8 +95,16 @@ final class TableDefaults
         //    behind a labelled "Filters" button with the active count;
         //  - search waits for a short pause in typing;
         //  - 25 rows per page by default, 10 / 25 / 50 / 100 to choose.
+        //  - 2026-11-16 (Phase 2): filters sit ABOVE the table with a
+        //    "Reset" link (they were hidden in a dropdown whose button was
+        //    clipped on wide tables). The panel is open on wide screens and
+        //    whenever a filter is active (resources/views/filament/tables/
+        //    filters-open.blade.php); phones keep the table first behind a
+        //    "Filters · n" button. Active filters also show as chips.
         Table::configureUsing(fn (Table $table) => $table
             ->stackedOnMobile()
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(['sm' => 2, 'lg' => 4, 'xl' => 5])
             ->deferFilters(false)
             ->searchDebounce('400ms')
             ->paginationPageOptions([10, 25, 50, 100])
