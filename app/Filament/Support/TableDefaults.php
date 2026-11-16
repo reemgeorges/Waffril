@@ -104,7 +104,7 @@ final class TableDefaults
         Table::configureUsing(fn (Table $table) => $table
             ->stackedOnMobile()
             ->filtersLayout(FiltersLayout::AboveContentCollapsible)
-            ->filtersFormColumns(['sm' => 2, 'lg' => 4, 'xl' => 5])
+            ->filtersFormColumns(['default' => 2, 'lg' => 4, 'xl' => 5])
             ->deferFilters(false)
             ->searchDebounce('400ms')
             ->paginationPageOptions([10, 25, 50, 100])

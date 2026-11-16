@@ -7,6 +7,7 @@ use App\Filament\Resources\Customers\RelationManagers\PlusRequestsRelationManage
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
+use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Fields;
 use App\Filament\Support\PlusPolicyFields;
 use App\Filament\Support\RowActions;
@@ -15,13 +16,11 @@ use App\Models\PlusRequest;
 use App\Services\Plus\PlusService;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -109,21 +108,8 @@ class PlusRequestResource extends AdminResource
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)->preload(),
                 SelectFilter::make('source')->label(__('admin.fields.source'))
                     ->options(['customer' => __('admin.plus.source_customer'), 'system' => __('admin.plus.source_system')]),
-                Filter::make('requested_between')->label(__('admin.plus.requested_at'))
-                    ->schema([
-                        DatePicker::make('from')->label(__('admin.fields.from')),
-                        DatePicker::make('until')->label(__('admin.fields.until')),
-                    ])
-                    ->columns(2)
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
-                        ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d)))
-                    ->indicateUsing(fn (array $data) => array_values(array_filter([
-                        ($data['from'] ?? null) ? __('admin.fields.from').' '.$data['from'] : null,
-                        ($data['until'] ?? null) ? __('admin.fields.until').' '.$data['until'] : null,
-                    ]))),
+                DateRangeFilter::make('requested_between', 'created_at', __('admin.plus.requested_at')),
             ])
-            ->filtersFormColumns(2)
             ->recordActions([
                 // Pending: Approve (primary) and Reject side by side; Details
                 // is always available under "More actions".
