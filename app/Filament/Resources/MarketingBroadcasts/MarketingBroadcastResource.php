@@ -40,21 +40,28 @@ class MarketingBroadcastResource extends AdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(__('admin.marketing.notice'))
+            ->description(__('admin.marketing.notice_v2'))
+            ->modifyQueryUsing(fn ($query) => $query->with(['city', 'admin']))
+            // Live progress: Reverb (marketing.progress on admin.activity) refreshes
+            // the page; while a message is sending, a 5 s poll covers a missing socket.
+            ->poll(fn () => MarketingBroadcast::query()->whereIn('status', [MarketingBroadcast::STATUS_QUEUED, MarketingBroadcast::STATUS_SENDING])->exists() ? '5s' : null)
             ->columns([
                 // Table UX overhaul (2026-11-12): the message with when it was
                 // created, audience, status, recipients, who sent it.
                 TextColumn::make('title')->label(__('admin.fields.name'))->limit(60)->searchable()->weight(FontWeight::SemiBold)
                     ->description(fn (MarketingBroadcast $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
                 TextColumn::make('audience')->label(__('admin.marketing.audience'))
-                    ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.'.$state).($record->city ? ' — '.$record->city->name : '')),
+                    ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.recipients_'.($record->recipient_type ?: MarketingBroadcast::RECIPIENTS_CUSTOMERS))
+                        .' — '.($record->city ? $record->city->name : __('admin.marketing.scope_all'))),
                 TextColumn::make('status')->label(__('admin.marketing.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('admin.marketing.'.$state))
                     ->color(fn ($state) => match ($state) {
                         'sent' => 'success', 'failed' => 'danger', default => 'warning'
                     }),
                 TextColumn::make('recipients_count')->label(__('admin.marketing.recipients'))
-                    ->formatStateUsing(fn ($state) => trans_choice('admin.table.recipients_n', (int) $state, ['count' => (int) $state])),
+                    ->formatStateUsing(fn ($state, MarketingBroadcast $record) => in_array($record->status, [MarketingBroadcast::STATUS_QUEUED, MarketingBroadcast::STATUS_SENDING], true) && $record->total_count !== null
+                        ? __('admin.marketing.progress', ['done' => number_format($record->processed_count), 'total' => number_format($record->total_count)])
+                        : trans_choice('admin.table.recipients_n', (int) $state, ['count' => (int) $state])),
                 TextColumn::make('admin.name')->label(__('admin.marketing.sent_by'))->color('gray')->visibleFrom('md'),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])

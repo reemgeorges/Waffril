@@ -18,6 +18,15 @@ class MarketingBroadcast extends Model
 
     public const AUDIENCE_CITY = 'city';
 
+    /** Who receives the message (2026-11-16); the city filter applies to each group. */
+    public const RECIPIENTS_CUSTOMERS = 'customers';
+
+    public const RECIPIENTS_DRIVERS = 'drivers';
+
+    public const RECIPIENTS_BOTH = 'both';
+
+    public const RECIPIENT_TYPES = [self::RECIPIENTS_CUSTOMERS, self::RECIPIENTS_DRIVERS, self::RECIPIENTS_BOTH];
+
     public const STATUS_QUEUED = 'queued';
 
     public const STATUS_SENDING = 'sending';
@@ -26,9 +35,9 @@ class MarketingBroadcast extends Model
 
     public const STATUS_FAILED = 'failed';
 
-    protected $fillable = ['admin_id', 'title', 'body', 'audience', 'city_id'];
+    protected $fillable = ['admin_id', 'title', 'body', 'audience', 'recipient_type', 'city_id'];
 
-    protected $casts = ['started_at' => 'datetime', 'sent_at' => 'datetime', 'recipients_count' => 'integer'];
+    protected $casts = ['started_at' => 'datetime', 'sent_at' => 'datetime', 'recipients_count' => 'integer', 'total_count' => 'integer', 'processed_count' => 'integer'];
 
     public function admin(): BelongsTo
     {

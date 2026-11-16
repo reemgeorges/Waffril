@@ -987,6 +987,17 @@ return [
         'sending' => 'Sending',
         'sent' => 'Sent',
         'failed' => 'Failed',
+        // 2026-11-16: recipients (customers / drivers / both), optional city, live progress.
+        'recipient_type' => 'Send to',
+        'recipients_customers' => 'Customers',
+        'recipients_drivers' => 'Drivers',
+        'recipients_both' => 'Customers and drivers',
+        'scope' => 'Where',
+        'scope_all' => 'All cities',
+        'scope_city' => 'One city only',
+        'city_help' => 'Customers by their default address, drivers by their own city.',
+        'progress' => ':done of :total',
+        'notice_v2' => 'Sent only to active accounts (customers, drivers or both): saved in the app, shown live when they are online, and as a phone notification. Each message is sent once and recorded in the activity log. Never include personal data.',
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
