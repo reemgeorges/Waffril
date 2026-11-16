@@ -170,7 +170,12 @@ new indexes and the grouped queries help on both.
   `TableFiltersLayoutTest`, `AdminFormsMapPickerTest`.
 - **Full suite, SQLite, final tree:** 758 tests, 31,481 assertions, 0
   failures, 22 skipped (MySQL-only tests).
-- **Full suite, MySQL 8:** recorded in the final report of this work.
+- **Full suite, MySQL 8, final tree:** 758 tests, 31,897 assertions,
+  **2 errors**, 7 skipped. Both errors are pre-existing on `main` (same 2
+  tests fail there): `OperationalMoneyTest::test_missing_or_invalid_rate_never_produces_an_amount`
+  and `SypOperationalCurrencyTest::test_catalog_converts_real_amount_and_missing_rate_fails_closed`.
+  Each sets `exchange_rate = 0`, which the MySQL CHECK `chk_currencies_rate_positive`
+  correctly refuses. SQLite does not enforce it. Test-only; see checklist item 8.
 
 ## 12. Mobile API compatibility
 
@@ -256,3 +261,6 @@ Keep `php artisan queue:work`, `php artisan schedule:work` and
    starter `docs/openapi` drift (149 legacy routes).
 7. Add `ext-bcmath` to `composer.json` `require` (reported earlier; not
    changed here).
+8. Make the two "missing rate" currency tests simulate the missing rate without
+   violating the MySQL CHECK (e.g. mock the rate lookup), so the MySQL suite
+   is fully green.
