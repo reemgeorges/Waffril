@@ -54,6 +54,18 @@ class MarketingDeliveryStatusTest extends CustomerTestCase
         return [$ok1, $ok2, $dead];
     }
 
+    /**
+     * Runs the worker one job at a time until the queue is empty. (A daemon
+     * worker, --stop-when-empty, checks its memory limit before taking a job
+     * and can stop at once inside a long PHPUnit process; --once does not.)
+     */
+    private function workUntilEmpty(): void
+    {
+        for ($i = 0; $i < 50 && DB::table('jobs')->count() > 0; $i++) {
+            Artisan::call('queue:work', ['--once' => true, '--queue' => config('waffrli.push.queue', 'default')]);
+        }
+    }
+
     private function stored(MarketingBroadcast $b): int
     {
         return DatabaseNotification::query()->where('type', 'marketing.message')->where('data->marketing_broadcast_id', $b->id)->count();
@@ -124,7 +136,7 @@ class MarketingDeliveryStatusTest extends CustomerTestCase
         $this->assertSame(3, $b->pushPending(), 'Pushes wait for the worker.');
         $this->assertStringContainsString(__('admin.marketing.push_pending', ['count' => 3]), implode("\n", $b->deliveryLines()));
 
-        Artisan::call('queue:work', ['--stop-when-empty' => true, '--queue' => config('waffrli.push.queue', 'default')]);
+        $this->workUntilEmpty();
         $b->refresh();
         $this->assertSame(0, $b->pushPending());
         $this->assertSame(2, $b->push_accepted_count);
