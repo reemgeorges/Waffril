@@ -12,6 +12,7 @@ use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\MapPicker;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Branch;
@@ -91,9 +92,11 @@ class BranchResource extends AdminResource
                     Section::make(__('admin.branches.section_location'))->icon('heroicon-o-map-pin')
                         ->description(__('admin.branches.section_location_help'))
                         ->columns(3)->schema([
-                            TextInput::make('lat')->label(__('admin.fields.lat'))->required()->numeric()->minValue(-90)->maxValue(90)->extraInputAttributes(['dir' => 'ltr']),
-                            TextInput::make('lng')->label(__('admin.fields.lng'))->required()->numeric()->minValue(-180)->maxValue(180)->extraInputAttributes(['dir' => 'ltr']),
+                            TextInput::make('lat')->label(__('admin.fields.lat'))->required()->numeric()->minValue(-90)->maxValue(90)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
+                            TextInput::make('lng')->label(__('admin.fields.lng'))->required()->numeric()->minValue(-180)->maxValue(180)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
                             Fields::phone('phone'),
+                            // 2026-11-16 (Phase 3): click or drag to place the branch.
+                            MapPicker::point('lat', 'lng'),
                         ]),
                 ]),
                 Group::make()->columnSpan(['default' => 1, 'lg' => 1])->schema([

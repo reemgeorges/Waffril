@@ -52,18 +52,21 @@ class DeliveryFeeRuleResource extends AdminResource
             Grid::make(2)->schema([
                 Select::make('city_id')->label(__('admin.fields.city'))->relationship('city', 'id')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name)
-                    ->placeholder(__('admin.delivery.global_scope'))->live()->searchable()->preload(),
+                    ->placeholder(__('admin.delivery.global_scope'))->live()->searchable()->preload()
+                    ->helperText(__('admin.fee_rules.city_help')),
                 Select::make('delivery_area_id')->label(__('admin.fields.delivery_area'))
                     ->options(fn (Get $get) => $get('city_id')
                         ? DeliveryArea::where('city_id', $get('city_id'))->get()->mapWithKeys(fn ($a) => [$a->id => $a->name])
                         : [])
-                    ->placeholder(__('admin.delivery.whole_city')),
+                    ->placeholder(__('admin.delivery.whole_city'))
+                    ->helperText(__('admin.fee_rules.area_help')),
             ]),
             Grid::make(2)->schema([
-                TextInput::make('distance_from_km')->label(__('admin.fields.distance_from_km'))->required()->numeric()->minValue(0)->default(0),
-                TextInput::make('distance_to_km')->label(__('admin.fields.distance_to_km'))->required()->numeric()->gt('distance_from_km'),
+                TextInput::make('distance_from_km')->label(__('admin.fields.distance_from_km'))->required()->numeric()->minValue(0)->default(0)->suffix('km')
+                    ->helperText(__('admin.fee_rules.band_help')),
+                TextInput::make('distance_to_km')->label(__('admin.fields.distance_to_km'))->required()->numeric()->gt('distance_from_km')->suffix('km'),
                 Fields::money('base_fee'),
-                Fields::money('per_km_fee'),
+                Fields::money('per_km_fee')->helperText(__('admin.fee_rules.formula_help')),
             ]),
             Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
         ]);

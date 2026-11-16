@@ -7,6 +7,7 @@ use App\Filament\Resources\DeliveryAreas\Pages\ManageDeliveryAreas;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\MapPicker;
 use App\Filament\Support\RowActions;
 use App\Models\DeliveryArea;
 use App\Support\Geo\Polygon;
@@ -54,7 +55,7 @@ class DeliveryAreaResource extends AdminResource
             Fields::translatable('name'),
             Textarea::make('boundary')->label(__('admin.fields.boundary'))
                 ->helperText(__('admin.help.boundary'))
-                ->rows(8)->required()
+                ->rows(8)->required()->live(onBlur: true)->extraInputAttributes(['dir' => 'ltr'])
                 ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT) : $state)
                 ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state)
                 ->rule(fn () => function (string $attribute, mixed $value, Closure $fail) {
@@ -63,6 +64,8 @@ class DeliveryAreaResource extends AdminResource
                         $fail($error);
                     }
                 }),
+            // 2026-11-16 (Phase 3): see the polygon before saving it.
+            MapPicker::boundary('boundary'),
             TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0)
                 ->helperText(__('admin.delivery_areas.sort_order_help')),
             Placeholder::make('boundary_quality_info')->label(__('admin.delivery_areas.boundary_quality'))

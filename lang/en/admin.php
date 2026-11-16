@@ -354,6 +354,29 @@ return [
     'audit' => [
         'system' => 'System',
     ],
+    // 2026-11-16 (Phase 3): city form and map fields.
+    'cities' => [
+        'section_identity' => 'City',
+        'section_area' => 'Service area',
+        'section_area_help' => 'The centre and the radius limit where customers can order when the city has no delivery areas. With delivery areas, an address must also be inside one of them.',
+        'radius_help' => 'Distance from the centre, in kilometres.',
+        'sort_order_help' => 'Lower numbers are listed first.',
+        'is_active_help' => 'Inactive cities are not listed or detected for customers.',
+    ],
+    'map_picker' => [
+        'label' => 'Map',
+        'point_help' => 'Click the map or drag the marker to set the coordinates; typing in the fields moves the marker.',
+        'preview_label' => 'Boundary preview',
+        'preview_help' => 'Shows the polygon above as it will be used. It updates when you leave the boundary field.',
+        'invalid_boundary' => 'The boundary is not a valid GeoJSON Polygon yet.',
+    ],
+    // 2026-11-16 (Phase 3): delivery fee rule form help (DeliveryFeeResolver semantics).
+    'fee_rules' => [
+        'city_help' => 'Empty: the global rule for every city without rules of its own.',
+        'area_help' => 'An area rule applies inside that area only. The most specific scope with any active rule decides alone (area, then city, then global): if its distance bands do not cover an address, that address is not served; a broader rule is not used instead.',
+        'band_help' => 'From is included, To is not: 0–3 km and 3–6 km do not overlap. Bands of one scope may not overlap.',
+        'formula_help' => 'Fee = base fee + per-km fee × (distance − From).',
+    ],
     'branches' => [
         'hour_exceptions' => 'Special hours & closures',
         'kind_closed' => 'Closed',
