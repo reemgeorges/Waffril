@@ -361,6 +361,7 @@ return [
         'section_area_help' => 'The centre and the radius limit where customers can order when the city has no delivery areas. With delivery areas, an address must also be inside one of them.',
         'radius_help' => 'Distance from the centre, in kilometres.',
         'sort_order_help' => 'Lower numbers are listed first.',
+        'km' => 'km',
         'is_active_help' => 'Inactive cities are not listed or detected for customers.',
     ],
     'map_picker' => [
@@ -1058,6 +1059,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
+        'base_not_denomination' => 'This changes the ACCOUNTING BASE currency of the platform (the currency every catalog price is stored in and every exchange rate is measured against). It is not the old/new Syrian pound display: that is a fixed 100 : 1 presentation handled automatically and never needs this switch.',
         'preview' => '1 :base of catalog prices becomes :example. Every current catalog amount is converted with this rate in one atomic step; check that the rate is the APPROVED one.',
         'status_pending' => 'Waiting',
         'status_running' => 'Running',
