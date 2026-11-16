@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\OrderCancellationRequests\OrderCancellationRequestResource;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -10,6 +11,7 @@ use Filament\Tables\Table;
 /** Customer cancellation requests for this order, with approve/reject. */
 class CancellationRequestsRelationManager extends RelationManager
 {
+    use RefreshesOnOrderEvents;
     use TranslatedRelationLabels;
 
     protected static string $relationLabelKey = 'cancellation_request';

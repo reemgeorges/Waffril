@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\OrderRefunds\OrderRefundResource;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -10,6 +11,7 @@ use Filament\Tables\Table;
 /** Refunds issued for this order (read-only). */
 class RefundsRelationManager extends RelationManager
 {
+    use RefreshesOnOrderEvents;
     use TranslatedRelationLabels;
 
     protected static string $relationLabelKey = 'refund';

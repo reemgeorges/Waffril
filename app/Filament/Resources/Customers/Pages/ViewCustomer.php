@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers\Pages;
 
 use App\Filament\Concerns\CombinesRelationTabs;
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\User;
@@ -15,6 +16,7 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewCustomer extends ViewRecord
 {
     use CombinesRelationTabs;
+    use RefreshesOnOperationalEvents;
 
     protected static string $resource = CustomerResource::class;
 

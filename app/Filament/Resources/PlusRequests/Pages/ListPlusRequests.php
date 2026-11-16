@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PlusRequests\Pages;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\PlusRequests\PlusRequestResource;
 use App\Models\PlusRequest;
 use Filament\Resources\Pages\ListRecords;
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class ListPlusRequests extends ListRecords
 {
+    use RefreshesOnOperationalEvents;
+
     protected static string $resource = PlusRequestResource::class;
 
     public function getTabs(): array

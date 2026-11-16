@@ -7,6 +7,7 @@ use App\Jobs\Delivery\RecoverDeliveryDispatch;
 use App\Models\DeviceToken;
 use App\Models\Driver;
 use App\Services\Delivery\DeliveryOfferService;
+use App\Services\Realtime\Realtime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -100,6 +101,9 @@ class DriverAccountService
 
             return $driver->fresh(['city']);
         });
+
+        // Live driver lists and maps (2026-11-16).
+        Realtime::admin('driver.status_changed', (int) $driver->id);
 
         // Delivery offers (dispatch B3, 2026-11-10), after the driver's lock is
         // released (offers lock order -> offer -> driver). No-ops while offers are off.

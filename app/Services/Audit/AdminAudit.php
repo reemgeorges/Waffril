@@ -4,6 +4,7 @@ namespace App\Services\Audit;
 
 use App\Models\Admin;
 use App\Models\AdminAuditLog;
+use App\Services\Realtime\Realtime;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,6 +13,15 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AdminAudit
 {
+    /** Audit action prefix → live refresh event (App\Events\Realtime\AdminOperationalEvent). */
+    public const LIVE_TYPES = [
+        'plus' => 'plus.membership_changed',
+        'customer' => 'customer.status_changed',
+        'driver' => 'driver.status_changed',
+        'settlement' => 'settlement.updated',
+        'marketing' => 'marketing.progress',
+    ];
+
     /** Properties merged into every entry while withContext() runs (e.g. generated demo data). */
     protected static array $context = [];
 
@@ -35,6 +45,14 @@ class AdminAudit
     {
         $admin ??= auth('admin_web')->user() ?? auth('admin')->user();
         $properties = array_merge($properties, static::$context);
+
+        // 2026-11-16: every audited business change refreshes the admin
+        // screens that show it (after commit, identifiers only). Order
+        // changes are already published by the order state machine.
+        $prefix = strstr($action, '.', true) ?: $action;
+        if (isset(self::LIVE_TYPES[$prefix]) && $subject !== null) {
+            Realtime::admin(self::LIVE_TYPES[$prefix], (int) $subject->getKey());
+        }
 
         return AdminAuditLog::create([
             'admin_id' => $admin instanceof Admin ? $admin->getKey() : null,

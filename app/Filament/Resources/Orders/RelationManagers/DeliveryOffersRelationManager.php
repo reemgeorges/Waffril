@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
 use App\Filament\Support\TableDefaults;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DeliveryOffersRelationManager extends RelationManager
 {
+    use RefreshesOnOrderEvents;
     use TranslatedRelationLabels;
 
     protected static string $relationLabelKey = 'delivery_offer';

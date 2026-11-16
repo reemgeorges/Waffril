@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MarketingBroadcasts\Pages;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\MarketingBroadcasts\MarketingBroadcastResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\City;
@@ -16,6 +17,8 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListMarketingBroadcasts extends ListRecords
 {
+    use RefreshesOnOperationalEvents;
+
     protected static string $resource = MarketingBroadcastResource::class;
 
     protected function getHeaderActions(): array

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DriverCashSettlements\Pages;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\DriverCashSettlements\DriverCashSettlementResource;
 use App\Filament\Support\BusinessAction;
 use App\Models\Currency;
@@ -19,6 +20,8 @@ use Illuminate\Support\Carbon;
 
 class ListDriverCashSettlements extends ListRecords
 {
+    use RefreshesOnOperationalEvents;
+
     protected static string $resource = DriverCashSettlementResource::class;
 
     protected function getHeaderActions(): array

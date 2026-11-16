@@ -27,5 +27,6 @@ Broadcast::channel('order.{id}', fn ($actor, $id) => ChannelAccess::order($actor
 Broadcast::channel('admin.orders', fn ($admin) => ChannelAccess::adminOrders($admin));
 
 Broadcast::channel('admin.drivers-map', fn ($admin) => ChannelAccess::adminDriversMap($admin));
+Broadcast::channel('admin.activity', fn ($admin) => ChannelAccess::adminActivity($admin));
 
 Broadcast::channel('admin.{id}', fn ($admin, $id) => ChannelAccess::admin($admin, $id));

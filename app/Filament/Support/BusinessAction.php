@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use Closure;
 use Filament\Notifications\Notification;
+use Livewire\Livewire;
 use LogicException;
 
 /**
@@ -21,12 +22,28 @@ final class BusinessAction
         try {
             $result = $callback(self::admin());
             Notification::make()->title($successTitle ?? __('admin.notifications.done'))->success()->send();
+            self::refreshPanel();
 
             return $result;
         } catch (BusinessRuleException|LogicException $e) {
             Notification::make()->title(__('admin.notifications.refused'))->body($e->getMessage())->danger()->send();
 
             return null;
+        }
+    }
+
+    /**
+     * Own-action refresh (2026-11-16): after a successful business action,
+     * every live component on this page (lists, widgets, relation managers)
+     * re-reads the database in the same browser round-trip, without waiting
+     * for the Reverb echo. Other sessions are refreshed by the broadcast.
+     */
+    public static function refreshPanel(): void
+    {
+        $component = Livewire::current();
+        if ($component !== null) {
+            $component->dispatch('waffrli-orders-changed');
+            $component->dispatch('waffrli-operations-changed');
         }
     }
 
