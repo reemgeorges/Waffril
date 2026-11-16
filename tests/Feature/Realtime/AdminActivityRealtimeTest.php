@@ -14,6 +14,7 @@ use App\Models\Admin;
 use App\Models\Driver;
 use App\Services\Audit\AdminAudit;
 use App\Services\Driver\DriverAccountService;
+use App\Services\Notifications\AdminAlerts;
 use App\Support\Broadcasting\RecordingBroadcaster;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
@@ -128,5 +129,29 @@ class AdminActivityRealtimeTest extends CustomerTestCase
             $class = 'App\\Filament\\Resources\\Orders\\RelationManagers\\'.basename($file, '.php');
             $this->assertTrue(method_exists($class, 'refreshFromRealtime'), $class);
         }
+    }
+
+    public function test_bell_alerts_also_toast_live_in_the_recipients_language_with_a_stable_id(): void
+    {
+        $arabic = $this->admin(['orders.view']);
+        $arabic->forceFill(['locale' => 'ar'])->save();
+        $english = $this->admin(['orders.view']);
+        $english->forceFill(['locale' => 'en'])->save();
+        $outsider = $this->admin(['plus.view']);
+
+        AdminAlerts::send('order.placed', 42, 'WF-42');
+        AdminAlerts::send('order.placed', 42, 'WF-42');
+
+        $event = 'Illuminate\\Notifications\\Events\\BroadcastNotificationCreated';
+        $toasts = RecordingBroadcaster::on("private-admin.{$arabic->id}", $event);
+        $this->assertCount(2, $toasts);
+        $this->assertSame('waffrli-alert-order-placed-42', $toasts[0]['payload']['id']);
+        $this->assertSame($toasts[0]['payload']['id'], $toasts[1]['payload']['id'], 'Same alert, same id: the client replaces instead of stacking.');
+        $this->assertSame(__('admin.alerts.order_placed.title', [], 'ar'), $toasts[0]['payload']['title']);
+        $this->assertStringContainsString('WF-42', $toasts[0]['payload']['body']);
+
+        $en = RecordingBroadcaster::on("private-admin.{$english->id}", $event);
+        $this->assertSame(__('admin.alerts.order_placed.title', [], 'en'), $en[0]['payload']['title']);
+        $this->assertSame([], RecordingBroadcaster::on("private-admin.{$outsider->id}"));
     }
 }
