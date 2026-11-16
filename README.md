@@ -397,6 +397,8 @@ The test bootstrap **refuses** to run against a MySQL database whose name does n
 | Currencies | `docs/waffrli/currency-switch.md` |
 | Demo data | `docs/waffrli/demo-data.md` |
 | Demo cities Hama and Homs (areas, sources, SYP prices) | `docs/waffrli/demo-hama.md` |
+| Admin panel audit 2026-11-16 (changes, measurements, checklist) | `docs/waffrli/admin-panel-audit.md` |
+| Error monitoring / FCM readiness | `docs/waffrli/error-monitoring.md` / `docs/waffrli/fcm-readiness.md` |
 | Database (as built) / design baseline | `docs/waffrli/database/` / `docs/waffrli/erd.md` |
 | API inventory, OpenAPI | `docs/waffrli/api-inventory.md`, `docs/waffrli/openapi/` |
 | Shared API workspace (Hoppscotch) | `docs/waffrli/api-portal.md` |
