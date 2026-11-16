@@ -17,6 +17,7 @@ use App\Support\Money\Money;
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 use Tests\Feature\Admin\AdminPanelTestCase;
+use Tests\Support\InvalidatesCurrencyRate;
 use Tests\Support\WaffrliFixtures;
 
 /**
@@ -26,6 +27,7 @@ use Tests\Support\WaffrliFixtures;
  */
 class OperationalMoneyTest extends AdminPanelTestCase
 {
+    use InvalidatesCurrencyRate;
     use WaffrliFixtures;
 
     protected Currency $syp;
@@ -129,7 +131,7 @@ class OperationalMoneyTest extends AdminPanelTestCase
     public function test_missing_or_invalid_rate_never_produces_an_amount(): void
     {
         $this->approve();
-        $this->syp->update(['exchange_rate' => '0']);
+        $this->makeRateInvalid($this->syp);
         OperationalMoney::flush();
 
         $this->assertNull(OperationalMoney::rate());
