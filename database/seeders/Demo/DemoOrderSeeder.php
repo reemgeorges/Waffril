@@ -63,7 +63,9 @@ class DemoOrderSeeder extends Seeder
             'DEMO-0010' => [[-5, 13, 0], 7, $pizza, 'mazzeh-west', [['pepperoni', 2, ['medium']]], [],
                 [[4, 'accept'], [6, 'request_cancel', 'Can I cancel? I ordered twice.'], [9, 'reject_request', 'Demo: already in the oven'], [10, 'assign', 3], [25, 'pickup'], [45, 'deliver']]],
             'DEMO-0011' => [[-4, 13, 0], 2, $grill, 'mazzeh', [['shawarma-wrap', 3, ['tannour']]], ['free_delivery' => true], $delivered(4)],
-            'DEMO-0012' => [[-3, 13, 0], 10, $pharmacy, 'homs', [['hand-sanitizer', 2, []], ['paracetamol', 1, []]], [],
+            // 15:00, not 13:00: the Homs pharmacy opens at 14:00 on Fridays, so
+            // "three days ago at 13:00" failed every Monday (2026-11-16).
+            'DEMO-0012' => [[-3, 15, 0], 10, $pharmacy, 'homs', [['hand-sanitizer', 2, []], ['paracetamol', 1, []]], [],
                 [[20, 'cancel_admin', ['reason_code' => 'branch_unavailable', 'note' => 'Demo: no driver available in Homs']]]],
             'DEMO-0013' => [[-2, 13, 0], 9, $pizza, 'aleppo-center', [['margherita', 2, ['small']]], ['currency' => 'SYP', 'wallet' => '15000'], $delivered(8)],
             'DEMO-0014' => [[-2, 13, 30], 5, $tech, 'center', [['usb-c-cable', 2, []]], ['currency' => 'EUR'],

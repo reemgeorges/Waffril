@@ -207,6 +207,30 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         $this->assertMatchesRegularExpression('/\p{Arabic}/u', (string) DB::table('cities')->value('name'));
     }
 
+    /**
+     * 2026-11-16: the demo scenarios are placed relative to "now" and go
+     * through the real checkout (opening hours included). DEMO-0012 used to
+     * land on a Friday 13:00 every Monday, when the Homs pharmacy is closed,
+     * and the whole demo seed failed. Seed it once for every weekday.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('everyWeekday')]
+    public function test_demo_data_seeds_on_every_day_of_the_week(string $localMoment): void
+    {
+        // Operations time zone (Asia/Damascus by default).
+        $this->travelTo(\Illuminate\Support\Carbon::parse($localMoment, 'Asia/Damascus')->utc());
+        $this->seedDemo();
+        $this->assertSame(35, Order::query()->where('order_number', 'like', 'DEMO-%')->count(), "All demo orders seeded at {$localMoment}");
+        $this->travelBack();
+    }
+
+    /** @return array<string, array{0: string}> Monday 2026-11-16 … Sunday 2026-11-22, late morning. */
+    public static function everyWeekday(): array
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+        return collect($days)->mapWithKeys(fn ($day, $i) => [$day => [sprintf('2026-11-%02d 11:40:00', 16 + $i)]])->all();
+    }
+
     public function test_dashboard_shows_database_numbers(): void
     {
         $this->seedDemo();

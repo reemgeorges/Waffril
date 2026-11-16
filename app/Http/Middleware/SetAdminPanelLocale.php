@@ -15,8 +15,11 @@ use Illuminate\Http\Request;
  *   3. a long-lived `admin_locale` cookie (keeps the login page in the last
  *      language used on this browser after logout);
  *   4. config('app.locale').
- * Filament registers panel middleware as Livewire persistent middleware, so
- * Livewire requests (actions, modals, validation) keep the same language.
+ * It is also registered as Livewire PERSISTENT middleware
+ * (AdminPanelProvider::persistentMiddleware, 2026-11-16) so it runs on every
+ * Livewire update request too — tabs, filters, sorting, actions, modals,
+ * validation and realtime refreshes keep the admin's language. Ordinary panel
+ * middleware does not run on Livewire updates.
  */
 class SetAdminPanelLocale
 {
