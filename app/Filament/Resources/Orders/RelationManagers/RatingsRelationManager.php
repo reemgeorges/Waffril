@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\RelationManagers;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class RatingsRelationManager extends RelationManager
 {
+    use RefreshesOnOrderEvents;
     use TranslatedRelationLabels;
 
     protected static string $relationLabelKey = 'rating';

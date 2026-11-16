@@ -57,7 +57,7 @@ class DriverResource extends AdminResource
                 Section::make(__('admin.drivers.section_person'))->icon('heroicon-o-identification')->columnSpan(['default' => 1, 'lg' => 2])->columns(2)->schema([
                     TextInput::make('name')->label(__('admin.fields.name'))->required()->maxLength(150),
                     Fields::phone('phone')->required()->unique(ignoreRecord: true),
-                    Select::make('language')->label(__('admin.fields.language'))->options(['ar' => 'العربية', 'en' => 'English'])->default('ar')->required()
+                    Select::make('language')->label(__('admin.fields.language'))->options(fn () => ['ar' => __('admin.languages.ar'), 'en' => __('admin.languages.en')])->default('ar')->required()
                         ->helperText(__('admin.help.driver_language')),
                     TextInput::make('password')->label(__('admin.fields.password'))->password()->revealable()
                         ->minLength(8)->maxLength(100)

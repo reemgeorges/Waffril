@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PlusMemberships\Pages;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\PlusMemberships\PlusMembershipResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\PlusPolicyFields;
@@ -14,6 +15,8 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewPlusMembership extends ViewRecord
 {
+    use RefreshesOnOperationalEvents;
+
     protected static string $resource = PlusMembershipResource::class;
 
     protected function getHeaderActions(): array

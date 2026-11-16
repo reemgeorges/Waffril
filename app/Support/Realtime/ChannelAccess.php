@@ -71,6 +71,12 @@ class ChannelAccess
         return false;
     }
 
+    /** 2026-11-16: non-order operational changes (identifiers only) for any active admin. */
+    public static function adminActivity(mixed $admin): bool
+    {
+        return $admin instanceof Admin && $admin->is_active && ! $admin->trashed();
+    }
+
     public static function adminOrders(mixed $admin): bool
     {
         return AdminPermissions::allows($admin instanceof Admin ? $admin : null, 'orders.view');

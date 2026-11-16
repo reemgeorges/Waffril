@@ -2,15 +2,16 @@
 
 namespace App\Services\Order;
 
-use App\Notifications\CustomerOrderUpdate;
-use App\Services\Realtime\Notify;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\OrderCancellation;
 use App\Models\OrderPayment;
 use App\Models\OrderRefund;
+use App\Notifications\CustomerOrderUpdate;
 use App\Services\Audit\AdminAudit;
+use App\Services\Realtime\Notify;
+use App\Services\Realtime\Realtime;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Money\Money;
@@ -97,6 +98,7 @@ class RefundService
             if ($order->user) {
                 Notify::send($order->user, new CustomerOrderUpdate('refunded', $order));
             }
+            Realtime::admin('order.refunded', (int) $order->id, $order->order_number);
 
             return $refund;
         });

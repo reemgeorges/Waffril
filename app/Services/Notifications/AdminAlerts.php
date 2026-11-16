@@ -86,6 +86,7 @@ class AdminAlerts
                 foreach ($recipients as $admin) {
                     try {
                         $notification->sendToDatabase($admin, isEventDispatched: true);
+                        self::toast($admin, $type, $key, $params, $color, $icon, $url, $orderId);
                     } catch (Throwable $e) {
                         Log::warning('admin_alert.failed', ['type' => $type, 'admin_id' => $admin->id, 'error' => $e->getMessage()]);
                     }
@@ -94,5 +95,31 @@ class AdminAlerts
                 Log::warning('admin_alert.failed', ['type' => $type, 'error' => $e->getMessage()]);
             }
         });
+    }
+
+    /**
+     * A short live toast (2026-11-16) next to the bell entry, in the
+     * recipient's own language, on their private channel admin.{id}.
+     * The id is stable per alert type and order, so a repeated event
+     * replaces the visible toast instead of stacking a duplicate
+     * (Filament keys toasts by id). Nothing is stored; the bell stays the
+     * record.
+     */
+    protected static function toast(Admin $admin, string $type, string $key, array $params, string $color, string $icon, ?string $url, ?int $orderId): void
+    {
+        $locale = $admin->preferredLocale();
+        $toast = Notification::make('waffrli-alert-'.str_replace('.', '-', $type).'-'.($orderId ?? 'none'))
+            ->title(__($key.'.title', [], $locale))
+            ->body(__($key.'.body', $params, $locale))
+            ->icon($icon)->iconColor($color)
+            ->duration(8000);
+        if ($url) {
+            $toast->actions([Action::make('open')->label(__('admin.alerts.open', [], $locale))->url($url)]);
+        }
+        // Laravel puts the notification's own id into the broadcast payload;
+        // presetting it keeps the toast id stable (Filament keys toasts by it).
+        $broadcast = $toast->toBroadcast();
+        $broadcast->id = $toast->getId();
+        $admin->notify($broadcast);
     }
 }

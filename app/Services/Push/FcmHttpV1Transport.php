@@ -26,6 +26,47 @@ class FcmHttpV1Transport implements PushTransport
 
     public function send(string $token, array $message): string
     {
+        return $this->post($token, $message, false);
+    }
+
+    /**
+     * Readiness probe (2026-11-16, waffrli:fcm-check --validate-token): FCM
+     * validates the message and the device token WITHOUT delivering anything
+     * ("validate_only"). Same result values as send().
+     */
+    public function validateOnly(string $token): string
+    {
+        return $this->post($token, ['title' => 'WAFFRLI readiness check', 'body' => 'validate_only', 'data' => ['event' => 'diagnostic']], true);
+    }
+
+    /**
+     * Credential summary for diagnostics: never the private key or a token.
+     *
+     * @return array{project_id: string, client_email: string, source: string}
+     */
+    public function credentialSummary(): array
+    {
+        $credentials = $this->credentials();
+        $key = openssl_pkey_get_private($credentials['private_key']);
+        if ($key === false) {
+            throw new RuntimeException('The FCM private key is not a valid PEM private key.');
+        }
+
+        return [
+            'project_id' => $credentials['project_id'],
+            'client_email' => $credentials['client_email'],
+            'source' => ! empty(config('waffrli.push.fcm.credentials')) ? 'file' : 'environment',
+        ];
+    }
+
+    /** Obtains (or reuses the cached) OAuth access token; returns only whether it worked. */
+    public function canAuthenticate(): bool
+    {
+        return $this->accessToken($this->credentials()) !== '';
+    }
+
+    protected function post(string $token, array $message, bool $validateOnly): string
+    {
         $credentials = $this->credentials();
         $android = ['priority' => 'HIGH'];
         $apns = ['apns-priority' => '10'];
@@ -35,18 +76,22 @@ class FcmHttpV1Transport implements PushTransport
             $android['ttl'] = max(0, (int) now()->diffInSeconds($expiresAt, false)).'s';
             $apns['apns-expiration'] = (string) $expiresAt->getTimestamp();
         }
+        $payload = [
+            'message' => [
+                'token' => $token,
+                'notification' => ['title' => $message['title'], 'body' => $message['body']],
+                'data' => array_map('strval', $message['data']),
+                'android' => $android,
+                'apns' => ['headers' => $apns],
+            ],
+        ];
+        if ($validateOnly) {
+            $payload['validate_only'] = true;
+        }
         $response = Http::timeout((int) config('waffrli.push.fcm.timeout', 10))
             ->withToken($this->accessToken($credentials))
             ->acceptJson()
-            ->post("https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send", [
-                'message' => [
-                    'token' => $token,
-                    'notification' => ['title' => $message['title'], 'body' => $message['body']],
-                    'data' => array_map('strval', $message['data']),
-                    'android' => $android,
-                    'apns' => ['headers' => $apns],
-                ],
-            ]);
+            ->post("https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send", $payload);
 
         if ($response->successful()) {
             return self::RESULT_SENT;

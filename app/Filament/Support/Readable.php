@@ -2,7 +2,9 @@
 
 namespace App\Filament\Support;
 
+use App\Support\Localization\Label;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 
 /**
@@ -51,7 +53,21 @@ final class Readable
         return $text !== $key ? $text : collect(explode('.', $action))->map(fn ($part) => Str::headline($part))->implode(' · ');
     }
 
-    /** Audit properties as "Label: value · Label: value" (field labels from admin.fields). */
+    /**
+     * Coded audit values that have a translated label: property key → Label
+     * family (App\Support\Localization\Label). Anything else is shown as stored.
+     */
+    private const VALUE_FAMILIES = [
+        'policy' => 'plus_policy',
+        'reason' => 'cancellation_reason',
+        'reason_code' => 'cancellation_reason',
+    ];
+
+    /**
+     * Audit properties as "Label: value · Label: value". Labels come from
+     * admin.fields, then admin.audit_keys (2026-11-16: keys that are not form
+     * fields used to fall back to an English headline in the Arabic panel).
+     */
     public static function properties(mixed $properties): string
     {
         if (! is_array($properties) || $properties === []) {
@@ -62,13 +78,40 @@ final class Readable
             ->reject(fn ($value) => $value === null || $value === '' || is_array($value))
             ->map(function ($value, $key) {
                 $leaf = Str::afterLast((string) $key, '.');
-                $label = __('admin.fields.'.$leaf);
-                $label = $label === 'admin.fields.'.$leaf ? Str::headline($leaf) : $label;
-                $value = is_bool($value) ? ($value ? __('admin.common.yes') : __('admin.common.no')) : (string) $value;
 
-                return $label.': '.(is_numeric($value) ? Fields::formatDecimal($value) : $value);
+                return self::propertyLabel($leaf).': '.self::propertyValue($leaf, $value);
             })
             ->take(6)->implode(' · ');
+    }
+
+    public static function propertyLabel(string $key): string
+    {
+        foreach (['admin.fields.', 'admin.audit_keys.'] as $group) {
+            if (Lang::has($group.$key)) {
+                return __($group.$key);
+            }
+        }
+
+        return Str::headline($key);
+    }
+
+    protected static function propertyValue(string $key, mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? __('admin.common.yes') : __('admin.common.no');
+        }
+        $value = (string) $value;
+        if (is_numeric($value)) {
+            return Fields::formatDecimal($value);
+        }
+        if (isset(self::VALUE_FAMILIES[$key]) && preg_match('/^[a-z_]+$/', $value)) {
+            // Panel wording (admin.*), not the app vocabulary (api_labels).
+            $translationKey = sprintf(Label::FAMILIES[self::VALUE_FAMILIES[$key]], $value);
+
+            return Lang::has($translationKey) ? __($translationKey) : $value;
+        }
+
+        return $value;
     }
 
     /** Notification class or alias → label (admin.notification_types), else headline. */

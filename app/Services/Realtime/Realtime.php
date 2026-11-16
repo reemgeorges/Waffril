@@ -2,6 +2,7 @@
 
 namespace App\Services\Realtime;
 
+use App\Events\Realtime\AdminOperationalEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -18,6 +19,12 @@ use Throwable;
  */
 class Realtime
 {
+    /** Refresh open admin screens (identifiers only; see AdminOperationalEvent). */
+    public static function admin(string $type, int $subjectId, ?string $reference = null): void
+    {
+        self::publish(new AdminOperationalEvent($type, $subjectId, $reference));
+    }
+
     public static function publish(object $event): void
     {
         DB::afterCommit(function () use ($event) {

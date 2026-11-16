@@ -14,26 +14,35 @@ use App\Models\Branch;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\OrderRefund;
 use App\Models\PlusCycle;
 use App\Models\PlusCycleDiscount;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\WalletTransaction;
+use App\Services\Currency\OperationalMoney;
+use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
 use Brick\Math\BigDecimal;
 use Database\Seeders\Demo\DemoContext;
+use Database\Seeders\Demo\DemoHamaSeeder;
+use Database\Seeders\Demo\DemoHomsSeeder;
+use Database\Seeders\Demo\DemoOrderSeeder;
 use Database\Seeders\Essential\AdminRoleTemplatesSeeder;
 use Database\Seeders\WaffrliDemoSeeder;
 use Database\Seeders\WaffrliEssentialSeeder;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
 
@@ -168,7 +177,7 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         $member = User::query()->where('email', DemoContext::email('customer-01'))->firstOrFail();
         [$current, $next] = PlusCycle::query()->where('user_id', $member->id)->orderBy('cycle_number')->get()->all();
         // 2026-11-12: new cycles get the platform allowance (plus.free_deliveries_limit).
-        $this->assertSame(\App\Services\Plus\PlusService::freeDeliveriesLimit(), $current->free_deliveries_total);
+        $this->assertSame(PlusService::freeDeliveriesLimit(), $current->free_deliveries_total);
         $this->assertSame(6, $next->free_deliveries_total, 'The override applies from the next cycle only.');
         $this->assertSame(3, PlusCycleDiscount::query()->where('plus_cycle_id', $current->id)->count());
         $this->assertSame(['exception', 'plan'], PlusCycleDiscount::query()->where('plus_cycle_id', $next->id)->orderBy('source')->pluck('source')->unique()->values()->all());
@@ -207,6 +216,33 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         $this->assertMatchesRegularExpression('/\p{Arabic}/u', (string) DB::table('cities')->value('name'));
     }
 
+    /**
+     * 2026-11-16: the demo scenarios are placed relative to "now" and go
+     * through the real checkout (opening hours included). DEMO-0012 used to
+     * land on a Friday 13:00 every Monday, when the Homs pharmacy is closed,
+     * and the whole demo seed failed. Seed it once for every weekday.
+     */
+    #[DataProvider('everyWeekday')]
+    public function test_demo_data_seeds_on_every_day_of_the_week(string $localMoment): void
+    {
+        // Operations time zone (Asia/Damascus by default).
+        $this->travelTo(Carbon::parse($localMoment, 'Asia/Damascus')->utc());
+        $this->seedDemo();
+        $expected = count(DemoOrderSeeder::scenarios())
+            + count((new \ReflectionMethod(DemoHamaSeeder::class, 'scenarios'))->invoke(new DemoHamaSeeder))
+            + count((new \ReflectionMethod(DemoHomsSeeder::class, 'scenarios'))->invoke(new DemoHomsSeeder));
+        $this->assertSame($expected, Order::query()->where('order_number', 'like', 'DEMO-%')->count(), "All demo orders seeded at {$localMoment}");
+        $this->travelBack();
+    }
+
+    /** @return array<string, array{0: string}> Monday 2026-11-16 … Sunday 2026-11-22, late morning. */
+    public static function everyWeekday(): array
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+        return collect($days)->mapWithKeys(fn ($day, $i) => [$day => [sprintf('2026-11-%02d 11:40:00', 16 + $i)]])->all();
+    }
+
     public function test_dashboard_shows_database_numbers(): void
     {
         $this->seedDemo();
@@ -228,6 +264,8 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
 
         $rows = collect(FinanceOverview::rows())->keyBy('code');
         $this->assertTrue($rows->every(fn ($row) => $row['ledger_consistent']));
+        // 2026-11-16: grouped aggregates == the previous per-currency queries.
+        $this->assertSame($this->legacyFinanceRows(), FinanceOverview::rows());
         $this->assertSame(
             (string) Money::toStorage((string) Wallet::where('currency_id', Currency::where('code', 'USD')->value('id'))->sum('balance')),
             $rows['USD']['wallet_balances']
@@ -275,5 +313,30 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
     protected function sum($values): string
     {
         return Money::toStorage(collect($values)->reduce(fn ($carry, $v) => $carry->plus((string) $v), BigDecimal::zero()));
+    }
+
+    /** FinanceOverview::rows() as implemented before 2026-11-16 (eight queries per currency). */
+    private function legacyFinanceRows(): array
+    {
+        $operationalId = OperationalMoney::currency()?->id;
+
+        return Currency::query()->orderBy('code')->get()->sortBy(fn (Currency $c) => $c->id === $operationalId ? 0 : 1)->values()->map(function (Currency $currency) use ($operationalId) {
+            $balances = (string) (Wallet::query()->where('currency_id', $currency->id)->sum('balance') ?: '0');
+            $credits = (string) (WalletTransaction::query()->where('direction', 'credit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
+            $debits = (string) (WalletTransaction::query()->where('direction', 'debit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
+            $payments = OrderPayment::query()->where('currency_id', $currency->id);
+
+            return [
+                'code' => $currency->code,
+                'historical' => $operationalId !== null && $currency->id !== $operationalId,
+                'wallets' => Wallet::query()->where('currency_id', $currency->id)->where('balance', '>', 0)->count(),
+                'wallet_balances' => Money::toStorage($balances),
+                'ledger_consistent' => Money::of($credits)->minus($debits)->isEqualTo($balances),
+                'collected' => Money::toStorage((string) ((clone $payments)->sum('collected_amount') ?: '0')),
+                'pending_cash' => Money::toStorage((string) ((clone $payments)->where('status', OrderPayment::STATUS_PENDING)->whereHas('method', fn ($q) => $q->where('kind', 'cash'))->sum('amount') ?: '0')),
+                'refunded' => Money::toStorage((string) (OrderRefund::query()->where('currency_id', $currency->id)->sum('amount') ?: '0')),
+                'unsettled_cash' => Money::toStorage((string) ((clone $payments)->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->sum('collected_amount') ?: '0')),
+            ];
+        })->filter(fn ($row) => $row['wallet_balances'] !== '0.0000' || $row['collected'] !== '0.0000' || $row['pending_cash'] !== '0.0000')->values()->all();
     }
 }

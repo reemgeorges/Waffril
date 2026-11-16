@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use App\Models\OrderItem;
@@ -13,6 +14,7 @@ use Filament\Tables\Table;
 /** Snapshotted order lines with their selected options (read-only). */
 class ItemsRelationManager extends RelationManager
 {
+    use RefreshesOnOrderEvents;
     use TranslatedRelationLabels;
 
     protected static string $relationLabelKey = 'order_item';

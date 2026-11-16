@@ -2,8 +2,6 @@
 
 namespace App\Services\Plus;
 
-use App\Notifications\CustomerPlusUpdate;
-use App\Services\Realtime\Notify;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Admin;
 use App\Models\Currency;
@@ -14,7 +12,10 @@ use App\Models\PlusPlan;
 use App\Models\PlusRequest;
 use App\Models\PlusStoreDiscount;
 use App\Models\Store;
+use App\Notifications\CustomerPlusUpdate;
 use App\Services\Audit\AdminAudit;
+use App\Services\Realtime\Notify;
+use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
 use App\Support\Settings\PlatformSettings;
 use Carbon\CarbonInterface;
@@ -76,6 +77,7 @@ class PlusService
         if (in_array($status, [PlusRequest::STATUS_APPROVED, PlusRequest::STATUS_REJECTED], true) && $request->user) {
             Notify::send($request->user, new CustomerPlusUpdate($status, $request));
         }
+        Realtime::admin('plus.request_resolved', (int) $request->id);
     }
 
     public function approveNew(PlusRequest $request, Admin $admin, string $policy, ?int $customDays = null, ?CarbonInterface $startsAt = null, ?string $note = null): PlusCycle

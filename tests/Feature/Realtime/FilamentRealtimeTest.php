@@ -106,10 +106,25 @@ class FilamentRealtimeTest extends CustomerTestCase
         $this->get('/admin/driver-map')->assertForbidden();
     }
 
-    public function test_operations_listener_requires_orders_view(): void
+    public function test_operations_listener_subscribes_to_admin_orders_only_with_orders_view(): void
     {
         $this->enableEcho();
+
+        // 2026-11-16: every active admin listens to admin.activity; only
+        // orders.view subscribes to admin.orders.
         $this->actingAs($this->admin(['customers.view']), 'admin_web');
+        $this->get('/admin')->assertOk()
+            ->assertSee('waffrliOperationsListener', false)
+            ->assertSee('const ORDERS_ALLOWED = false;', false)
+            ->assertSee("window.Echo.private('admin.activity')", false);
+
+        $this->actingAs($this->admin(['orders.view']), 'admin_web');
+        $this->get('/admin')->assertOk()->assertSee('const ORDERS_ALLOWED = true;', false);
+    }
+
+    public function test_operations_listener_is_absent_without_echo(): void
+    {
+        $this->actingAs($this->admin(['orders.view']), 'admin_web');
         $this->get('/admin')->assertOk()->assertDontSee('waffrliOperationsListener', false);
     }
 

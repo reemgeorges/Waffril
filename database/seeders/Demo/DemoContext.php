@@ -56,6 +56,29 @@ class DemoContext
         }
     }
 
+    /** Only the environment check: for purely additive reference data (cities, areas, stores…). */
+    public static function assertSafeEnvironment(): void
+    {
+        if (! app()->environment(self::ALLOWED_ENVIRONMENTS)) {
+            throw new RuntimeException('WAFFRLI demo data may only be seeded in: '.implode(', ', self::ALLOWED_ENVIRONMENTS).'. Current environment: '.app()->environment().'.');
+        }
+    }
+
+    /**
+     * Whether demo TRANSACTIONS (orders, payments, wallets, ratings) may be
+     * added: never next to real orders or wallet movements (2026-11-16).
+     */
+    public static function transactionsAllowed(): bool
+    {
+        try {
+            self::assertSafeToSeed();
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
     /** The moment all relative demo dates are computed from (fixed for one run). */
     public function anchor(): Carbon
     {

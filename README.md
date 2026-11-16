@@ -192,7 +192,7 @@ After changing PHP code that the queue or Reverb run, restart them: `docker comp
 | `WAFFRLI_API_DOCS_ENABLED` | `true` | Serves `/docs` (it is off by default, and never on in production) |
 | `MAIL_*` | Mailpit | |
 
-Real SMS, WhatsApp and Firebase credentials are configured only through environment variables on servers that need them (see `docs/waffrli/realtime-and-push.md`). Never commit them.
+Real SMS, WhatsApp and Firebase credentials are configured only through environment variables on servers that need them (see `docs/waffrli/realtime-and-push.md`). Never commit them. Check push readiness, without sending anything, with `php artisan waffrli:fcm-check` (see `docs/waffrli/fcm-readiness.md`).
 
 ## 7. Database: migrations, seeders, demo data
 
@@ -215,6 +215,7 @@ docker compose exec app php artisan db:seed --class=WaffrliDemoSeeder
   - re-running them adds nothing.
 
   Every person, phone and e-mail is fictional (`*@demo.waffrli.test`, `+1 202 555 01xx`), and nobody can log in with demo passwords. See `docs/waffrli/demo-data.md`.
+- **Hama** (the main demonstration city) and **Homs** come with complete delivery-area coverage from OpenStreetMap, fictional stores priced in Syrian pounds, demo customers, drivers and orders. See `docs/waffrli/demo-hama.md`.
 - Migrations and rollback tests run only against `waffrli_testing`, through the test suite. Never run `migrate:fresh` or `migrate:reset` on a database you care about.
 
 ## 8. Accounts: Super Admin, demo driver, customer OTP
@@ -240,6 +241,21 @@ Then log in with `POST /api/v1/driver/login` and `{ "phone": "+12025550201", "pa
 3. `POST /api/v1/customer/auth/otp/verify` with `{ "phone": "...", "code": "...", "device_id": "my-laptop" }` → `data.token`
 
 Limits are enforced locally too: 5 codes per phone per hour, a 60-second cooldown, and 5 requests per IP per minute.
+
+**Fixed test OTP (optional, local only).** To avoid reading a new random code for every app test, dedicated test phones can use one fixed code. Add to your local `.env`:
+
+```dotenv
+WAFFRLI_TEST_FIXED_OTP_ENABLED=true
+WAFFRLI_TEST_FIXED_OTP_CODE=123456
+WAFFRLI_TEST_FIXED_OTP_PHONES=+963944000001,+963944000002
+```
+
+Then run `php artisan config:clear`. It applies only when **all** of these hold: the flag is on, `APP_ENV` is `local` or `testing` (it is ignored in production whatever the flags say), the code has 4–8 digits, and the phone is in the allowlist.
+
+- **Allowlist only.** Use dedicated test numbers: a local server may be public through a Cloudflare tunnel, so there is no "any phone" mode.
+- **Nothing is sent.** No SMS or WhatsApp is attempted for those phones, and the API answers exactly as usual (`channel: "sms"`). The stored row is marked `test_fixed`.
+- **Same safeguards.** The code is still stored hashed, expires after 10 minutes, works once, is bound to its purpose (login vs recovery), and keeps the cooldown, rate limits and attempt ceiling. It is never returned or logged.
+- **Everyone else is unchanged.** Other phones, and every phone when the flag is off, get random codes through the configured SMS driver.
 
 ## 9. API collections (Bruno) and API docs (Scalar)
 
@@ -380,6 +396,9 @@ The test bootstrap **refuses** to run against a MySQL database whose name does n
 | Realtime and push | `docs/waffrli/realtime-and-push.md` |
 | Currencies | `docs/waffrli/currency-switch.md` |
 | Demo data | `docs/waffrli/demo-data.md` |
+| Demo cities Hama and Homs (areas, sources, SYP prices) | `docs/waffrli/demo-hama.md` |
+| Admin panel audit 2026-11-16 (changes, measurements, checklist) | `docs/waffrli/admin-panel-audit.md` |
+| Error monitoring / FCM readiness | `docs/waffrli/error-monitoring.md` / `docs/waffrli/fcm-readiness.md` |
 | Database (as built) / design baseline | `docs/waffrli/database/` / `docs/waffrli/erd.md` |
 | API inventory, OpenAPI | `docs/waffrli/api-inventory.md`, `docs/waffrli/openapi/` |
 | Shared API workspace (Hoppscotch) | `docs/waffrli/api-portal.md` |

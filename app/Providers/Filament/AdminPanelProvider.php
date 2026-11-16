@@ -123,7 +123,18 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // 2026-11-16: the admin's language must also apply to Livewire
+            // update requests (status tabs, filters, sorting, actions,
+            // realtime refreshes). Filament builds and caches page parts such
+            // as the tab labels while the component boots, BEFORE Livewire
+            // restores the locale it stored in the snapshot; persistent
+            // middleware runs earlier, right after the snapshot is verified.
+            // Without this, tabs and filters re-rendered in the default
+            // language after the first click.
+            ->persistentMiddleware([SetAdminPanelLocale::class])
             ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
+            // 2026-11-16: open the table filter panel on wide screens (display only).
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.tables.filters-open'))
             ->authMiddleware([
                 Authenticate::class,
             ]);

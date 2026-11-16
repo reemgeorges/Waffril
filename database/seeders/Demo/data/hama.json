@@ -1,0 +1,357 @@
+{
+  "key": "hama",
+  "source": {
+    "provider": "OpenStreetMap (Nominatim API)",
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0 — https://www.openstreetmap.org/copyright",
+    "retrieved": "2026-11-16",
+    "city_boundary": "relation/18354844 (place=city)",
+    "method": "City boundary from the OSM relation; named centres from OSM place=neighbourhood nodes, one mapped neighbourhood way, named landuse=residential ways and place=village nodes inside that boundary."
+  },
+  "city": {
+    "ar": "حماة",
+    "en": "Hama",
+    "lat": 35.1343368,
+    "lng": 36.7496276,
+    "radius_km": 8
+  },
+  "boundary": [
+    [
+      36.6887966,
+      35.1131213
+    ],
+    [
+      36.7330342,
+      35.1001834
+    ],
+    [
+      36.7593875,
+      35.0982339
+    ],
+    [
+      36.8141772,
+      35.0984793
+    ],
+    [
+      36.8164671,
+      35.1159446
+    ],
+    [
+      36.8112034,
+      35.1790972
+    ],
+    [
+      36.7880507,
+      35.1834764
+    ],
+    [
+      36.7220196,
+      35.1851798
+    ],
+    [
+      36.70365,
+      35.1589198
+    ],
+    [
+      36.7085448,
+      35.1380771
+    ],
+    [
+      36.6894301,
+      35.1302204
+    ],
+    [
+      36.6887966,
+      35.1131213
+    ]
+  ],
+  "centres": {
+    "ad-dahiriyah": {
+      "ar": "الضاهرية",
+      "en": "Ad Dahiriyah",
+      "en_source": "osm",
+      "lat": 35.1611963,
+      "lng": 36.7306743,
+      "osm": "node/572554476",
+      "kind": "village"
+    },
+    "aidin": {
+      "ar": "العائدين",
+      "en": "Al A'idīn",
+      "en_source": "osm",
+      "lat": 35.1427662,
+      "lng": 36.7465168,
+      "osm": "node/14049297164",
+      "kind": "neighbourhood"
+    },
+    "ain-al-lawza": {
+      "ar": "حي عين اللوزة",
+      "en": "Ain Al-Lawza",
+      "en_source": "osm",
+      "lat": 35.1182702,
+      "lng": 36.7524425,
+      "osm": "node/14049297172",
+      "kind": "neighbourhood"
+    },
+    "al-elelyiat": {
+      "ar": "العليليات",
+      "en": "Al-Elelyiat",
+      "en_source": "osm",
+      "lat": 35.1251736,
+      "lng": 36.7606659,
+      "osm": "way/370443509",
+      "kind": "residential"
+    },
+    "al-madinah": {
+      "ar": "المدينة",
+      "en": "Al-Madinah",
+      "en_source": "osm",
+      "lat": 35.1331694,
+      "lng": 36.7455668,
+      "osm": "way/370456605",
+      "kind": "residential"
+    },
+    "andalus": {
+      "ar": "الأندلس",
+      "en": "Al-Andalus",
+      "en_source": "osm",
+      "lat": 35.1282898,
+      "lng": 36.7378427,
+      "osm": "node/14049297171",
+      "kind": "neighbourhood"
+    },
+    "as-sabouniyah": {
+      "ar": "الصابونية",
+      "en": "As-Sabouniyah",
+      "en_source": "osm",
+      "lat": 35.1221242,
+      "lng": 36.7621067,
+      "osm": "way/370443508",
+      "kind": "residential"
+    },
+    "as-sawaeq-ash-shamali": {
+      "ar": "الصواعق الشمالي",
+      "en": "As-Sawa'eq ash-Shamali",
+      "en_source": "osm",
+      "lat": 35.1636406,
+      "lng": 36.7719903,
+      "osm": "node/12200018827",
+      "kind": "village"
+    },
+    "ash-shariaa": {
+      "ar": "الشريعة",
+      "en": "Ash-Shariaa",
+      "en_source": "osm",
+      "lat": 35.1273973,
+      "lng": 36.7671581,
+      "osm": "way/370443510",
+      "kind": "residential"
+    },
+    "ash-sharqiyah": {
+      "ar": "الشرقية",
+      "en": "Ash-Sharqiyah",
+      "en_source": "osm",
+      "lat": 35.1345412,
+      "lng": 36.7618448,
+      "osm": "way/370553255",
+      "kind": "residential"
+    },
+    "ayn-al-bad": {
+      "ar": "عين الباد",
+      "en": "Ayn al-Bad",
+      "en_source": "osm",
+      "lat": 35.15,
+      "lng": 36.7833333,
+      "osm": "node/571184065",
+      "kind": "village"
+    },
+    "bab-qibli": {
+      "ar": "باب القبلي",
+      "en": "Bab Qibli",
+      "en_source": "osm",
+      "lat": 35.1326912,
+      "lng": 36.7429372,
+      "osm": "node/14049297179",
+      "kind": "neighbourhood"
+    },
+    "barudiyah": {
+      "ar": "البارودية",
+      "en": "Al Barudiyah",
+      "en_source": "osm",
+      "lat": 35.1347655,
+      "lng": 36.7629055,
+      "osm": "node/14049297165",
+      "kind": "neighbourhood"
+    },
+    "dahiyat-abi-al-fidaa": {
+      "ar": "ضاحية أبي الفداء",
+      "en": "Dahiyat Abi Al-Fidaa",
+      "en_source": "osm",
+      "lat": 35.1032397,
+      "lng": 36.7604216,
+      "osm": "way/370456608",
+      "kind": "residential"
+    },
+    "fayhaa": {
+      "ar": "الفيحاء",
+      "en": "Al Fayhaa",
+      "en_source": "osm",
+      "lat": 35.1477653,
+      "lng": 36.764866,
+      "osm": "node/14049297166",
+      "kind": "neighbourhood"
+    },
+    "gharb-al-mashtal": {
+      "ar": "غرب المشتل",
+      "en": "Gharb Al Mashtal",
+      "en_source": "osm",
+      "lat": 35.1131289,
+      "lng": 36.7511096,
+      "osm": "node/14049297175",
+      "kind": "neighbourhood"
+    },
+    "hamidiyah": {
+      "ar": "حي الحميدية",
+      "en": "Al Hamidiyah",
+      "en_source": "osm",
+      "lat": 35.1406068,
+      "lng": 36.7655307,
+      "osm": "node/14049297162",
+      "kind": "neighbourhood"
+    },
+    "harat-al-tab": {
+      "ar": "حارة الطب",
+      "en": "Al-Tab Lane",
+      "en_source": "osm",
+      "lat": 35.1142622,
+      "lng": 36.746208,
+      "osm": "node/14049297174",
+      "kind": "neighbourhood"
+    },
+    "janoub-al-malaab": {
+      "ar": "جنوب الملعب",
+      "en": "Janob al Malaab",
+      "en_source": "osm",
+      "lat": 35.1133018,
+      "lng": 36.7640632,
+      "osm": "node/14049297176",
+      "kind": "neighbourhood"
+    },
+    "jibrin": {
+      "ar": "جبرين",
+      "en": "Jibrin",
+      "en_source": "osm",
+      "lat": 35.1664861,
+      "lng": 36.7881532,
+      "osm": "node/12284942796",
+      "kind": "village"
+    },
+    "kazu": {
+      "ar": "كازو",
+      "en": "Kazu",
+      "en_source": "osm",
+      "lat": 35.1502281,
+      "lng": 36.7254043,
+      "osm": "node/572558782",
+      "kind": "village"
+    },
+    "mashaa-al-arbaeen": {
+      "ar": "حي مشاع الأربعين",
+      "en": "Mashaa Al-Arbaeen",
+      "en_source": "transliteration",
+      "lat": 35.1571887,
+      "lng": 36.7639193,
+      "osm": "way/1455768720",
+      "kind": "neighbourhood"
+    },
+    "mashaa-al-furusiya": {
+      "ar": "مشاع الفروسية",
+      "en": "Mashaa Al-Furusiya",
+      "en_source": "osm",
+      "lat": 35.1148008,
+      "lng": 36.7751664,
+      "osm": "node/14049297178",
+      "kind": "neighbourhood"
+    },
+    "nasr": {
+      "ar": "النصر",
+      "en": "Nasr",
+      "en_source": "osm",
+      "lat": 35.1181759,
+      "lng": 36.7393507,
+      "osm": "node/14049297173",
+      "kind": "neighbourhood"
+    },
+    "riyadi": {
+      "ar": "الرياضي",
+      "en": "Riyadi",
+      "en_source": "osm",
+      "lat": 35.1150675,
+      "lng": 36.7612482,
+      "osm": "node/14049297177",
+      "kind": "neighbourhood"
+    },
+    "ruqaytah": {
+      "ar": "رقيطة",
+      "en": "Ruqaytah",
+      "en_source": "osm",
+      "lat": 35.1092145,
+      "lng": 36.7223521,
+      "osm": "node/572553208",
+      "kind": "village"
+    },
+    "sabil": {
+      "ar": "حي السبيل",
+      "en": "Al Sabil",
+      "en_source": "osm",
+      "lat": 35.1568183,
+      "lng": 36.7667356,
+      "osm": "node/14049297167",
+      "kind": "neighbourhood"
+    },
+    "shahba": {
+      "ar": "الشهباء",
+      "en": "Ash Shahba",
+      "en_source": "osm",
+      "lat": 35.1461171,
+      "lng": 36.7505158,
+      "osm": "node/14049297161",
+      "kind": "neighbourhood"
+    },
+    "shamaliyah": {
+      "ar": "شمالية",
+      "en": "Ash Shamaliyah",
+      "en_source": "osm",
+      "lat": 35.1397106,
+      "lng": 36.7589466,
+      "osm": "node/14049297159",
+      "kind": "neighbourhood"
+    },
+    "souq-al-ghanam": {
+      "ar": "سوق الغنم",
+      "en": "Souq Al-Ghanam",
+      "en_source": "osm",
+      "lat": 35.154525,
+      "lng": 36.7854704,
+      "osm": "node/14049297169",
+      "kind": "neighbourhood"
+    },
+    "tishrine": {
+      "ar": "تشرين",
+      "en": "Tishrine",
+      "en_source": "osm",
+      "lat": 35.1582782,
+      "lng": 36.7526979,
+      "osm": "node/14049297168",
+      "kind": "neighbourhood"
+    },
+    "zanbaqi": {
+      "ar": "الزنبقي",
+      "en": "Az Zanbaqi",
+      "en_source": "osm",
+      "lat": 35.1372592,
+      "lng": 36.7541919,
+      "osm": "node/14049297160",
+      "kind": "neighbourhood"
+    }
+  }
+}

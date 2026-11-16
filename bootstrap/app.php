@@ -43,6 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
 
+        // WAFFRLI (2026-11-16): correlation id (log context, error monitor,
+        // X-Request-Id response header). First, so every layer sees it.
+        $middleware->prepend(\App\Http\Middleware\AssignRequestId::class);
+
         $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
 
         // WAFFRLI P0 (2026-10-30): ar/en locale from Accept-Language for API

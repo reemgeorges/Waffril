@@ -34,6 +34,10 @@ return [
         'settings' => 'Settings',
     ],
     'resources' => [
+        'error_event' => [
+            'singular' => 'Error',
+            'plural' => 'Errors',
+        ],
         'currency' => [
             'singular' => 'Currency',
             'plural' => 'Currencies',
@@ -349,6 +353,29 @@ return [
     ],
     'audit' => [
         'system' => 'System',
+    ],
+    // 2026-11-16 (Phase 3): city form and map fields.
+    'cities' => [
+        'section_identity' => 'City',
+        'section_area' => 'Service area',
+        'section_area_help' => 'The centre and the radius limit where customers can order when the city has no delivery areas. With delivery areas, an address must also be inside one of them.',
+        'radius_help' => 'Distance from the centre, in kilometres.',
+        'sort_order_help' => 'Lower numbers are listed first.',
+        'is_active_help' => 'Inactive cities are not listed or detected for customers.',
+    ],
+    'map_picker' => [
+        'label' => 'Map',
+        'point_help' => 'Click the map or drag the marker to set the coordinates; typing in the fields moves the marker.',
+        'preview_label' => 'Boundary preview',
+        'preview_help' => 'Shows the polygon above as it will be used. It updates when you leave the boundary field.',
+        'invalid_boundary' => 'The boundary is not a valid GeoJSON Polygon yet.',
+    ],
+    // 2026-11-16 (Phase 3): delivery fee rule form help (DeliveryFeeResolver semantics).
+    'fee_rules' => [
+        'city_help' => 'Empty: the global rule for every city without rules of its own.',
+        'area_help' => 'An area rule applies inside that area only. The most specific scope with any active rule decides alone (area, then city, then global): if its distance bands do not cover an address, that address is not served; a broader rule is not used instead.',
+        'band_help' => 'From is included, To is not: 0–3 km and 3–6 km do not overlap. Bands of one scope may not overlap.',
+        'formula_help' => 'Fee = base fee + per-km fee × (distance − From).',
     ],
     'branches' => [
         'hour_exceptions' => 'Special hours & closures',
@@ -907,6 +934,10 @@ return [
         'audit' => [
             'view' => 'View audit log',
         ],
+        'errors' => [
+            'view' => 'View application errors',
+            'manage' => 'Resolve, reopen or ignore application errors',
+        ],
         'content' => [
             'manage' => 'Manage Terms & Conditions and FAQ',
         ],
@@ -987,6 +1018,43 @@ return [
         'sending' => 'Sending',
         'sent' => 'Sent',
         'failed' => 'Failed',
+        // 2026-11-16: recipients (customers / drivers / both), optional city, live progress.
+        'recipient_type' => 'Send to',
+        'recipients_customers' => 'Customers',
+        'recipients_drivers' => 'Drivers',
+        'recipients_both' => 'Customers and drivers',
+        'scope' => 'Where',
+        'scope_all' => 'All cities',
+        'scope_city' => 'One city only',
+        'city_help' => 'Customers by their default address, drivers by their own city.',
+        'progress' => ':done of :total',
+        'notice_v2' => 'Sent only to active accounts (customers, drivers or both): saved in the app, shown live when they are online, and as a phone notification. Each message is sent once and recorded in the activity log. Never include personal data.',
+    ],
+    // 2026-11-16 (Phase 9): Monitoring → Errors.
+    'errors_monitor' => [
+        'notice' => 'Unexpected application errors, grouped: the same error at the same place is one row with a counter. Messages are cleaned of passwords, codes, tokens, e-mail addresses and phone numbers. A user can give you the request id (X-Request-Id) to find the matching error. Expected outcomes (refused business rules, validation, sign-in) are not listed.',
+        'exception' => 'Error',
+        'message' => 'Message',
+        'location' => 'Where',
+        'occurrences' => 'Times',
+        'environment' => 'Environment',
+        'first_seen' => 'First seen',
+        'last_seen' => 'Last seen',
+        'regressed' => 'Came back',
+        'resolved_by' => 'Resolved by',
+        'request_id' => 'Request id',
+        'request' => 'Last request',
+        'route' => 'Route',
+        'actor' => 'User',
+        'trace' => 'Stack trace (no arguments)',
+        'status_open' => 'Open',
+        'status_resolved' => 'Resolved',
+        'status_ignored' => 'Ignored',
+        'resolve' => 'Resolve',
+        'ignore' => 'Ignore',
+        'reopen' => 'Reopen',
+        'ignore_help' => 'An ignored error keeps counting but no longer appears as open. A resolved error that happens again is reopened automatically.',
+        'search' => 'Error, message, file or request id',
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
@@ -1017,6 +1085,15 @@ return [
     ],
     'locale_switch' => [
         'label' => 'Interface language',
+    ],
+    // Delivery areas: boundary quality (2026-11-16).
+    'delivery_areas' => [
+        'boundary_quality' => 'Boundary',
+        'quality_verified' => 'Verified boundary',
+        'quality_approximate' => 'Approximate boundary',
+        'quality_unverified' => 'Unverified boundary',
+        'quality_admin' => 'Drawn by an admin',
+        'sort_order_help' => 'Where areas overlap, the lowest number wins. A "whole service area" uses 1000 so named areas take precedence.',
     ],
     'dispatch' => [
         'cancel_admin_withdrawn' => 'Withdrawn by an admin (dispatch paused)',
@@ -1106,6 +1183,43 @@ return [
         'store_categories' => 'Add a category such as "Restaurants" or "Pharmacies" to group stores in the app.',
         'stores' => 'Add your first store, then add its branches and products from its actions menu.',
     ],
+    // Audit-log detail keys that are not form fields (2026-11-16).
+    'audit_keys' => [
+        'exception' => 'Error type',
+        'accepting' => 'Accepting orders',
+        'affected_ids' => 'Affected records',
+        'audience' => 'Audience',
+        'recipient_type' => 'Send to',
+        'available' => 'Available',
+        'cash_collected' => 'Cash collected',
+        'city_id' => 'City',
+        'count' => 'Count',
+        'cycle_id' => 'PLUS cycle',
+        'days' => 'Days',
+        'driver_id' => 'Driver',
+        'excluded' => 'Excluded',
+        'expected' => 'Expected amount',
+        'generated_demo' => 'Demo data',
+        'is_published' => 'Published',
+        'keys' => 'Settings changed',
+        'moved_to' => 'Moved to',
+        'next_plan_id' => 'Next plan',
+        'offer_id' => 'Delivery offer',
+        'payment_id' => 'Payment',
+        'policy' => 'Renewal policy',
+        'rate' => 'Exchange rate',
+        'rate_after' => 'Rate after',
+        'rate_before' => 'Rate before',
+        'received' => 'Amount received',
+        'request_id' => 'Request',
+        'roles' => 'Roles',
+        'round' => 'Dispatch round',
+        'store_id' => 'Store',
+        'to' => 'To',
+        'version' => 'Version',
+        'wallet_reversed' => 'Returned to wallet',
+        'withdrawn_offer_id' => 'Withdrawn offer',
+    ],
     'languages' => [
         'ar' => 'Arabic',
         'en' => 'English',
@@ -1157,6 +1271,9 @@ return [
     ],
     // UX redesign round 2 (2026-11-11): readable activity and notification names.
     'audit_actions' => [
+        'errors__resolved' => 'Error marked resolved',
+        'errors__ignored' => 'Error ignored',
+        'errors__reopened' => 'Error reopened',
         'admin__created' => 'Staff member added',
         'admin__updated' => 'Staff member updated',
         'catalog__branch_accepting_orders' => 'Branch order intake changed',

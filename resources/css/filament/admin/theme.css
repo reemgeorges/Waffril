@@ -803,6 +803,48 @@ input[id$='.phone'] {
     box-shadow: var(--wf-shadow-pop);
 }
 
+/* ---------------------------------------------- notification bell (2026-11-16)
+   Measured before: unread and read rows had the same transparent background
+   and full-contrast text; only a 2px edge line marked "unread", and the bell
+   count was pale green on a 10% green tint. Now:
+   - bell count: solid danger-600 with white text (4.8:1), ringed against the topbar;
+   - unread rows: brand tint, 3px edge, strong title;
+   - read rows: secondary text colour, so unread stands out in both themes. */
+.fi-topbar-database-notifications-btn .fi-icon-btn-badge-ctn .fi-badge {
+    background-color: var(--danger-600);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--wf-surface);
+}
+
+.fi-no-database .fi-no-notification-unread-ctn {
+    background-color: var(--wf-green-tint);
+}
+
+.fi-no-database .fi-no-notification-unread-ctn::before {
+    width: 3px;
+    background-color: var(--wf-green-ui);
+}
+
+.fi-no-database .fi-no-notification-unread-ctn .fi-no-notification-title {
+    font-weight: 700;
+    color: var(--wf-text);
+}
+
+.fi-no-database .fi-no-notification-unread-ctn .fi-no-notification-body {
+    color: var(--wf-text-2);
+}
+
+.fi-no-database .fi-no-notification-read-ctn .fi-no-notification-title {
+    color: var(--wf-text-2);
+    font-weight: 500;
+}
+
+.fi-no-database .fi-no-notification-read-ctn .fi-no-notification-body {
+    color: var(--wf-text-3);
+    font-weight: 400;
+}
+
 /* ================================================================ language switch */
 .wf-locale-switch {
     display: inline-flex;

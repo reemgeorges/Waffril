@@ -90,6 +90,14 @@ return [
     | FIREBASE_PRIVATE_KEY. Driver `fake` records messages in memory (refused
     | in production); nothing is pushed while `enabled` is false.
     */
+    // 2026-11-16 (Phase 9): grouped error store (Monitoring → Errors).
+    'monitoring' => [
+        'errors_enabled' => (bool) env('WAFFRLI_ERROR_MONITOR_ENABLED', true),
+        // Days to keep resolved/ignored groups, and any group not seen since.
+        'resolved_retention_days' => (int) env('WAFFRLI_ERROR_RETENTION_DAYS', 30),
+        'stale_retention_days' => (int) env('WAFFRLI_ERROR_STALE_RETENTION_DAYS', 90),
+    ],
+
     'push' => [
         'enabled' => (bool) env('WAFFRLI_PUSH_ENABLED', false),
         'driver' => env('WAFFRLI_PUSH_DRIVER', 'fake'),
@@ -146,5 +154,21 @@ return [
 
     'dev' => [
         'otp_peek_token' => env('WAFFRLI_DEV_OTP_PEEK_TOKEN'),
+
+        /*
+         * 2026-11-16 — optional FIXED customer OTP for local app testing
+         * (App\Services\Customer\Auth\FixedTestOtp). Applies only when ALL
+         * of these hold: enabled, APP_ENV is local or testing (never
+         * production, whatever the flags say), a valid 4–8 digit code, and
+         * the phone is in the allowlist (E.164, comma-separated). A local
+         * server can be public through a tunnel, so there is no "any phone"
+         * mode. In fixed mode no SMS or WhatsApp is sent; the code is still
+         * stored hashed, expires, is single use, purpose-bound and limited.
+         */
+        'fixed_otp' => [
+            'enabled' => (bool) env('WAFFRLI_TEST_FIXED_OTP_ENABLED', false),
+            'code' => (string) env('WAFFRLI_TEST_FIXED_OTP_CODE', '123456'),
+            'phones' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAFFRLI_TEST_FIXED_OTP_PHONES', ''))))),
+        ],
     ],
 ];

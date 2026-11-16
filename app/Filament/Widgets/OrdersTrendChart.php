@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Models\Order;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Database\DayBuckets;
 use App\Support\Settings\PlatformSettings;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
@@ -60,26 +61,25 @@ class OrdersTrendChart extends ChartWidget
     /** @return array<string, array{delivered: int, cancelled: int, open: int}> local date (Y-m-d) => counts, oldest first */
     public static function series(): array
     {
-        $tz = PlatformSettings::timezone();
-        $start = now($tz)->startOfDay()->subDays(self::DAYS - 1);
-        $days = [];
-        for ($day = $start->copy(); $day->lte(now($tz)); $day->addDay()) {
-            $days[$day->toDateString()] = ['delivered' => 0, 'cancelled' => 0, 'open' => 0];
+        // Aggregated by the database (2026-11-16): no per-order rows are loaded.
+        $buckets = new DayBuckets(self::DAYS, PlatformSettings::timezone());
+        $byStatus = $buckets->countsBy(Order::query(), 'created_at', 'status');
+        $zero = array_fill(0, count($buckets->dates), 0);
+        $delivered = $byStatus[OrderStatus::Delivered->value] ?? $zero;
+        $cancelled = $byStatus[OrderStatus::Cancelled->value] ?? $zero;
+        $open = $zero;
+        foreach ($byStatus as $status => $counts) {
+            if ($status !== OrderStatus::Delivered->value && $status !== OrderStatus::Cancelled->value) {
+                foreach ($counts as $i => $n) {
+                    $open[$i] += $n;
+                }
+            }
         }
 
-        Order::query()->where('created_at', '>=', $start->copy()->utc())->get(['created_at', 'status'])
-            ->each(function (Order $order) use (&$days, $tz) {
-                $key = Carbon::parse($order->created_at)->setTimezone($tz)->toDateString();
-                if (! isset($days[$key])) {
-                    return;
-                }
-                $bucket = match ($order->status) {
-                    OrderStatus::Delivered => 'delivered',
-                    OrderStatus::Cancelled => 'cancelled',
-                    default => 'open',
-                };
-                $days[$key][$bucket]++;
-            });
+        $days = [];
+        foreach ($buckets->dates as $i => $date) {
+            $days[$date] = ['delivered' => $delivered[$i], 'cancelled' => $cancelled[$i], 'open' => $open[$i]];
+        }
 
         return $days;
     }

@@ -16,6 +16,9 @@ class DeliveryArea extends BasePlatformModel
         'city_id' => 'city_id',
         'name' => 'name',
         'boundary' => 'boundary',
+        // 2026-11-16: how trustworthy the boundary is (verified | approximate | unverified, NULL = admin-drawn).
+        'boundary_quality' => 'boundary_quality',
+        'boundary_source' => 'boundary_source',
         'min_lat' => 'min_lat',
         'max_lat' => 'max_lat',
         'min_lng' => 'min_lng',

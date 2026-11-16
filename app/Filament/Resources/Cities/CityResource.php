@@ -8,12 +8,14 @@ use App\Filament\Resources\DeliveryAreas\DeliveryAreaResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
+use App\Filament\Support\MapPicker;
 use App\Filament\Support\RowActions;
 use App\Models\City;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\TextSize;
@@ -41,15 +43,28 @@ class CityResource extends AdminResource
 
     public static function form(Schema $schema): Schema
     {
+        // 2026-11-16 (Phase 3): grouped, with help, and a map for the centre
+        // and the service radius (click or drag; the fields stay editable).
         return $schema->components([
-            Fields::translatable('name'),
-            Grid::make(3)->schema([
-                TextInput::make('center_lat')->label(__('admin.fields.center_lat'))->required()->numeric()->minValue(-90)->maxValue(90),
-                TextInput::make('center_lng')->label(__('admin.fields.center_lng'))->required()->numeric()->minValue(-180)->maxValue(180),
-                TextInput::make('radius_km')->label(__('admin.fields.radius_km'))->required()->numeric()->gt(0)->maxValue(9999.99),
+            Section::make(__('admin.cities.section_identity'))->icon('heroicon-o-building-office-2')->schema([
+                Fields::translatable('name'),
+                Grid::make(2)->schema([
+                    TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0)
+                        ->helperText(__('admin.cities.sort_order_help')),
+                    Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true)->inline(false)
+                        ->helperText(__('admin.cities.is_active_help')),
+                ]),
             ]),
-            TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0),
-            Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true),
+            Section::make(__('admin.cities.section_area'))->icon('heroicon-o-map')
+                ->description(__('admin.cities.section_area_help'))->schema([
+                    Grid::make(3)->schema([
+                        TextInput::make('center_lat')->label(__('admin.fields.center_lat'))->required()->numeric()->minValue(-90)->maxValue(90)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
+                        TextInput::make('center_lng')->label(__('admin.fields.center_lng'))->required()->numeric()->minValue(-180)->maxValue(180)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
+                        TextInput::make('radius_km')->label(__('admin.fields.radius_km'))->required()->numeric()->gt(0)->maxValue(9999.99)->live(debounce: 600)
+                            ->suffix('km')->helperText(__('admin.cities.radius_help')),
+                    ]),
+                    MapPicker::point('center_lat', 'center_lng', 'radius_km'),
+                ]),
         ]);
     }
 

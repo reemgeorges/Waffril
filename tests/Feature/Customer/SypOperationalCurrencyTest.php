@@ -25,9 +25,12 @@ use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\InvalidatesCurrencyRate;
 
 class SypOperationalCurrencyTest extends CustomerTestCase
 {
+    use InvalidatesCurrencyRate;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -57,7 +60,7 @@ class SypOperationalCurrencyTest extends CustomerTestCase
         $this->assertSame(Denomination::presentString(app(CurrencyConverter::class)->convert('2.50', $source, $target), $target), $price['amount']);
         $this->assertSame('325.00', $price['amount']);
         $this->assertNotSame('2.50', $price['amount']);
-        $target->update(['exchange_rate' => '0']);
+        $this->makeRateInvalid($target);
         $this->expectException(BusinessRuleException::class);
         app(CustomerCatalogService::class)->price('2.50', $this->demoCustomer(1));
     }
