@@ -4,6 +4,7 @@ namespace App\Jobs\Push;
 
 use App\Contracts\Push\PushTransport;
 use App\Models\DeviceToken;
+use App\Services\Notifications\MarketingDeliveryStats;
 use App\Services\Push\ChannelPresence;
 use App\Services\Push\DeviceTokenService;
 use Illuminate\Bus\Queueable;
@@ -51,6 +52,28 @@ class SendPushMessage implements ShouldQueue
     }
 
     public function handle(PushTransport $transport, ChannelPresence $presence, DeviceTokenService $tokens): string
+    {
+        $result = $this->deliver($transport, $presence, $tokens);
+
+        // 2026-11-16: marketing pushes record their real outcome. "accepted"
+        // means Firebase accepted the message for that device, not that the
+        // phone displayed it.
+        MarketingDeliveryStats::increment(MarketingDeliveryStats::broadcastId((array) ($this->message['data'] ?? [])), match ($result) {
+            PushTransport::RESULT_SENT => 'push_accepted_count',
+            PushTransport::RESULT_INVALID_TOKEN => 'push_invalid_count',
+            default => 'push_skipped_count',
+        });
+
+        return $result;
+    }
+
+    /** All retries used up (or the sync run threw): counted once for marketing pushes. */
+    public function failed(?Throwable $e = null): void
+    {
+        MarketingDeliveryStats::increment(MarketingDeliveryStats::broadcastId((array) ($this->message['data'] ?? [])), 'push_failed_count');
+    }
+
+    protected function deliver(PushTransport $transport, ChannelPresence $presence, DeviceTokenService $tokens): string
     {
         $token = DeviceToken::query()->find($this->deviceTokenId);
         if (! $token || ! $token->is_active) {
