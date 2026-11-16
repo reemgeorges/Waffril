@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Support\Fields;
 use App\Models\Currency;
 use App\Models\OrderPayment;
@@ -20,6 +21,8 @@ use Filament\Widgets\Widget;
  */
 class FinanceOverview extends Widget
 {
+    use RefreshesOnOperationalEvents;
+
     /** Cheap queries: render with the page instead of on scroll. */
     protected static bool $isLazy = false;
 
@@ -41,22 +44,39 @@ class FinanceOverview extends Widget
         // first; any other row is a historical or future currency of its own.
         $operationalId = OperationalMoney::currency()?->id;
 
-        return Currency::query()->orderBy('code')->get()->sortBy(fn (Currency $c) => $c->id === $operationalId ? 0 : 1)->values()->map(function (Currency $currency) use ($operationalId) {
-            $balances = (string) (Wallet::query()->where('currency_id', $currency->id)->sum('balance') ?: '0');
-            $credits = (string) (WalletTransaction::query()->where('direction', 'credit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
-            $debits = (string) (WalletTransaction::query()->where('direction', 'debit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
-            $payments = OrderPayment::query()->where('currency_id', $currency->id);
+        // 2026-11-16 (Phase 14): one grouped query per figure instead of eight
+        // queries per currency. Same SQL aggregates, so the same values.
+        $byCurrency = fn ($query, string $aggregate) => $query->toBase()
+            ->selectRaw("currency_id, {$aggregate} AS aggregate")->groupBy('currency_id')->pluck('aggregate', 'currency_id');
+
+        $balances = $byCurrency(Wallet::query(), 'SUM(balance)');
+        $walletsWithBalance = $byCurrency(Wallet::query()->where('balance', '>', 0), 'COUNT(*)');
+        $ledger = WalletTransaction::query()->toBase()
+            ->join('wallets', 'wallets.id', '=', 'wallet_transactions.wallet_id')
+            ->selectRaw('wallets.currency_id AS currency_id, wallet_transactions.direction AS direction, SUM(wallet_transactions.amount) AS aggregate')
+            ->groupBy('wallets.currency_id', 'wallet_transactions.direction')
+            ->get()->groupBy('direction')->map(fn ($rows) => $rows->pluck('aggregate', 'currency_id'));
+        $collected = $byCurrency(OrderPayment::query(), 'SUM(collected_amount)');
+        $pendingCash = $byCurrency(OrderPayment::query()->where('status', OrderPayment::STATUS_PENDING)->whereHas('method', fn ($q) => $q->where('kind', 'cash')), 'SUM(amount)');
+        $refunded = $byCurrency(OrderRefund::query(), 'SUM(amount)');
+        $unsettled = $byCurrency(OrderPayment::query()->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id'), 'SUM(collected_amount)');
+
+        $value = fn ($map, int $id) => (string) (($map[$id] ?? null) ?: '0');
+
+        return Currency::query()->orderBy('code')->get()->sortBy(fn (Currency $c) => $c->id === $operationalId ? 0 : 1)->values()->map(function (Currency $currency) use ($operationalId, $balances, $walletsWithBalance, $ledger, $collected, $pendingCash, $refunded, $unsettled, $value) {
+            $id = $currency->id;
+            $balance = $value($balances, $id);
 
             return [
                 'code' => $currency->code,
-                'historical' => $operationalId !== null && $currency->id !== $operationalId,
-                'wallets' => Wallet::query()->where('currency_id', $currency->id)->where('balance', '>', 0)->count(),
-                'wallet_balances' => Money::toStorage($balances),
-                'ledger_consistent' => Money::of($credits)->minus($debits)->isEqualTo($balances),
-                'collected' => Money::toStorage((string) ((clone $payments)->sum('collected_amount') ?: '0')),
-                'pending_cash' => Money::toStorage((string) ((clone $payments)->where('status', OrderPayment::STATUS_PENDING)->whereHas('method', fn ($q) => $q->where('kind', 'cash'))->sum('amount') ?: '0')),
-                'refunded' => Money::toStorage((string) (OrderRefund::query()->where('currency_id', $currency->id)->sum('amount') ?: '0')),
-                'unsettled_cash' => Money::toStorage((string) ((clone $payments)->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->sum('collected_amount') ?: '0')),
+                'historical' => $operationalId !== null && $id !== $operationalId,
+                'wallets' => (int) ($walletsWithBalance[$id] ?? 0),
+                'wallet_balances' => Money::toStorage($balance),
+                'ledger_consistent' => Money::of($value($ledger['credit'] ?? [], $id))->minus($value($ledger['debit'] ?? [], $id))->isEqualTo($balance),
+                'collected' => Money::toStorage($value($collected, $id)),
+                'pending_cash' => Money::toStorage($value($pendingCash, $id)),
+                'refunded' => Money::toStorage($value($refunded, $id)),
+                'unsettled_cash' => Money::toStorage($value($unsettled, $id)),
             ];
         })->filter(fn ($row) => $row['wallet_balances'] !== '0.0000' || $row['collected'] !== '0.0000' || $row['pending_cash'] !== '0.0000')->values()->all();
     }

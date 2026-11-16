@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Models\Branch;
 use App\Models\PlusCycle;
 use App\Models\PlusMembership;
@@ -18,6 +19,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class PlatformOverview extends StatsOverviewWidget
 {
+    use RefreshesOnOperationalEvents;
+
     /** Cheap queries: render with the page instead of on scroll. */
     protected static bool $isLazy = false;
 

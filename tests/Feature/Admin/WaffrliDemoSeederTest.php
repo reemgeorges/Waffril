@@ -14,12 +14,15 @@ use App\Models\Branch;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\OrderRefund;
 use App\Models\PlusCycle;
 use App\Models\PlusCycleDiscount;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\WalletTransaction;
+use App\Services\Currency\OperationalMoney;
 use App\Services\Plus\PlusService;
 use App\Services\Wallet\WalletLedger;
 use App\Support\Money\Money;
@@ -261,6 +264,8 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
 
         $rows = collect(FinanceOverview::rows())->keyBy('code');
         $this->assertTrue($rows->every(fn ($row) => $row['ledger_consistent']));
+        // 2026-11-16: grouped aggregates == the previous per-currency queries.
+        $this->assertSame($this->legacyFinanceRows(), FinanceOverview::rows());
         $this->assertSame(
             (string) Money::toStorage((string) Wallet::where('currency_id', Currency::where('code', 'USD')->value('id'))->sum('balance')),
             $rows['USD']['wallet_balances']
@@ -308,5 +313,30 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
     protected function sum($values): string
     {
         return Money::toStorage(collect($values)->reduce(fn ($carry, $v) => $carry->plus((string) $v), BigDecimal::zero()));
+    }
+
+    /** FinanceOverview::rows() as implemented before 2026-11-16 (eight queries per currency). */
+    private function legacyFinanceRows(): array
+    {
+        $operationalId = OperationalMoney::currency()?->id;
+
+        return Currency::query()->orderBy('code')->get()->sortBy(fn (Currency $c) => $c->id === $operationalId ? 0 : 1)->values()->map(function (Currency $currency) use ($operationalId) {
+            $balances = (string) (Wallet::query()->where('currency_id', $currency->id)->sum('balance') ?: '0');
+            $credits = (string) (WalletTransaction::query()->where('direction', 'credit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
+            $debits = (string) (WalletTransaction::query()->where('direction', 'debit')->whereHas('wallet', fn ($q) => $q->where('currency_id', $currency->id))->sum('amount') ?: '0');
+            $payments = OrderPayment::query()->where('currency_id', $currency->id);
+
+            return [
+                'code' => $currency->code,
+                'historical' => $operationalId !== null && $currency->id !== $operationalId,
+                'wallets' => Wallet::query()->where('currency_id', $currency->id)->where('balance', '>', 0)->count(),
+                'wallet_balances' => Money::toStorage($balances),
+                'ledger_consistent' => Money::of($credits)->minus($debits)->isEqualTo($balances),
+                'collected' => Money::toStorage((string) ((clone $payments)->sum('collected_amount') ?: '0')),
+                'pending_cash' => Money::toStorage((string) ((clone $payments)->where('status', OrderPayment::STATUS_PENDING)->whereHas('method', fn ($q) => $q->where('kind', 'cash'))->sum('amount') ?: '0')),
+                'refunded' => Money::toStorage((string) (OrderRefund::query()->where('currency_id', $currency->id)->sum('amount') ?: '0')),
+                'unsettled_cash' => Money::toStorage((string) ((clone $payments)->whereNotNull('collected_by_driver_id')->whereNull('driver_cash_settlement_id')->sum('collected_amount') ?: '0')),
+            ];
+        })->filter(fn ($row) => $row['wallet_balances'] !== '0.0000' || $row['collected'] !== '0.0000' || $row['pending_cash'] !== '0.0000')->values()->all();
     }
 }

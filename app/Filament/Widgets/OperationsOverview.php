@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Concerns\RefreshesOnOrderEvents;
 use App\Filament\Resources\DriverCashSettlements\DriverCashSettlementResource;
 use App\Filament\Resources\OrderCancellationRequests\OrderCancellationRequestResource;
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
  */
 class OperationsOverview extends Widget
 {
+    use RefreshesOnOperationalEvents;
     use RefreshesOnOrderEvents;
 
     protected static ?int $sort = 0;

@@ -33,6 +33,31 @@ class DriverMapTest extends AdminPanelTestCase
         return collect($markers)->pluck('name')->sort()->values()->all();
     }
 
+    /**
+     * Only the base demo drivers (DemoPeopleSeeder). The regional demo cities
+     * (Hama, Homs; 2026-11-16) add their own drivers, some with live
+     * deliveries; they are checked by the generic invariants instead.
+     *
+     * @return list<string>
+     */
+    protected function baseNames(array $markers): array
+    {
+        $base = collect(DemoPeopleSeeder::DRIVERS)->pluck(0)->all();
+
+        return array_values(array_filter($this->names($markers), fn ($name) => in_array($name, $base, true)));
+    }
+
+    /** Every marker is a driver with an assigned / picked-up order (status filter applied). */
+    protected function assertOnlyActiveDeliveries(array $markers, array $statuses = ['assigned', 'picked_up']): void
+    {
+        foreach ($markers as $marker) {
+            $this->assertTrue(
+                Order::query()->where('driver_id', $marker['id'])->whereIn('status', $statuses)->exists(),
+                "{$marker['name']} is on the map without an active delivery."
+            );
+        }
+    }
+
     protected function demoDriverName(int $n): string
     {
         return DemoPeopleSeeder::DRIVERS[$n][0];
@@ -44,7 +69,8 @@ class DriverMapTest extends AdminPanelTestCase
 
         $markers = Livewire::test(DriverMapPage::class)->instance()->markers();
         $expected = collect([1, 2, 3, 4, 7])->map(fn ($n) => $this->demoDriverName($n))->sort()->values()->all();
-        $this->assertSame($expected, $this->names($markers));
+        $this->assertSame($expected, $this->baseNames($markers));
+        $this->assertOnlyActiveDeliveries($markers);
 
         // Idle (5, 8) and offline (6) drivers are not on the map; each marker has a stored position.
         foreach ($markers as $marker) {
@@ -54,7 +80,7 @@ class DriverMapTest extends AdminPanelTestCase
         }
 
         $stale = collect($markers)->where('stale', true)->pluck('name')->all();
-        $this->assertSame([$this->demoDriverName(4)], $stale, 'Only the position older than the threshold is stale.');
+        $this->assertSame([$this->demoDriverName(4)], array_values(array_intersect($stale, $expected)), 'Only the position older than the threshold is stale.');
     }
 
     public function test_city_and_status_filters(): void
@@ -66,13 +92,15 @@ class DriverMapTest extends AdminPanelTestCase
         $this->assertSame([$this->demoDriverName(7)], $this->names($page->instance()->markers()));
 
         $page->set('cityId', null)->set('status', 'picked_up');
-        $this->assertSame(collect([3, 4])->map(fn ($n) => $this->demoDriverName($n))->sort()->values()->all(), $this->names($page->instance()->markers()));
+        $this->assertSame(collect([3, 4])->map(fn ($n) => $this->demoDriverName($n))->sort()->values()->all(), $this->baseNames($page->instance()->markers()));
+        $this->assertOnlyActiveDeliveries($page->instance()->markers(), ['picked_up']);
 
         $page->set('cityId', $aleppo->id);
         $this->assertSame([], $page->instance()->markers());
 
         $page->set('status', 'not-a-status')->set('cityId', null);
-        $this->assertCount(5, $page->instance()->markers(), 'An unknown status falls back to all active statuses.');
+        $this->assertCount(5, $this->baseNames($page->instance()->markers()), 'An unknown status falls back to all active statuses.');
+        $this->assertOnlyActiveDeliveries($page->instance()->markers());
     }
 
     public function test_driver_leaves_the_map_when_the_delivery_ends(): void

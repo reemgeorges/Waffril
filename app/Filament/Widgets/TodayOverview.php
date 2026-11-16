@@ -10,10 +10,10 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Services\Currency\OperationalMoney;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Database\DayBuckets;
 use App\Support\Money\Money;
 use App\Support\Settings\PlatformSettings;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Carbon;
 
 /**
  * WAFFRLI dashboard, "Today" (UX redesign 2026-11-11): one compact band of
@@ -75,43 +75,15 @@ class TodayOverview extends Widget
      */
     public static function series(int $days = 14): array
     {
-        $tz = PlatformSettings::timezone();
-        $start = now($tz)->startOfDay()->subDays($days - 1);
-        $keys = [];
-        for ($day = $start->copy(); count($keys) < $days; $day->addDay()) {
-            $keys[$day->toDateString()] = 0;
-        }
-        $bucket = fn ($at) => $at ? Carbon::parse($at)->setTimezone($tz)->toDateString() : null;
-        $from = $start->copy()->utc();
-
-        $received = $keys;
-        foreach (Order::query()->where('created_at', '>=', $from)->pluck('created_at') as $at) {
-            if (isset($received[$key = $bucket($at)])) {
-                $received[$key]++;
-            }
-        }
-
-        $delivered = $keys;
-        $minutes = array_map(fn () => [], $keys);
-        foreach (Order::query()->where('status', OrderStatus::Delivered->value)->where('delivered_at', '>=', $from)->get(['created_at', 'delivered_at']) as $order) {
-            if (isset($delivered[$key = $bucket($order->delivered_at)])) {
-                $delivered[$key]++;
-                $minutes[$key][] = $order->created_at->diffInMinutes($order->delivered_at);
-            }
-        }
-
-        $cancelled = $keys;
-        foreach (OrderStatusHistory::query()->where('to_status', OrderStatus::Cancelled->value)->where('created_at', '>=', $from)->pluck('created_at') as $at) {
-            if (isset($cancelled[$key = $bucket($at)])) {
-                $cancelled[$key]++;
-            }
-        }
+        // Aggregated by the database (2026-11-16): no per-order rows are loaded.
+        $buckets = new DayBuckets($days, PlatformSettings::timezone());
+        $delivered = Order::query()->where('status', OrderStatus::Delivered->value);
 
         return [
-            'received' => array_values($received),
-            'delivered' => array_values($delivered),
-            'cancelled' => array_values($cancelled),
-            'minutes' => array_values(array_map(fn ($list) => $list === [] ? null : (int) round(array_sum($list) / count($list)), $minutes)),
+            'received' => $buckets->counts(Order::query(), 'created_at'),
+            'delivered' => $buckets->counts($delivered, 'delivered_at'),
+            'cancelled' => $buckets->counts(OrderStatusHistory::query()->where('to_status', OrderStatus::Cancelled->value), 'created_at'),
+            'minutes' => $buckets->averageMinutes($delivered, 'created_at', 'delivered_at'),
         ];
     }
 
