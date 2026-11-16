@@ -1131,6 +1131,7 @@ return [
         'accepting' => 'Accepting orders',
         'affected_ids' => 'Affected records',
         'audience' => 'Audience',
+        'recipient_type' => 'Send to',
         'available' => 'Available',
         'cash_collected' => 'Cash collected',
         'city_id' => 'City',

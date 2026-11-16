@@ -1131,6 +1131,7 @@ return [
         'accepting' => 'استقبال الطلبات',
         'affected_ids' => 'السجلات المتأثرة',
         'audience' => 'الجمهور',
+        'recipient_type' => 'الإرسال إلى',
         'available' => 'متاح',
         'cash_collected' => 'النقد المحصّل',
         'city_id' => 'المدينة',
