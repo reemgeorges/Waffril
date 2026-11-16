@@ -259,10 +259,35 @@ class OrderAdminService
             }
 
             $order = Order::query()->lockForUpdate()->findOrFail($order->getKey());
+
+            // Cancellation audit (2026-11-16): a concurrent submit with the same
+            // key waited on the order lock; it returns the first result instead
+            // of failing with "not cancellable".
+            $existing = OrderCancellation::query()->where('idempotency_key', $key)->first();
+            if ($existing) {
+                return $existing;
+            }
+
             $from = $order->status;
 
             if (! in_array($from, [OrderStatus::Pending, OrderStatus::Accepted, OrderStatus::Assigned, OrderStatus::PickedUp], true)) {
                 throw new BusinessRuleException(__('admin.errors.order_not_cancellable'));
+            }
+
+            // The customer's request is re-checked under a row lock (lock order:
+            // order, then request): an admin who rejected it a moment ago wins,
+            // and its "rejected" is never overwritten by "approved".
+            if ($request) {
+                $request = OrderCancellationRequest::query()->lockForUpdate()->findOrFail($request->getKey());
+                if ($request->status !== OrderCancellationRequest::STATUS_PENDING || (int) $request->order_id !== (int) $order->id) {
+                    throw new BusinessRuleException(__('admin.errors.request_not_pending'));
+                }
+            } elseif ($by === 'admin') {
+                // A direct admin cancellation also answers the customer's open
+                // request for this order (approved, linked), so it never stays
+                // pending forever (it blocks anonymization and the dashboard).
+                $request = OrderCancellationRequest::query()->where('order_id', $order->id)
+                    ->where('status', OrderCancellationRequest::STATUS_PENDING)->lockForUpdate()->first();
             }
 
             if (! in_array($data['reason_code'] ?? null, OrderCancellation::REASONS, true)) {

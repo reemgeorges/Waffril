@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Events\Realtime\OrderStatusChanged;
 use App\Exceptions\BusinessRuleException;
 use App\Models\Order;
+use App\Models\OrderCancellationRequest;
 use App\Models\OrderStatusHistory;
 use App\Notifications\CustomerOrderUpdate;
 use App\Services\Delivery\DeliveryOfferService;
@@ -82,6 +83,16 @@ class OrderStateMachine
             'driver_id' => $driverId,
             'note' => $note,
         ]);
+
+        // Cancellation audit (2026-11-16): a customer's cancellation request
+        // that is still open when the order is delivered can no longer be
+        // granted. It is closed as rejected (existing status; no admin, no
+        // note) so it does not stay pending forever.
+        if ($to === OrderStatus::Delivered) {
+            OrderCancellationRequest::query()->where('order_id', $order->getKey())
+                ->where('status', OrderCancellationRequest::STATUS_PENDING)
+                ->update(['status' => OrderCancellationRequest::STATUS_REJECTED, 'resolved_at' => now(), 'updated_at' => now()]);
+        }
 
         $order->refresh();
         // WAFFRLI (2026-11-03): every transition reaches the order's customer,
