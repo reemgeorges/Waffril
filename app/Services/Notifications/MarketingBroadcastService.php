@@ -14,6 +14,7 @@ use App\Services\Realtime\Notify;
 use App\Services\Realtime\Realtime;
 use App\Support\Auth\AdminPermissions;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -89,6 +90,18 @@ class MarketingBroadcastService
         ]);
     }
 
+    /**
+     * In-app notifications actually saved for this message (2026-11-16):
+     * counted from the notifications table, not assumed from the recipients.
+     */
+    public function storedCount(MarketingBroadcast $broadcast): int
+    {
+        return DatabaseNotification::query()
+            ->where('type', 'marketing.message')
+            ->where('data->marketing_broadcast_id', $broadcast->id)
+            ->count();
+    }
+
     /** Called by the job. Returns the number of recipients. */
     public function deliver(MarketingBroadcast $broadcast): int
     {
@@ -101,7 +114,7 @@ class MarketingBroadcastService
 
         $groups = $this->groups($broadcast);
         $total = array_sum(array_map(fn (Builder $query) => (clone $query)->count(), $groups));
-        MarketingBroadcast::query()->whereKey($broadcast->id)->update(['total_count' => $total, 'processed_count' => 0]);
+        MarketingBroadcast::query()->whereKey($broadcast->id)->update(['total_count' => $total, 'processed_count' => 0, 'push_enabled' => (bool) config('waffrli.push.enabled'), 'stored_count' => 0]);
         Realtime::admin('marketing.progress', $broadcast->id);
 
         $count = 0;
@@ -113,17 +126,17 @@ class MarketingBroadcastService
                     // failing channel no longer stops the rest of the audience.
                     Notify::send($recipients, new MarketingMessage($broadcast));
                     $count += $recipients->count();
-                    MarketingBroadcast::query()->whereKey($broadcast->id)->update(['processed_count' => $count]);
+                    MarketingBroadcast::query()->whereKey($broadcast->id)->update(['processed_count' => $count, 'stored_count' => $this->storedCount($broadcast)]);
                     Realtime::admin('marketing.progress', $broadcast->id);
                 }, $table.'.id', 'id');
             }
         } catch (\Throwable $e) {
-            MarketingBroadcast::query()->whereKey($broadcast->id)->update(['status' => MarketingBroadcast::STATUS_FAILED, 'recipients_count' => $count, 'processed_count' => $count, 'failure_reason' => mb_substr($e->getMessage(), 0, 250)]);
+            MarketingBroadcast::query()->whereKey($broadcast->id)->update(['status' => MarketingBroadcast::STATUS_FAILED, 'recipients_count' => $count, 'processed_count' => $count, 'stored_count' => $this->storedCount($broadcast), 'failure_reason' => mb_substr($e->getMessage(), 0, 250)]);
             Realtime::admin('marketing.progress', $broadcast->id);
             throw $e;
         }
 
-        MarketingBroadcast::query()->whereKey($broadcast->id)->update(['status' => MarketingBroadcast::STATUS_SENT, 'recipients_count' => $count, 'processed_count' => $count, 'sent_at' => now()]);
+        MarketingBroadcast::query()->whereKey($broadcast->id)->update(['status' => MarketingBroadcast::STATUS_SENT, 'recipients_count' => $count, 'processed_count' => $count, 'stored_count' => $this->storedCount($broadcast), 'sent_at' => now()]);
         Realtime::admin('marketing.progress', $broadcast->id);
 
         return $count;

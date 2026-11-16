@@ -43,25 +43,29 @@ class CityResource extends AdminResource
 
     public static function form(Schema $schema): Schema
     {
-        // 2026-11-16 (Phase 3): grouped, with help, and a map for the centre
-        // and the service radius (click or drag; the fields stay editable).
+        // 2026-11-16: two full-width sections (they used to sit side by side in
+        // the modal, squeezing the coordinates to ~105 px and wrapping their
+        // labels). Coordinates and radius share one balanced row; the map
+        // (click or drag; the fields stay editable and validated) sits
+        // full width below them.
         return $schema->components([
-            Section::make(__('admin.cities.section_identity'))->icon('heroicon-o-building-office-2')->schema([
+            Section::make(__('admin.cities.section_identity'))->icon('heroicon-o-building-office-2')->columnSpanFull()->schema([
                 Fields::translatable('name'),
-                Grid::make(2)->schema([
+                Grid::make(['default' => 1, 'sm' => 2])->schema([
                     TextInput::make('sort_order')->label(__('admin.fields.sort_order'))->integer()->minValue(0)->default(0)
                         ->helperText(__('admin.cities.sort_order_help')),
                     Toggle::make('is_active')->label(__('admin.fields.is_active'))->default(true)->inline(false)
                         ->helperText(__('admin.cities.is_active_help')),
                 ]),
             ]),
-            Section::make(__('admin.cities.section_area'))->icon('heroicon-o-map')
+            Section::make(__('admin.cities.section_area'))->icon('heroicon-o-map')->columnSpanFull()
                 ->description(__('admin.cities.section_area_help'))->schema([
-                    Grid::make(3)->schema([
+                    Grid::make(['default' => 1, 'sm' => 3])->schema([
                         TextInput::make('center_lat')->label(__('admin.fields.center_lat'))->required()->numeric()->minValue(-90)->maxValue(90)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
                         TextInput::make('center_lng')->label(__('admin.fields.center_lng'))->required()->numeric()->minValue(-180)->maxValue(180)->live(debounce: 600)->extraInputAttributes(['dir' => 'ltr']),
+                        // The unit is the suffix; what the radius means is in the section description.
                         TextInput::make('radius_km')->label(__('admin.fields.radius_km'))->required()->numeric()->gt(0)->maxValue(9999.99)->live(debounce: 600)
-                            ->suffix('km')->helperText(__('admin.cities.radius_help')),
+                            ->suffix(__('admin.cities.km'))->extraInputAttributes(['dir' => 'ltr']),
                     ]),
                     MapPicker::point('center_lat', 'center_lng', 'radius_km'),
                 ]),

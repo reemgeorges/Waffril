@@ -349,6 +349,10 @@ class DriverOfferApiTest extends AdminPanelTestCase
 
     public function test_fcm_message_carries_a_ttl_for_time_limited_offers(): void
     {
+        // The deadline and the assertion must use the same clock: between them
+        // the transport signs a JWT and fetches a token, and a second boundary
+        // in between made apns-expiration differ by one (flaky under load).
+        $this->freezeTime();
         $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
         if ($key === false) {
             $this->markTestSkipped('NOT RUN: PHP OpenSSL cannot generate a key here (set OPENSSL_CONF).');

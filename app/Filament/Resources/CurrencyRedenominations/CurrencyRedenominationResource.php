@@ -37,11 +37,23 @@ class CurrencyRedenominationResource extends AdminResource
      * conversion "SYP → SYN" with its rate, status with colour, when it ran
      * and finished, the error (if any) under the status. Read only.
      */
+    /**
+     * 2026-11-16: the switch is off on this platform (feature flag
+     * waffrli.currency.redenomination_enabled), so the entry is not shown in
+     * the sidebar. The Currencies page stays. With the flag on, the entry
+     * returns for admins allowed to see it. The service, its safeguards and
+     * the history are unchanged.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return CurrencyRedenominationService::enabled() && parent::shouldRegisterNavigation();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->description(fn () => CurrencyRedenominationService::enabled()
-                ? __('admin.redenomination.notice')
+                ? __('admin.redenomination.base_not_denomination').' '.__('admin.redenomination.notice')
                 : __('admin.currencies.redenomination_unavailable'))
             ->modifyQueryUsing(fn ($query) => $query->with(['fromCurrency', 'toCurrency']))
             ->columns([

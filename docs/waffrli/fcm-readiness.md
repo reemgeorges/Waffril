@@ -74,3 +74,42 @@ failed_push_jobs_24h  PASS
 **Next step for production:** run the command with `--online` on the server
 that holds the real credentials. Then run it with `--validate-token` for one
 test phone.
+
+## Push and OTP readiness audit (2026-11-16)
+
+### How the pieces connect (verified in code and tests)
+
+| Path | How it works | Evidence |
+|---|---|---|
+| Device registration | `POST /api/v1/{customer,driver}/device-tokens`. One active device per customer, a bounded number per driver; tokens are owned and validated. | `PushNotificationsTest` |
+| Customer and driver notifications | `Notify::send` delivers database + live (Reverb) + `PushChannel` for every recipient and channel separately. `PushChannel` queues one `SendPushMessage` per **active** device. | `FirebaseOtpReadinessTest` (customer and driver devices both get a push job), `PushNotificationsTest` |
+| Queued push delivery | `SendPushMessage` (3 tries, back-off 10/60/300 s) handles: skip when the user is online, dedupe per notification and device, deactivating invalid tokens, and a `failed()` hook after the last retry. Transport: `FcmHttpV1Transport` when `WAFFRLI_PUSH_DRIVER=fcm`, otherwise the fake. | `PushNotificationsTest`, `FirebaseOtpReadinessTest` |
+| Marketing delivery status | The panel shows: processed recipients, in-app saved, push queued / accepted by Firebase / pending / failed / invalid / not needed, recipients without a phone, and "push off". | `MarketingDeliveryStatusTest` (sync and database queue, worker stopped then started) |
+| Customer OTP | `PhoneOtpService::issue()` calls `TextMessenger::deliver()` **synchronously inside the request**. No job is involved, so OTP works without a queue worker. A failed send invalidates the code and the API answers 503. | `FirebaseOtpReadinessTest`, `CustomerIdentityTest` |
+| OTP secrecy | Codes are stored hashed. The fake gateway logs "content withheld". No log line contains a code. No admin page reads the `otps` table. | `FirebaseOtpReadinessTest`, `FixedTestOtpTest` |
+| Fixed development OTP | Allowlisted phones only, `local`/`testing` only, never production whatever the flags; nothing is sent. | `FixedTestOtpTest` |
+| SMS / WhatsApp drivers | `WAFFRLI_SMS_DRIVER=fake` (refused in production) or `twilio`, which uses `TWILIO_*`. They are separate classes and are never mixed. | `FirebaseOtpReadinessTest` |
+
+### Needs real credentials or a real phone (NOT tested here)
+
+| Item | How to verify |
+|---|---|
+| Google issues an OAuth token for your service account | `php artisan waffrli:fcm-check --online` on the server. |
+| FCM accepts a real device token | `php artisan waffrli:fcm-check --validate-token=ID` (dry run; nothing is delivered). |
+| The phone displays the notification (Android and iOS, foreground and background), sound, tap opens the right screen, data payload read | Manual test on real customer and driver app builds. |
+| APNs configuration in Firebase for iOS | Firebase console; an iOS device test. |
+| Twilio SMS / WhatsApp actually delivered to a Syrian number | One OTP request with `WAFFRLI_SMS_DRIVER=twilio` on staging, to a test phone. |
+| Driver app renders `marketing.message` | Before the first driver campaign. |
+
+"Accepted by Firebase" (shown on marketing messages) is the strongest
+evidence the server can have. It is not proof that a phone displayed the
+message.
+
+### Queue worker
+
+- **OTP:** never needs a worker.
+- **Pushes, marketing sends and broadcasts:** need a worker when
+  `QUEUE_CONNECTION` is not `sync`. Without one, a marketing message stays
+  "Queued", and after 2 minutes the panel says no worker has picked it up.
+- **Check:** `php artisan waffrli:fcm-check` reports the waiting jobs and the
+  age of the oldest one.

@@ -361,6 +361,7 @@ return [
         'section_area_help' => 'The centre and the radius limit where customers can order when the city has no delivery areas. With delivery areas, an address must also be inside one of them.',
         'radius_help' => 'Distance from the centre, in kilometres.',
         'sort_order_help' => 'Lower numbers are listed first.',
+        'km' => 'km',
         'is_active_help' => 'Inactive cities are not listed or detected for customers.',
     ],
     'map_picker' => [
@@ -1018,6 +1019,25 @@ return [
         'sending' => 'Sending',
         'sent' => 'Sent',
         'failed' => 'Failed',
+        // 2026-11-16: delivery stages (never claims a phone displayed the message).
+        'status_queued' => 'Queued',
+        'status_sending' => 'Sending',
+        'status_sent' => 'Processed',
+        'status_failed' => 'Failed',
+        'waiting' => 'Waiting to be processed.',
+        'waiting_worker' => 'Still waiting: no queue worker has picked it up. Start one with php artisan queue:work.',
+        'stats_not_recorded' => 'Delivery details were not recorded for messages sent before 16 Nov 2026.',
+        'stored' => 'In the app: :count saved',
+        'push_off' => 'Phone notifications: off on this server (none sent).',
+        'push_queued' => 'Phone: :count queued',
+        'push_accepted' => ':count accepted by Firebase',
+        'push_pending' => ':count waiting for the queue worker',
+        'push_failed' => ':count failed',
+        'push_invalid' => ':count invalid devices (removed)',
+        'push_skipped' => ':count not needed (user online or duplicate)',
+        'push_no_device' => ':count recipients have no registered phone',
+        'accepted_help' => '"Accepted by Firebase" means Firebase took the message for that device. It does not confirm that the phone showed it (phones can be off, offline or have notifications disabled).',
+        'stages_help' => 'For each message: recipients processed, in-app notifications saved, and phone notifications queued and accepted by Firebase. Recipients who are online also see it live.',
         // 2026-11-16: recipients (customers / drivers / both), optional city, live progress.
         'recipient_type' => 'Send to',
         'recipients_customers' => 'Customers',
@@ -1058,6 +1078,7 @@ return [
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
+        'base_not_denomination' => 'This changes the ACCOUNTING BASE currency of the platform (the currency every catalog price is stored in and every exchange rate is measured against). It is not the old/new Syrian pound display: that is a fixed 100 : 1 presentation handled automatically and never needs this switch.',
         'preview' => '1 :base of catalog prices becomes :example. Every current catalog amount is converted with this rate in one atomic step; check that the rate is the APPROVED one.',
         'status_pending' => 'Waiting',
         'status_running' => 'Running',

@@ -7,12 +7,11 @@ use App\Filament\Resources\Wallets\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Wallets\WalletResource;
 use App\Filament\Resources\WalletTransactions\Pages\ListWalletTransactions;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Fields;
 use App\Models\WalletTransaction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,14 +71,7 @@ class WalletTransactionResource extends AdminResource
                     'credit' => __('admin.table.credit'),
                     'debit' => __('admin.table.debit'),
                 ]),
-                Filter::make('created_between')->label(__('admin.table.date_between'))
-                    ->schema([
-                        DatePicker::make('from')->label(__('admin.fields.from')),
-                        DatePicker::make('until')->label(__('admin.fields.until')),
-                    ])
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
-                        ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))),
+                DateRangeFilter::make('created_between', 'created_at', __('admin.table.date_between')),
             ])
             ->defaultSort('id', 'desc');
     }

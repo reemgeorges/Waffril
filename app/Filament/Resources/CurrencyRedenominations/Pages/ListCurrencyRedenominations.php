@@ -34,7 +34,7 @@ class ListCurrencyRedenominations extends ListRecords
             Action::make('switchDefault')->label(__('admin.redenomination.action'))->icon('heroicon-o-arrows-right-left')->color('danger')
                 ->visible(fn () => CurrencyRedenominationService::enabled()
                     && PlatformPermissions::allows(auth('admin_web')->user(), PlatformPermissions::CURRENCIES_CHANGE_DEFAULT))
-                ->modalDescription(__('admin.redenomination.warning'))
+                ->modalDescription(__('admin.redenomination.base_not_denomination').' '.__('admin.redenomination.warning'))
                 ->schema([
                     Select::make('to_currency_id')->label(__('admin.fields.to_currency'))->required()
                         // The rate in the target's DISPLAYED denomination (SYP: 130 new

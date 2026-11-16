@@ -39,6 +39,18 @@ class ErrorEventResource extends AdminResource
 
     protected static ?int $navigationSort = 35;
 
+    /**
+     * 2026-11-16: a developer diagnostic, not part of the daily admin sidebar.
+     * Collection, request ids, retention and logging are unchanged. Admins
+     * with errors.view (developers; super admins) open it directly at
+     * /admin/error-events, and the policy still refuses everyone else, so
+     * ordinary admins never see traces or technical details.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationBadge(): ?string
     {
         $open = ErrorEvent::query()->where('status', ErrorEvent::STATUS_OPEN)->count();

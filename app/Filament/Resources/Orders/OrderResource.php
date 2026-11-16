@@ -14,13 +14,13 @@ use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Order;
 use App\Services\Delivery\DeliveryOfferService;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -32,7 +32,6 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\TextSize;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -215,14 +214,7 @@ class OrderResource extends AdminResource
                 TernaryFilter::make('assigned')->label(__('admin.table.driver_assigned'))
                     ->trueLabel(__('admin.table.assigned'))->falseLabel(__('admin.table.unassigned'))
                     ->queries(true: fn (Builder $query) => $query->whereNotNull('driver_id'), false: fn (Builder $query) => $query->whereNull('driver_id')),
-                Filter::make('created_between')->label(__('admin.fields.created_at'))
-                    ->schema([
-                        DatePicker::make('from')->label(__('admin.fields.from')),
-                        DatePicker::make('until')->label(__('admin.fields.until')),
-                    ])
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'] ?? null, fn ($query, $d) => $query->whereDate('created_at', '>=', $d))
-                        ->when($data['until'] ?? null, fn ($query, $d) => $query->whereDate('created_at', '<=', $d))),
+                DateRangeFilter::make('created_between', 'created_at', __('admin.fields.created_at')),
             ])
             ->recordActions([RowActions::primary(ViewAction::make()->label(__('admin.table.view_order')))])
             ->defaultSort('created_at', 'desc');

@@ -481,3 +481,18 @@ Keep `php artisan queue:work`, `php artisan schedule:work` and
 - Pre-existing and unchanged: `docs:check-drift` (149 legacy starter routes,
   same on `main`), and the legacy `HttpResponseTrait::handleException`
   (section 2, P13).
+
+## 17. Follow-up 2026-11-16: admin UI polish and honest notification status
+
+| Item | Change | Evidence |
+|---|---|---|
+| Filters (all lists) | Compact panel. Date ranges sit side by side via the shared `DateRangeFilter` (6 lists). Date filters now show removable chips and count towards the active total. 2 columns on phones, 4–5 on desktop. While open, the toggle sits in the panel header next to Reset. Queries unchanged. | Orders filter panel: desktop 369 → 214 px (3 → 2 rows); phone (opened) 909 → 438 px (9 → 5 rows). Sweep of all 45 panel lists (light/en, dark/ar): all 200, no horizontal scroll, no JS errors. Arabic chip after a Livewire filter update. `TableFiltersLayoutTest`. |
+| City form | Both sections full width. Latitude, longitude and radius in one row; the map full width below; km suffix. | Inputs 105 → 251 px, map 364 → 800 px. Map↔input binding checked in en and ar. |
+| Errors screen | Not in the sidebar; still available to `errors.view` at `/admin/error-events` and refused to others. Monitoring unchanged. | `AdminNavigationVisibilityTest` |
+| Currency redenominations | Sidebar entry only while the feature flag is on (it is off). When on, the screen explains that it changes the accounting base currency, not the SYP display. | `AdminNavigationVisibilityTest` |
+| Marketing status | "Sent" is now shown as "Processed". Per-stage lines: in-app saved (counted from `notifications`); push queued / accepted by Firebase / waiting / failed / invalid / not needed; recipients without a phone; push off. A message queued for more than 2 minutes says it is waiting for a queue worker. Additive migration `2026_11_16_140000_add_delivery_stats_to_marketing_broadcasts`. | `MarketingDeliveryStatusTest`: sync queue; database queue with the worker stopped, then started; duplicate job (at most once); failure after retries. |
+| Push / OTP readiness | OTP is sent synchronously (no worker needed) and never logged. SMS and push drivers are separate from their fakes. Customer and driver devices get push jobs. | `FirebaseOtpReadinessTest`; `fcm-readiness.md` (what still needs real credentials and phones). |
+
+Migration to run on deploy (additive, nullable or with defaults; columns are
+added instantly on MySQL 8): `2026_11_16_140000_add_delivery_stats_to_marketing_broadcasts`.
+No seeder is needed for this follow-up.

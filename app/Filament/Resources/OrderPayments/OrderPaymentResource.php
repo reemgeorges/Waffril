@@ -5,12 +5,11 @@ namespace App\Filament\Resources\OrderPayments;
 use App\Filament\Resources\OrderPayments\Pages\ListOrderPayments;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager as OrderPaymentsRelationManager;
 use App\Filament\Support\AdminResource;
+use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Fields;
 use App\Models\OrderPayment;
-use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,14 +79,7 @@ class OrderPaymentResource extends AdminResource
                 SelectFilter::make('payment_method_id')->label(__('admin.fields.payment_method'))->relationship('method', 'code')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->name),
                 SelectFilter::make('currency_id')->label(__('admin.fields.currency'))->relationship('currency', 'code'),
-                Filter::make('paid_between')->label(__('admin.table.paid_between'))
-                    ->schema([
-                        DatePicker::make('from')->label(__('admin.fields.from')),
-                        DatePicker::make('until')->label(__('admin.fields.until')),
-                    ])
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('paid_at', '>=', $d))
-                        ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('paid_at', '<=', $d))),
+                DateRangeFilter::make('paid_between', 'paid_at', __('admin.table.paid_between')),
             ])
             ->defaultSort('id', 'desc');
     }

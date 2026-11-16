@@ -2451,3 +2451,60 @@ a > .wf-stat-link .fi-badge::after,
 .fi-ta-filters-trigger-action-ctn .fi-btn {
     white-space: nowrap;
 }
+
+/* ---------------------------------------------- compact filter panel (2026-11-16)
+   Measured before (Orders, 1440 px): 369 px tall, "From" above "Until" in one
+   cell (a third row of mostly empty space) and the collapse button alone on a
+   line below the fields. Now: tighter spacing, date ranges side by side
+   (App\Filament\Support\DateRangeFilter spans two columns), and while the
+   panel is open its "Filters · n" toggle sits in the panel header next to
+   "Reset". Logical properties keep Arabic RTL and English LTR mirrored. */
+.fi-ta-filters-above-content-ctn {
+    position: relative;
+    padding-block: 0.875rem;
+}
+
+.fi-ta-filters-above-content-ctn .fi-ta-filters {
+    row-gap: 0.625rem;
+}
+
+.fi-ta-filters-above-content-ctn .fi-ta-filters-header {
+    min-height: 2.375rem;
+    align-items: center;
+}
+
+.fi-ta-filters-above-content-ctn .fi-ta-filters-heading {
+    font-size: 0.9375rem;
+}
+
+.fi-ta-filters-above-content-ctn .fi-ta-filters .fi-grid,
+.fi-ta-filters-above-content-ctn .fi-ta-filters .fi-sc.fi-sc-has-gap {
+    column-gap: 1rem;
+    row-gap: 0.75rem;
+}
+
+.fi-ta-filters-above-content-ctn .fi-fo-field {
+    row-gap: 0.375rem;
+}
+
+.fi-ta-filters-above-content-ctn .fi-fo-field-label-content {
+    font-size: 0.8125rem;
+    color: var(--wf-text-2);
+}
+
+/* Open panel: the toggle joins the header row instead of taking its own line. */
+.fi-ta-filters-above-content-ctn.fi-open > .fi-ta-filters-trigger-action-ctn {
+    position: absolute;
+    top: 0.875rem;
+    inset-inline-end: 1rem;
+}
+
+.fi-ta-filters-above-content-ctn.fi-open .fi-ta-filters-header {
+    padding-inline-end: 8.5rem;
+}
+
+@media (min-width: 640px) {
+    .fi-ta-filters-above-content-ctn.fi-open > .fi-ta-filters-trigger-action-ctn {
+        inset-inline-end: 1.5rem;
+    }
+}
