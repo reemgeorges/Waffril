@@ -192,7 +192,7 @@ After changing PHP code that the queue or Reverb run, restart them: `docker comp
 | `WAFFRLI_API_DOCS_ENABLED` | `true` | Serves `/docs` (it is off by default, and never on in production) |
 | `MAIL_*` | Mailpit | |
 
-Real SMS, WhatsApp and Firebase credentials are configured only through environment variables on servers that need them (see `docs/waffrli/realtime-and-push.md`). Never commit them.
+Real SMS, WhatsApp and Firebase credentials are configured only through environment variables on servers that need them (see `docs/waffrli/realtime-and-push.md`). Never commit them. Check push readiness, without sending anything, with `php artisan waffrli:fcm-check` (see `docs/waffrli/fcm-readiness.md`).
 
 ## 7. Database: migrations, seeders, demo data
 
