@@ -90,6 +90,14 @@ return [
     | FIREBASE_PRIVATE_KEY. Driver `fake` records messages in memory (refused
     | in production); nothing is pushed while `enabled` is false.
     */
+    // 2026-11-16 (Phase 9): grouped error store (Monitoring → Errors).
+    'monitoring' => [
+        'errors_enabled' => (bool) env('WAFFRLI_ERROR_MONITOR_ENABLED', true),
+        // Days to keep resolved/ignored groups, and any group not seen since.
+        'resolved_retention_days' => (int) env('WAFFRLI_ERROR_RETENTION_DAYS', 30),
+        'stale_retention_days' => (int) env('WAFFRLI_ERROR_STALE_RETENTION_DAYS', 90),
+    ],
+
     'push' => [
         'enabled' => (bool) env('WAFFRLI_PUSH_ENABLED', false),
         'driver' => env('WAFFRLI_PUSH_DRIVER', 'fake'),

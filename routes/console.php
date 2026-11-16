@@ -23,3 +23,6 @@ Schedule::command('waffrli:dispatch-sweep')->everyFifteenSeconds()->withoutOverl
 // their own expires_at (off-peak, 03:15 / 03:25 Asia/Damascus).
 Schedule::command('otp:cleanup-expired')->dailyAt('00:15')->withoutOverlapping();
 Schedule::command('tokens:cleanup-expired')->dailyAt('00:25')->withoutOverlapping();
+
+// WAFFRLI (2026-11-16): error-monitor retention (error_events only).
+Schedule::command('waffrli:prune-errors')->dailyAt('00:35')->withoutOverlapping();

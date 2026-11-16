@@ -34,6 +34,10 @@ return [
         'settings' => 'Settings',
     ],
     'resources' => [
+        'error_event' => [
+            'singular' => 'Error',
+            'plural' => 'Errors',
+        ],
         'currency' => [
             'singular' => 'Currency',
             'plural' => 'Currencies',
@@ -907,6 +911,10 @@ return [
         'audit' => [
             'view' => 'View audit log',
         ],
+        'errors' => [
+            'view' => 'View application errors',
+            'manage' => 'Resolve, reopen or ignore application errors',
+        ],
         'content' => [
             'manage' => 'Manage Terms & Conditions and FAQ',
         ],
@@ -998,6 +1006,32 @@ return [
         'city_help' => 'Customers by their default address, drivers by their own city.',
         'progress' => ':done of :total',
         'notice_v2' => 'Sent only to active accounts (customers, drivers or both): saved in the app, shown live when they are online, and as a phone notification. Each message is sent once and recorded in the activity log. Never include personal data.',
+    ],
+    // 2026-11-16 (Phase 9): Monitoring → Errors.
+    'errors_monitor' => [
+        'notice' => 'Unexpected application errors, grouped: the same error at the same place is one row with a counter. Messages are cleaned of passwords, codes, tokens, e-mail addresses and phone numbers. A user can give you the request id (X-Request-Id) to find the matching error. Expected outcomes (refused business rules, validation, sign-in) are not listed.',
+        'exception' => 'Error',
+        'message' => 'Message',
+        'location' => 'Where',
+        'occurrences' => 'Times',
+        'environment' => 'Environment',
+        'first_seen' => 'First seen',
+        'last_seen' => 'Last seen',
+        'regressed' => 'Came back',
+        'resolved_by' => 'Resolved by',
+        'request_id' => 'Request id',
+        'request' => 'Last request',
+        'route' => 'Route',
+        'actor' => 'User',
+        'trace' => 'Stack trace (no arguments)',
+        'status_open' => 'Open',
+        'status_resolved' => 'Resolved',
+        'status_ignored' => 'Ignored',
+        'resolve' => 'Resolve',
+        'ignore' => 'Ignore',
+        'reopen' => 'Reopen',
+        'ignore_help' => 'An ignored error keeps counting but no longer appears as open. A resolved error that happens again is reopened automatically.',
+        'search' => 'Error, message, file or request id',
     ],
     // WAFFRLI (2026-11-03): default-currency switch.
     'redenomination' => [
@@ -1128,6 +1162,7 @@ return [
     ],
     // Audit-log detail keys that are not form fields (2026-11-16).
     'audit_keys' => [
+        'exception' => 'Error type',
         'accepting' => 'Accepting orders',
         'affected_ids' => 'Affected records',
         'audience' => 'Audience',
@@ -1213,6 +1248,9 @@ return [
     ],
     // UX redesign round 2 (2026-11-11): readable activity and notification names.
     'audit_actions' => [
+        'errors__resolved' => 'Error marked resolved',
+        'errors__ignored' => 'Error ignored',
+        'errors__reopened' => 'Error reopened',
         'admin__created' => 'Staff member added',
         'admin__updated' => 'Staff member updated',
         'catalog__branch_accepting_orders' => 'Branch order intake changed',

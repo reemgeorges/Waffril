@@ -20,6 +20,7 @@ use App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService;
 use App\Services\Model\Setting\SettingManagementService;
 use App\Services\Model\Test\TestService;
 use App\Services\Model\User\UserService;
+use App\Services\Monitoring\ErrorMonitor;
 use App\Services\Push\FakePushTransport;
 use App\Services\Push\FcmHttpV1Transport;
 use App\Support\Broadcasting\RecordingBroadcaster;
@@ -103,6 +104,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerAuthRateLimiters();
+
+        // WAFFRLI (2026-11-16): unexpected errors are also stored, grouped and
+        // scrubbed, for Monitoring → Errors. Logging is unchanged.
+        $this->app->make(ExceptionHandler::class)->reportable(function (\Throwable $e): void {
+            ErrorMonitor::capture($e);
+        });
 
         // WAFFRLI (2026-11-04): database translations (spatie/laravel-translatable).
         // A missing translation falls back to APP_FALLBACK_LOCALE, then to any
