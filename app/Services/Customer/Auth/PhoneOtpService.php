@@ -7,6 +7,7 @@ use App\Models\Otp;
 use App\Services\Messaging\TextMessenger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
@@ -55,17 +56,20 @@ class PhoneOtpService
             throw new BusinessRuleException(__('messages.customer.otp_cooldown', ['seconds' => (int) now()->diffInSeconds($last->created_at->copy()->addSeconds($cooldown), true) + 1]), 429);
         }
 
+        // Local testing only: an allowlisted test phone gets the configured
+        // fixed code instead of a random one (FixedTestOtp; never production).
+        $fixed = FixedTestOtp::codeFor($phone);
         $length = max(4, (int) config('otp.code_length', 6));
-        $code = str_pad((string) random_int(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
+        $code = $fixed ?? str_pad((string) random_int(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
         $ttl = max(1, (int) config('otp.ttl_minutes', 10));
 
-        $otp = DB::transaction(function () use ($hash, $purpose, $code, $ttl, $ip) {
+        $otp = DB::transaction(function () use ($hash, $purpose, $code, $ttl, $ip, $fixed) {
             Otp::query()->where('verifiable_type', self::TYPE)->where('destination_hash', $hash)->where('purpose', $purpose)
                 ->whereNull('consumed_at')->whereNull('invalidated_at')->update(['invalidated_at' => now()]);
 
             return Otp::create([
                 'verifiable_type' => self::TYPE, 'verifiable_id' => null, 'purpose' => $purpose,
-                'channel' => config('waffrli.customer.otp_channel', 'sms'), 'destination_hash' => $hash,
+                'channel' => $fixed !== null ? FixedTestOtp::CHANNEL : config('waffrli.customer.otp_channel', 'sms'), 'destination_hash' => $hash,
                 'code_hash' => Hash::make($code), 'attempts' => 0, 'max_attempts' => max(1, (int) config('otp.max_attempts', 5)),
                 'expires_at' => now()->addMinutes($ttl), 'ip_hash' => $ip ? hash_hmac('sha256', $ip, (string) config('app.key')) : null,
             ]);
@@ -74,6 +78,14 @@ class PhoneOtpService
         RateLimiter::hit($this->key('send-phone', $hash, $purpose), (int) config('otp.send_window_minutes', 60) * 60);
         if ($ip) {
             RateLimiter::hit($this->key('send-ip', $ip, $purpose), (int) config('otp.send_window_minutes', 60) * 60);
+        }
+
+        if ($fixed !== null) {
+            // Nothing is sent. The answer keeps the normal channel name so the
+            // apps behave exactly as with a real SMS; the row says test_fixed.
+            Log::notice('otp.fixed_test_code_issued', ['purpose' => $purpose, 'phone_hash' => substr($hash, 0, 12)]);
+
+            return ['channel' => (string) config('waffrli.customer.otp_channel', 'sms'), 'expires_in' => $ttl * 60, 'resend_in' => $cooldown];
         }
 
         try {

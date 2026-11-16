@@ -241,6 +241,21 @@ Then log in with `POST /api/v1/driver/login` and `{ "phone": "+12025550201", "pa
 
 Limits are enforced locally too: 5 codes per phone per hour, a 60-second cooldown, and 5 requests per IP per minute.
 
+**Fixed test OTP (optional, local only).** To avoid reading a new random code for every app test, dedicated test phones can use one fixed code. Add to your local `.env`:
+
+```dotenv
+WAFFRLI_TEST_FIXED_OTP_ENABLED=true
+WAFFRLI_TEST_FIXED_OTP_CODE=123456
+WAFFRLI_TEST_FIXED_OTP_PHONES=+963944000001,+963944000002
+```
+
+Then run `php artisan config:clear`. It applies only when **all** of these hold: the flag is on, `APP_ENV` is `local` or `testing` (it is ignored in production whatever the flags say), the code has 4–8 digits, and the phone is in the allowlist.
+
+- **Allowlist only.** Use dedicated test numbers: a local server may be public through a Cloudflare tunnel, so there is no "any phone" mode.
+- **Nothing is sent.** No SMS or WhatsApp is attempted for those phones, and the API answers exactly as usual (`channel: "sms"`). The stored row is marked `test_fixed`.
+- **Same safeguards.** The code is still stored hashed, expires after 10 minutes, works once, is bound to its purpose (login vs recovery), and keeps the cooldown, rate limits and attempt ceiling. It is never returned or logged.
+- **Everyone else is unchanged.** Other phones, and every phone when the flag is off, get random codes through the configured SMS driver.
+
 ## 9. API collections (Bruno) and API docs (Scalar)
 
 - **Bruno**, in `api-tests/bruno/`, has three collections: Customer (108 requests), Driver (46) and Admin (69). Every `/api/v1` route is covered, including negative and authorization tests. Start with `api-tests/bruno/README.md`.
