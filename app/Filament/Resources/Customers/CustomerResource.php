@@ -16,6 +16,7 @@ use App\Filament\Support\PlusStatus;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\User;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -89,7 +90,7 @@ class CustomerResource extends AdminResource
                     ->state(fn (User $record) => PlusStatus::for($record)['plan']),
                 TextEntry::make('plus_cycle')->label(__('admin.plus.current_cycle'))->placeholder('—')
                     ->state(fn (User $record) => ($c = PlusStatus::for($record)['cycle'])
-                        ? $c->starts_at?->translatedFormat(TableDefaults::dateFormat()).' – '.$c->ends_at?->translatedFormat(TableDefaults::dateFormat()) : null),
+                        ? AdminTimezone::format($c->starts_at, TableDefaults::dateFormat()).' – '.AdminTimezone::format($c->ends_at, TableDefaults::dateFormat()) : null),
                 TextEntry::make('plus_free')->label(__('admin.plus.free_deliveries_remaining'))->placeholder('—')
                     ->state(fn (User $record) => ($c = PlusStatus::for($record)['cycle'])
                         ? max(0, (int) $c->free_deliveries_total - (int) $c->free_deliveries_used).' / '.(int) $c->free_deliveries_total : null),
@@ -145,7 +146,7 @@ class CustomerResource extends AdminResource
                     ->color(fn (User $record) => PlusStatus::for($record)['color'])
                     ->icon(fn (User $record) => PlusStatus::for($record)['icon'])
                     ->description(fn (User $record) => ($p = PlusStatus::for($record))['state'] === PlusStatus::NONE ? null
-                        : collect([$p['plan'], $p['cycle']?->ends_at ? __('admin.plus.until', ['date' => $p['cycle']->ends_at->translatedFormat(TableDefaults::dateFormat())]) : null])->filter()->implode(' · ')),
+                        : collect([$p['plan'], $p['cycle']?->ends_at ? __('admin.plus.until', ['date' => AdminTimezone::format($p['cycle']->ends_at, TableDefaults::dateFormat())]) : null])->filter()->implode(' · ')),
                 Columns::countLink('orders_count', __('admin.resources.order.plural'), 'admin.table.orders_count', 'heroicon-m-shopping-bag',
                     fn (User $record) => $view($record, 'orders'), __('admin.table.open_customer_orders'))
                     ->counts('orders')->sortable()->visibleFrom('md'),

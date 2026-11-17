@@ -9,6 +9,7 @@ use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Models\Order;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -44,7 +45,7 @@ class PendingOrdersTable extends TableWidget
             ->columns([
                 TextColumn::make('order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
                     ->description(fn (Order $record) => $record->created_at?->diffForHumans())
-                    ->tooltip(fn (Order $record) => $record->created_at?->toDateTimeString()),
+                    ->tooltip(fn (Order $record) => AdminTimezone::format($record->created_at, 'Y-m-d H:i:s')),
                 TextColumn::make('urgency')->label(__('admin.fields.type'))->badge()
                     ->state(fn (Order $record) => $record->urgent_at !== null ? 'urgent' : $record->type)
                     ->formatStateUsing(fn (string $state) => $state === 'urgent' ? __('admin.orders.urgent') : __("admin.orders.type_{$state}"))
@@ -59,7 +60,7 @@ class PendingOrdersTable extends TableWidget
                         default => 'gray',
                     })
                     // A scheduled order shows its time under the badge.
-                    ->description(fn (Order $record) => $record->scheduled_for?->translatedFormat('j M، H:i')),
+                    ->description(fn (Order $record) => AdminTimezone::format($record->scheduled_for, 'j M، H:i')),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
                     ->state(fn (Order $record) => $record->user?->fullName())
                     ->description(fn (Order $record) => Fields::ltr($record->user?->phone)),

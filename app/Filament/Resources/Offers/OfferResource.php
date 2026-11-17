@@ -11,6 +11,7 @@ use App\Filament\Support\TableDefaults;
 use App\Models\Branch;
 use App\Models\Offer;
 use App\Models\Product;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
@@ -88,7 +89,7 @@ class OfferResource extends AdminResource
             $record->ends_at !== null && $record->ends_at->isPast() => 'ended',
             default => 'running',
         };
-        $date = fn ($value) => $value?->translatedFormat(TableDefaults::dateTimeFormat());
+        $date = fn ($value) => AdminTimezone::format($value, TableDefaults::dateTimeFormat());
 
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['store', 'branch', 'product']))

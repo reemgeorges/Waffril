@@ -20,6 +20,7 @@ use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Order;
 use App\Services\Delivery\DeliveryOfferService;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -150,7 +151,7 @@ class OrderResource extends AdminResource
             ->columns([
                 TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->sortable()->weight(FontWeight::SemiBold)
                     ->description(fn (Order $record) => $record->created_at?->diffForHumans())
-                    ->tooltip(fn (Order $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->tooltip(fn (Order $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat())),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
                 // Type and urgency as one labelled badge (icon + words; colour
@@ -169,7 +170,7 @@ class OrderResource extends AdminResource
                         default => 'gray',
                     })
                     ->description(fn (Order $record) => $record->scheduled_for
-                        ? __('admin.table.scheduled_for', ['date' => $record->scheduled_for->translatedFormat('j M، H:i')]) : null),
+                        ? __('admin.table.scheduled_for', ['date' => AdminTimezone::format($record->scheduled_for, 'j M، H:i')]) : null),
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))
                     ->state(fn (Order $record) => $record->user?->fullName())
                     ->description(fn (Order $record) => Fields::ltr($record->user?->phone))

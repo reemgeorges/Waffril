@@ -16,6 +16,7 @@ use App\Models\Order;
 use App\Notifications\DriverDeliveryOfferCreated;
 use App\Services\Audit\AdminAudit;
 use App\Services\Driver\DriverRecommendationService;
+use App\Services\Notifications\OrderLifecycleAlerts;
 use App\Services\Order\OrderStateMachine;
 use App\Services\Realtime\Notify;
 use App\Services\Realtime\Realtime;
@@ -448,6 +449,8 @@ class DeliveryOfferService
     protected function finalize(DeliveryOffer $offer, DeliveryOfferStatus $status, array $attributes = []): DeliveryOffer
     {
         $offer->forceFill(['status' => $status, 'responded_at' => now()] + $attributes)->save();
+        // 2026-11-17: declined / expired offers alert the dispatchers (after commit, once per outcome).
+        OrderLifecycleAlerts::offer($offer, $status);
         if ($status !== DeliveryOfferStatus::Accepted) {
             // Rejected, expired or cancelled: the driver's devices close the offer.
             self::announce(DeliveryOfferChanged::WITHDRAWN, $offer);

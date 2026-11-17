@@ -9,6 +9,7 @@ use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Fields;
 use App\Filament\Support\TableDefaults;
 use App\Models\OrderRefund;
+use App\Support\Time\AdminTimezone;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -45,7 +46,7 @@ class OrderRefundResource extends AdminResource
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['order', 'payment.method', 'currency', 'createdBy']))
             ->columns([
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
-                    ->description(fn (OrderRefund $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->description(fn (OrderRefund $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat()))
                     ->searchable(),
                 TextColumn::make('amount')->label(__('admin.fields.amount'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, OrderRefund $record) => Fields::formatMoney($state, $record->currency))

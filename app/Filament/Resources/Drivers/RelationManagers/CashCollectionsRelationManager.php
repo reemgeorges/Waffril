@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Drivers\RelationManagers;
 use App\Filament\Concerns\TranslatedRelationLabels;
 use App\Filament\Support\Fields;
 use App\Filament\Support\TableDefaults;
+use App\Support\Time\AdminTimezone;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -40,11 +41,11 @@ class CashCollectionsRelationManager extends RelationManager
             ->modifyQueryUsing(fn ($query) => $query->with(['order', 'currency', 'settlement']))
             ->columns([
                 TextColumn::make('order.order_number')->label(__('admin.fields.order_number'))->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => $record->paid_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->description(fn ($record) => AdminTimezone::format($record->paid_at, TableDefaults::dateTimeFormat())),
                 TextColumn::make('collected_amount')->label(__('admin.fields.collected_amount'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency))
                     ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
-                TextColumn::make('settlement.business_date')->label(__('admin.fields.business_date'))->date()->badge()
+                TextColumn::make('settlement.business_date')->label(__('admin.fields.business_date'))->date()->timezone(config('app.timezone'))   /* a calendar DATE, never shifted (2026-11-17) */ ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'warning')
                     ->placeholder(__('admin.drivers.unsettled')),
             ])

@@ -45,7 +45,16 @@ class LocalizedNotification extends Notification
         // The title of a known type has no parameters: always translatable.
         $static->title(__($key.'.title'));
         if (is_array($params) && isset($params['reference'])) {
-            $static->body(__($key.'.body', ['reference' => self::isolate((string) $params['reference'])]));
+            // Every stored parameter (reference, and since 2026-11-17 e.g. the
+            // driver's name), each isolated so Latin names keep their order in
+            // Arabic. Was reference-only: ":driver" showed literally in the bell.
+            $replace = [];
+            foreach ($params as $name => $value) {
+                if (is_string($name) && is_scalar($value)) {
+                    $replace[$name] = self::isolate((string) $value);
+                }
+            }
+            $static->body(__($key.'.body', $replace));
         }
 
         foreach ($static->getActions() as $action) {

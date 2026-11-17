@@ -17,6 +17,7 @@ use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Driver;
 use App\Services\Driver\DriverAdminService;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -103,7 +104,7 @@ class DriverResource extends AdminResource
                     __('admin.table.open_driver_orders'))->counts('activeOrders'),
                 Columns::status(),
                 TextColumn::make('last_location_at')->label(__('admin.table.last_seen'))->since()->placeholder('—')->sortable()
-                    ->tooltip(fn ($record) => $record->last_location_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->tooltip(fn ($record) => AdminTimezone::format($record->last_location_at, TableDefaults::dateTimeFormat()))
                     ->visibleFrom('lg'),
             ])
             ->searchPlaceholder(__('admin.table.search_drivers'))

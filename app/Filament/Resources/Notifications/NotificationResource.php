@@ -10,6 +10,7 @@ use App\Filament\Support\TableDefaults;
 use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\User;
+use App\Support\Time\AdminTimezone;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -57,7 +58,7 @@ class NotificationResource extends AdminResource
                     ->color(fn ($state) => $state === 'read' ? 'gray' : 'info')
                     ->icon(fn ($state) => $state === 'read' ? 'heroicon-m-envelope-open' : 'heroicon-m-envelope'),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->since()->sortable()->color('gray')
-                    ->tooltip(fn ($record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->tooltip(fn ($record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat())),
             ])
             ->filters([
                 // e.g. driver.problem_reported isolates delivery problem reports.

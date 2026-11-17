@@ -8,6 +8,7 @@ use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontWeight;
@@ -44,7 +45,7 @@ class OrdersRelationManager extends RelationManager
             ->modifyQueryUsing(fn ($query) => $query->with(['branch.store', 'currency']))
             ->columns([
                 TextColumn::make('order_number')->label(__('admin.fields.order_number'))->searchable()->weight(FontWeight::SemiBold)
-                    ->description(fn ($record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->description(fn ($record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat())),
                 TextColumn::make('status')->label(__('admin.fields.status'))->badge()
                     ->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
                 TextColumn::make('branch.name')->label(__('admin.fields.branch'))

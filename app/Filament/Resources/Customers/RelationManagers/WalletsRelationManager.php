@@ -7,6 +7,7 @@ use App\Filament\Resources\Wallets\WalletResource;
 use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontWeight;
@@ -47,7 +48,7 @@ class WalletsRelationManager extends RelationManager
                 TextColumn::make('balance')->label(__('admin.fields.balance'))->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, $record) => Fields::formatMoney($state, $record->currency)),
                 TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->since()->color('gray')
-                    ->tooltip(fn ($record) => $record->updated_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->tooltip(fn ($record) => AdminTimezone::format($record->updated_at, TableDefaults::dateTimeFormat())),
             ])
             ->recordActions([
                 RowActions::primary(Action::make('history')->label(__('admin.table.history'))->icon('heroicon-m-list-bullet')

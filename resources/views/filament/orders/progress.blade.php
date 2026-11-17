@@ -16,7 +16,7 @@
     $reached = $cancelled
         ? count(array_filter($times))
         : array_search($status->value, $order, true) + 1;
-    $fmt = fn ($at) => $at?->copy()->setTimezone(\App\Support\Settings\PlatformSettings::timezone())->locale(app()->getLocale())->translatedFormat(\App\Filament\Support\TableDefaults::dateTimeFormat());
+    $fmt = fn ($at) => \App\Support\Time\AdminTimezone::format($at, \App\Filament\Support\TableDefaults::dateTimeFormat());   // the admin's own zone (2026-11-17)
 @endphp
 <ol class="wf-steps" data-cancelled="{{ $cancelled ? 'yes' : 'no' }}" aria-label="{{ __('admin.orders.progress') }}">
     @foreach ($order as $i => $step)

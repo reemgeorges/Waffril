@@ -8,6 +8,7 @@ use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\Readable;
 use App\Filament\Support\TableDefaults;
 use App\Models\AdminAuditLog;
+use App\Support\Time\AdminTimezone;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -35,7 +36,7 @@ class AdminAuditLogResource extends AdminResource
                 // Table UX overhaul (2026-11-12): when (relative, exact time on
                 // hover) and who in one column; the action with its subject.
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->since()->sortable()
-                    ->tooltip(fn (AdminAuditLog $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->tooltip(fn (AdminAuditLog $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat()))
                     ->description(fn (AdminAuditLog $record) => $record->admin?->name ?? __('admin.audit.system')),
                 // UX redesign round 2: plain words instead of keys and JSON;
                 // the raw key stays visible as a tooltip for support staff.

@@ -9,6 +9,7 @@ use App\Filament\Support\TableDefaults;
 use App\Models\ErrorEvent;
 use App\Services\Audit\AdminAudit;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
@@ -114,7 +115,7 @@ class ErrorEventResource extends AdminResource
                     }),
                 TextColumn::make('occurrences')->label(__('admin.errors_monitor.occurrences'))->numeric()->sortable()->alignEnd(),
                 TextColumn::make('last_seen_at')->label(__('admin.errors_monitor.last_seen'))->since()->sortable()
-                    ->tooltip(fn (ErrorEvent $record) => $record->last_seen_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->tooltip(fn (ErrorEvent $record) => AdminTimezone::format($record->last_seen_at, TableDefaults::dateTimeFormat())),
                 TextColumn::make('last_path')->label(__('admin.errors_monitor.request'))->state(fn (ErrorEvent $record) => trim(($record->last_method ?? '').' '.($record->last_path ?? '')))
                     ->limit(50)->color('gray')->visibleFrom('lg'),
                 TextColumn::make('first_seen_at')->label(__('admin.errors_monitor.first_seen'))->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),

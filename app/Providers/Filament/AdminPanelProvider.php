@@ -7,6 +7,7 @@ use App\Filament\Support\Brand;
 use App\Filament\Support\InitialsAvatarProvider;
 use App\Filament\Support\LocalizedNotification;
 use App\Filament\Support\TableDefaults;
+use App\Http\Middleware\SetAdminDisplayTimezone;
 use App\Http\Middleware\SetAdminPanelLocale;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\LocalFontProvider;
@@ -116,6 +117,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 SetAdminPanelLocale::class,
+                SetAdminDisplayTimezone::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
@@ -131,7 +133,10 @@ class AdminPanelProvider extends PanelProvider
             // middleware runs earlier, right after the snapshot is verified.
             // Without this, tabs and filters re-rendered in the default
             // language after the first click.
-            ->persistentMiddleware([SetAdminPanelLocale::class])
+            // 2026-11-17: the admin's display timezone, likewise on every
+            // Livewire update (App\Support\Time\AdminTimezone).
+            ->persistentMiddleware([SetAdminPanelLocale::class, SetAdminDisplayTimezone::class])
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.time.browser-timezone'))
             ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.realtime.operations-listener'))
             // 2026-11-16: open the table filter panel on wide screens (display only).
             ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.tables.filters-open'))

@@ -26,6 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: ['127.0.0.1', '::1']);
+
+        // WAFFRLI (2026-11-17): the admin's browser timezone is written by the
+        // panel's own script (not secret; validated against the IANA list).
+        $middleware->encryptCookies(except: [\App\Support\Time\AdminTimezone::COOKIE]);
         $middleware->alias([
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,

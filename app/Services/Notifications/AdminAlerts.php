@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -37,6 +38,15 @@ class AdminAlerts
         // Dispatch B3 (2026-11-10): an order is waiting for a driver (sent once per entry into the queue).
         'order.no_driver_available' => ['orders.assign', 'heroicon-o-user-minus', 'warning'],
         'plus.request_submitted' => ['plus.approve', 'heroicon-o-star', 'info'],
+        // 2026-11-17: order lifecycle (App\Services\Notifications\OrderLifecycleAlerts).
+        // Dispatch outcomes go to admins who can assign drivers; progress to
+        // everyone who follows orders. Admin-initiated changes do not alert.
+        'order.driver_accepted' => ['orders.assign', 'heroicon-o-check-badge', 'success'],
+        'order.offer_rejected' => ['orders.assign', 'heroicon-o-hand-thumb-down', 'warning'],
+        'order.offer_expired' => ['orders.assign', 'heroicon-o-clock', 'warning'],
+        'order.picked_up' => ['orders.view', 'heroicon-o-truck', 'info'],
+        'order.delivered' => ['orders.view', 'heroicon-o-check-circle', 'success'],
+        'order.cancelled_by_customer' => ['orders.view', 'heroicon-o-x-circle', 'danger'],
     ];
 
     /** Translation group of an alert type: admin.alerts.order_placed etc. */
@@ -45,13 +55,24 @@ class AdminAlerts
         return 'admin.alerts.'.str_replace('.', '_', $type);
     }
 
-    public static function send(string $type, ?int $orderId, ?string $reference): void
+    /**
+     * @param  array<string, string>  $params  extra text parameters (e.g. driver) for the translated title/body
+     * @param  string|null  $dedupeKey  stable id of the underlying event (status history row, offer outcome):
+     *                                  the alert is sent at most once per key, so retried jobs, repeated
+     *                                  events and idempotent API calls never alert twice
+     */
+    public static function send(string $type, ?int $orderId, ?string $reference, array $params = [], ?string $dedupeKey = null): void
     {
         if (! isset(self::ALERTS[$type]) || config('waffrli.notifications_muted')) {
             return;
         }
 
-        DB::afterCommit(function () use ($type, $orderId, $reference) {
+        DB::afterCommit(function () use ($type, $orderId, $reference, $params, $dedupeKey) {
+            // Claimed after the commit only: a rolled-back change never alerts and
+            // never burns its key.
+            if ($dedupeKey !== null && ! Cache::add('waffrli:admin-alert:'.$type.':'.$dedupeKey, 1, now()->addDays(3))) {
+                return;
+            }
             try {
                 [$permission, $icon, $color] = self::ALERTS[$type];
                 $recipients = Admin::query()->where('is_active', true)->get()
@@ -71,7 +92,7 @@ class AdminAlerts
                 // fallback, the bell re-translates it for the viewer.
                 $key = self::translationKey($type);
                 $locale = (string) config('app.fallback_locale', 'en');
-                $params = ['reference' => $reference ?? '—'];
+                $params = ['reference' => $reference ?? '—'] + array_map(fn ($v) => (string) $v, $params);
                 $notification = Notification::make()
                     ->title(__($key.'.title', [], $locale))
                     ->body(__($key.'.body', $params, $locale))

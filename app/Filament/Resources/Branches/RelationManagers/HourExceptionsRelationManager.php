@@ -7,6 +7,7 @@ use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\BranchHourException;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -53,7 +54,7 @@ class HourExceptionsRelationManager extends RelationManager
      */
     public function table(Table $table): Table
     {
-        $date = fn ($value) => $value?->translatedFormat(TableDefaults::dateTimeFormat());
+        $date = fn ($value) => AdminTimezone::format($value, TableDefaults::dateTimeFormat());
 
         return $table
             ->columns([

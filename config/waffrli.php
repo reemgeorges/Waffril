@@ -90,6 +90,11 @@ return [
     | FIREBASE_PRIVATE_KEY. Driver `fake` records messages in memory (refused
     | in production); nothing is pushed while `enabled` is false.
     */
+    // 2026-11-17: admin panel display timezone when the browser's zone is not
+    // known yet (first request, cookies blocked). Empty: the operations
+    // timezone setting, else UTC. Storage always stays UTC.
+    'admin_display_timezone' => env('WAFFRLI_ADMIN_DISPLAY_TIMEZONE'),
+
     // 2026-11-16 (Phase 9): grouped error store (Monitoring → Errors).
     'monitoring' => [
         'errors_enabled' => (bool) env('WAFFRLI_ERROR_MONITOR_ENABLED', true),
