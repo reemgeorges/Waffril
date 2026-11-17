@@ -1,7 +1,7 @@
 {{-- PLUS request details and the customer's review history (UX overhaul 2026-11-12). --}}
 @php
     use App\Filament\Resources\PlusRequests\PlusRequestResource as R;
-    $fmt = fn ($at) => $at?->copy()->setTimezone(\App\Support\Settings\PlatformSettings::timezone())->locale(app()->getLocale())->translatedFormat(\App\Filament\Support\TableDefaults::dateTimeFormat());
+    $fmt = fn ($at) => \App\Support\Time\AdminTimezone::format($at, \App\Filament\Support\TableDefaults::dateTimeFormat());   // the admin's own zone (2026-11-17)
 @endphp
 <div class="wf-detail">
     <dl class="wf-detail__grid">

@@ -6,6 +6,7 @@ use App\Filament\Resources\MarketingBroadcasts\Pages\ListMarketingBroadcasts;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\TableDefaults;
 use App\Models\MarketingBroadcast;
+use App\Support\Time\AdminTimezone;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -53,7 +54,7 @@ class MarketingBroadcastResource extends AdminResource
                 // Table UX overhaul (2026-11-12): the message with when it was
                 // created, audience, status, recipients, who sent it.
                 TextColumn::make('title')->label(__('admin.fields.name'))->limit(60)->searchable()->weight(FontWeight::SemiBold)
-                    ->description(fn (MarketingBroadcast $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->description(fn (MarketingBroadcast $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat())),
                 TextColumn::make('audience')->label(__('admin.marketing.audience'))
                     ->formatStateUsing(fn ($state, MarketingBroadcast $record) => __('admin.marketing.recipients_'.($record->recipient_type ?: MarketingBroadcast::RECIPIENTS_CUSTOMERS))
                         .' — '.($record->city ? $record->city->name : __('admin.marketing.scope_all'))),

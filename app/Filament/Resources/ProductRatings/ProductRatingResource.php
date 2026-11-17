@@ -15,6 +15,7 @@ use App\Models\ProductRating;
 use App\Models\Store;
 use App\Services\Catalog\ProductRatingService;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Enums\FontWeight;
@@ -89,7 +90,7 @@ class ProductRatingResource extends AdminResource
                     ->tooltip(fn (ProductRating $record) => $record->is_hidden ? $record->hidden_reason : null)
                     ->width(TableDefaults::COMPACT_WIDTH),
                 TextColumn::make('created_at')->label(__('admin.fields.created_at'))->since()->sortable()
-                    ->tooltip(fn (ProductRating $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->tooltip(fn (ProductRating $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat()))
                     ->visibleFrom('md'),
             ])
             ->searchPlaceholder(__('admin.table.search_ratings'))

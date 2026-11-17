@@ -15,6 +15,7 @@ use App\Filament\Support\TableDefaults;
 use App\Models\PlusRequest;
 use App\Services\Plus\PlusService;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
@@ -65,7 +66,7 @@ class PlusRequestResource extends AdminResource
                 TextColumn::make('user.first_name')->label(__('admin.fields.customer'))->weight(FontWeight::SemiBold)
                     ->state(fn (PlusRequest $record) => $record->user?->fullName())
                     ->description(fn (PlusRequest $record) => collect([Fields::ltr($record->user?->phone), $record->created_at ? __('admin.table.requested_ago', ['time' => $record->created_at->diffForHumans()]) : null])->filter()->implode(' · '))
-                    ->tooltip(fn (PlusRequest $record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat()))
+                    ->tooltip(fn (PlusRequest $record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat()))
                     ->url(fn (PlusRequest $record) => $record->user && CustomerResource::canViewAny() ? CustomerResource::getUrl('view', ['record' => $record->user]) : null)
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('user', fn (Builder $user) => $user
                         ->where('phone', 'like', "%{$search}%")
@@ -89,7 +90,7 @@ class PlusRequestResource extends AdminResource
                     ->icon(fn ($state) => self::STATUS_ICONS[$state] ?? null)
                     ->formatStateUsing(fn ($state) => __("admin.requests.status_{$state}"))
                     ->description(fn (PlusRequest $record) => $record->reviewedBy
-                        ? collect([$record->reviewedBy->name, $record->reviewed_at?->translatedFormat(TableDefaults::dateTimeFormat())])->filter()->implode(' · ') : null),
+                        ? collect([$record->reviewedBy->name, AdminTimezone::format($record->reviewed_at, TableDefaults::dateTimeFormat())])->filter()->implode(' · ') : null),
                 TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(70)->tooltip(fn (PlusRequest $record) => $record->customer_note)
                     ->placeholder('—')->wrap()->visibleFrom('lg'),
                 TextColumn::make('created_at')->label(__('admin.plus.requested_at'))->dateTime()->sortable()

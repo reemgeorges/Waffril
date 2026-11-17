@@ -41,8 +41,10 @@ class OpeningHoursRelationManager extends RelationManager
     {
         return $schema->components([
             Select::make('day_of_week')->label(__('admin.fields.day_of_week'))->options(self::days())->required(),
-            TimePicker::make('opens_at')->label(__('admin.fields.opens_at'))->seconds(false)->required(),
-            TimePicker::make('closes_at')->label(__('admin.fields.closes_at'))->seconds(false)->required()->different('opens_at'),
+            // Wall-clock opening hours (the branch's own day), not instants: never
+            // shifted by the admin's display timezone (2026-11-17).
+            TimePicker::make('opens_at')->label(__('admin.fields.opens_at'))->seconds(false)->required()->timezone(config('app.timezone')),
+            TimePicker::make('closes_at')->label(__('admin.fields.closes_at'))->seconds(false)->required()->different('opens_at')->timezone(config('app.timezone')),
         ]);
     }
 

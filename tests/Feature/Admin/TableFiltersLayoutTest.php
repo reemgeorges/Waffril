@@ -37,6 +37,8 @@ class TableFiltersLayoutTest extends AdminPanelTestCase
 
     public function test_date_range_filter_keeps_its_query_shows_chips_and_sits_side_by_side(): void
     {
+        // These edges are UTC days; local-day behaviour: AdminTimezoneTest.
+        config(['waffrli.admin_display_timezone' => 'UTC']);
         $this->actingAsAdmin($this->superAdmin());
         $branch = $this->branch($this->store(), $this->city());
         $customer = $this->customer();
@@ -49,7 +51,7 @@ class TableFiltersLayoutTest extends AdminPanelTestCase
 
         $page = Livewire::test(ListOrders::class)
             ->filterTable('created_between', ['from' => '2026-11-05', 'until' => '2026-11-06'])
-            // Same whereDate(>= from) and whereDate(<= until) as before: both edge days included.
+            // Both edge days included (the admin's days; UTC here).
             ->assertCanSeeTableRecords([$orders['2026-11-05 23:59:00'], $orders['2026-11-06 00:00:00']])
             ->assertCanNotSeeTableRecords([$orders['2026-11-01 10:00:00'], $orders['2026-11-09 12:00:00']]);
 

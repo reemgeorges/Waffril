@@ -25,8 +25,8 @@
              style="display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.5rem;padding:.75rem;border:1px solid rgba(127,127,127,.25);border-radius:.75rem">
             <div><div style="opacity:.7">{{ __('admin.dispatch.current_driver') }}</div><div style="font-weight:600">{{ $d['pending']['driver'] }}</div></div>
             <div><div style="opacity:.7">{{ __('admin.dispatch.source') }}</div><div>{{ $d['pending']['source'] }} · #{{ $d['pending']['attempt'] }}</div></div>
-            <div><div style="opacity:.7">{{ __('admin.dispatch.offered_at') }}</div><div>{{ $d['pending']['offered_at']->format('H:i:s') }}</div></div>
-            <div><div style="opacity:.7">{{ __('admin.dispatch.expires_at') }}</div><div>{{ $d['pending']['expires_at']->format('H:i:s') }}</div></div>
+            <div><div style="opacity:.7">{{ __('admin.dispatch.offered_at') }}</div><div>{{ \App\Support\Time\AdminTimezone::local($d['pending']['offered_at'])->format('H:i:s') }}</div></div>
+            <div><div style="opacity:.7">{{ __('admin.dispatch.expires_at') }}</div><div>{{ \App\Support\Time\AdminTimezone::local($d['pending']['expires_at'])->format('H:i:s') }}</div></div>
             <div>
                 <div style="opacity:.7">{{ __('admin.dispatch.remaining') }}</div>
                 <div style="font-weight:700;font-variant-numeric:tabular-nums" data-testid="dispatch-remaining"
@@ -42,7 +42,7 @@
             <span style="opacity:.7">{{ __('admin.dispatch.last_outcome') }}</span>
             <x-filament::badge :color="$d['last']['status_color']" style="display:inline-flex">{{ $d['last']['status'] }}</x-filament::badge>
             {{ $d['last']['driver'] }}@if ($d['last']['reason']) — {{ $d['last']['reason'] }}@endif
-            @if ($d['last']['at']) <span style="opacity:.7">({{ $d['last']['at']->format('H:i:s') }})</span>@endif
+            @if ($d['last']['at']) <span style="opacity:.7">({{ \App\Support\Time\AdminTimezone::local($d['last']['at'])->format('H:i:s') }})</span>@endif
         </div>
     @endif
 
@@ -53,10 +53,10 @@
                 {{ __('admin.dispatch.auto_on_decline', ['seconds' => $d['timeout_seconds']]) }}
                 @break
             @case('no_driver')
-                {{ __('admin.dispatch.no_driver_since', ['at' => $d['no_driver_since']?->format('H:i')]) }}
+                {{ __('admin.dispatch.no_driver_since', ['at' => \App\Support\Time\AdminTimezone::local($d['no_driver_since'])?->format('H:i')]) }}
                 @if ($d['alerted_at']) {{ __('admin.dispatch.admins_alerted') }} @endif
                 @if ($d['auto_recovery'])
-                    {{ __('admin.dispatch.recovery_on', ['used' => $d['auto_rounds_used'], 'max' => $d['max_auto_rounds'], 'at' => $d['next_auto_round_at']?->format('H:i')]) }}
+                    {{ __('admin.dispatch.recovery_on', ['used' => $d['auto_rounds_used'], 'max' => $d['max_auto_rounds'], 'at' => \App\Support\Time\AdminTimezone::local($d['next_auto_round_at'])?->format('H:i')]) }}
                 @else
                     {{ __('admin.dispatch.recovery_off') }}
                 @endif

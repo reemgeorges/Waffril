@@ -52,7 +52,7 @@ class DriverCashSettlementResource extends AdminResource
         return $table
             ->modifyQueryUsing(fn ($query) => $query->with(['driver', 'currency', 'settledBy']))
             ->columns([
-                TextColumn::make('business_date')->label(__('admin.fields.business_date'))->date()->sortable()->weight(FontWeight::SemiBold)
+                TextColumn::make('business_date')->label(__('admin.fields.business_date'))->date()->timezone(config('app.timezone'))   /* a calendar DATE, never shifted (2026-11-17) */ ->sortable()->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => $record->driver?->name)
                     ->searchable(query: fn ($query, string $search) => $query->whereHas('driver', fn ($d) => $d->where('name', 'like', "%{$search}%"))),
                 TextColumn::make('expected_amount')->label(__('admin.fields.expected_amount'))->formatStateUsing($money)

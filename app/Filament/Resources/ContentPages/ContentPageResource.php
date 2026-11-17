@@ -9,6 +9,7 @@ use App\Filament\Support\AdminResource;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\ContentPage;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -100,7 +101,7 @@ class ContentPageResource extends AdminResource
                     TextColumn::make('version')->label(__('admin.content.version'))->size(TextSize::Small)->color('gray')->icon('heroicon-m-document-check')
                         ->formatStateUsing(fn ($state, ContentPage $record) => collect([
                             __('admin.table.version_n', ['n' => $state]),
-                            $record->published_at ? __('admin.table.published_on', ['date' => $record->published_at->translatedFormat(TableDefaults::dateFormat())]) : __('admin.table.not_published'),
+                            $record->published_at ? __('admin.table.published_on', ['date' => AdminTimezone::format($record->published_at, TableDefaults::dateFormat())]) : __('admin.table.not_published'),
                         ])->implode(' · ')),
                     TextColumn::make('updatedBy.name')->label(__('admin.content.updated_by'))->size(TextSize::Small)->color('gray')->icon('heroicon-m-user')
                         ->formatStateUsing(fn ($state, ContentPage $record) => __('admin.table.updated_by', ['name' => $state, 'time' => $record->updated_at?->diffForHumans()]))

@@ -6,7 +6,7 @@ use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Stores\StoreResource;
 use App\Models\Order;
-use App\Support\Settings\PlatformSettings;
+use App\Support\Time\AdminTimezone;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Illuminate\Contracts\View\View;
 
@@ -30,11 +30,11 @@ class Dashboard extends BaseDashboard
         return __('admin.dashboard.title');
     }
 
-    /** A greeting with today's date in the platform timezone and panel language. */
+    /** A greeting with today's date in the admin's own timezone (2026-11-17) and panel language. */
     public function getSubheading(): ?string
     {
         $locale = app()->getLocale();
-        $now = now(PlatformSettings::timezone())->locale($locale);
+        $now = now(AdminTimezone::current())->locale($locale);
         $greeting = $now->hour < 12 ? __('admin.dashboard.good_morning') : __('admin.dashboard.good_evening');
         $name = auth()->user()?->name;
 
@@ -55,7 +55,7 @@ class Dashboard extends BaseDashboard
     public function getHeader(): ?View
     {
         $locale = app()->getLocale();
-        $now = now(PlatformSettings::timezone())->locale($locale);
+        $now = now(AdminTimezone::current())->locale($locale);
         $canOrders = OrderResource::canViewAny();
 
         $shortcuts = array_values(array_filter([

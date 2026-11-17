@@ -2,6 +2,7 @@
 
 namespace App\Filament\Support;
 
+use App\Support\Time\AdminTimezone;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Grid;
 use Filament\Tables\Filters\Filter;
@@ -12,12 +13,11 @@ use Illuminate\Support\Carbon;
 /**
  * WAFFRLI (2026-11-16) — one date-range filter for every admin list.
  *
- * "From" and "Until" sit side by side on every screen (the filter spans two
- * columns of the filter grid from 640 px; on phones the pair shares one row). The query is exactly
- * the previous one: whereDate(column, '>=', from) and
- * whereDate(column, '<=', until), both optional. Each filled date shows as
- * its own removable chip, so the active filter count and "remove all" also
- * cover dates (the previous filters had no indicator).
+ * "From" and "Until" sit side by side on every screen (the pair spans two
+ * columns of the filter grid). The picked days are the admin's LOCAL days
+ * (browser timezone, App\Support\Time\AdminTimezone), queried as UTC
+ * instants; both are optional. Each filled date shows as its own removable
+ * chip, so the active filter count and "remove all" also cover dates.
  */
 final class DateRangeFilter
 {
@@ -32,9 +32,13 @@ final class DateRangeFilter
                 ]),
             ])
             ->columnSpan(['default' => 2])
+            // 2026-11-17: the picked days are the ADMIN's local days (their
+            // browser timezone), converted to UTC bounds: [start of "from",
+            // start of the day after "until"). Was whereDate() on UTC values,
+            // so a local evening fell on the next UTC day.
             ->query(fn (Builder $query, array $data) => $query
-                ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate($column, '>=', $date))
-                ->when($data['until'] ?? null, fn (Builder $q, $date) => $q->whereDate($column, '<=', $date)))
+                ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->where($column, '>=', AdminTimezone::dayStartUtc((string) $date)))
+                ->when($data['until'] ?? null, fn (Builder $q, $date) => $q->where($column, '<', AdminTimezone::dayEndUtc((string) $date))))
             ->indicateUsing(function (array $data) use ($label): array {
                 $indicators = [];
                 $prefix = $label ?? __('admin.table.date_between');

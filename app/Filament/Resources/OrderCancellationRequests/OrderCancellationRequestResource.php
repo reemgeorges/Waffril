@@ -12,6 +12,7 @@ use App\Filament\Support\TableDefaults;
 use App\Models\OrderCancellationRequest;
 use App\Services\Order\OrderAdminService;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
@@ -84,7 +85,7 @@ class OrderCancellationRequestResource extends AdminResource
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state?->color())->visibleFrom('md'),
                 TextColumn::make('customer_note')->label(__('admin.fields.customer_note'))->limit(80)->wrap()->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('created_at')->label(__('admin.table.requested'))->since()->sortable()
-                    ->tooltip(fn ($record) => $record->created_at?->translatedFormat(TableDefaults::dateTimeFormat())),
+                    ->tooltip(fn ($record) => AdminTimezone::format($record->created_at, TableDefaults::dateTimeFormat())),
             ])
             ->searchPlaceholder(__('admin.table.search_cancellations'))
             ->filters([

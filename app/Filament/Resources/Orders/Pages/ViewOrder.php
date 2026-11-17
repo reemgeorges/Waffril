@@ -17,6 +17,7 @@ use App\Services\Driver\DriverRecommendationService;
 use App\Services\Order\OrderAdminService;
 use App\Services\Order\RefundService;
 use App\Support\Auth\AdminPermissions;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Hidden;
@@ -106,7 +107,7 @@ class ViewOrder extends ViewRecord
         return Action::make('accept')->label(__('admin.orders.accept'))->icon('heroicon-o-check')->color('success')
             ->visible(fn (Order $record) => $record->status === OrderStatus::Pending && AdminPermissions::currentAllows('orders.accept'))
             ->modalDescription(fn (Order $record) => ($opens = $this->service()->acceptanceOpensAt($record))
-                ? __('admin.orders.scheduled_acceptance_opens', ['at' => $opens->toDateTimeString()]) : null)
+                ? __('admin.orders.scheduled_acceptance_opens', ['at' => AdminTimezone::format($opens, 'Y-m-d H:i:s')]) : null)
             ->requiresConfirmation()
             ->action(fn (Order $record) => BusinessAction::run(fn ($admin) => $this->service()->accept($record, $admin)));
     }

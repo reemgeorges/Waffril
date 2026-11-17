@@ -10,6 +10,7 @@ use App\Filament\Support\Fields;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\Wallet;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -71,7 +72,7 @@ class WalletResource extends AdminResource
                     ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency))
                     ->color(fn ($state) => (float) $state > 0 ? null : 'gray'),
                 TextColumn::make('updated_at')->label(__('admin.fields.updated_at'))->since()->sortable()->color('gray')
-                    ->tooltip(fn ($record) => $record->updated_at?->translatedFormat(TableDefaults::dateTimeFormat()))->visibleFrom('md'),
+                    ->tooltip(fn ($record) => AdminTimezone::format($record->updated_at, TableDefaults::dateTimeFormat()))->visibleFrom('md'),
             ])
             ->searchPlaceholder(__('admin.table.search_wallets'))
             ->filters([

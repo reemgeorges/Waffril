@@ -12,6 +12,7 @@ use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\PlusCycle;
 use App\Services\Plus\PlusService;
+use App\Support\Time\AdminTimezone;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -79,7 +80,7 @@ class PlusCycleResource extends AdminResource
      */
     public static function table(Table $table): Table
     {
-        $date = fn ($value) => $value?->translatedFormat(TableDefaults::dateFormat());
+        $date = fn ($value) => AdminTimezone::format($value, TableDefaults::dateFormat());
 
         return $table
             ->modifyQueryUsing(fn ($query) => $query->with('user'))
