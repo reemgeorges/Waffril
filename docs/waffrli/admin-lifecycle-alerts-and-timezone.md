@@ -22,6 +22,9 @@ held in the cache for 3 days).
 | Cancellation request | `order.cancellation_requested` | `orders.resolve_cancellation_requests` | existing | — |
 | Problem report | `order.problem_reported` | `orders.view` | existing | — |
 
+The bell re-translates each stored alert into the viewer's language using all
+of its stored parameters (order reference, driver name), each bidi-isolated.
+
 **No alert** is sent for:
 - changes an admin makes (direct assignment, reassignment, unassignment, admin
   cancellation, refunds): the acting admin already sees them, and the other
@@ -41,7 +44,11 @@ after the history row is written.
   the page was rendered in a different zone, the script reloads it **once**
   (per zone, per tab).
 - `SetAdminDisplayTimezone` (panel + Livewire persistent middleware) validates
-  the zone against the IANA list and calls `FilamentTimezone::set()`. Every
+  the zone and calls `FilamentTimezone::set()`. Only Region/City names and UTC
+  are accepted; raw offsets and abbreviations are refused. Legacy names that
+  browsers still report (`Asia/Calcutta`, `Europe/Kiev`, `US/Pacific`, …) are
+  mapped to the canonical zone, because PHP builds that use the system tzdata
+  may not know them. Every
   `dateTime()`/`date()` column and entry, and every `DateTimePicker`, then
   converts automatically, DST included. The value is held per request in the
   container, so admins in different zones never affect each other.
@@ -61,6 +68,25 @@ after the history row is written.
 
 - `tests/Feature/Admin/AdminTimezoneTest.php`
 - `tests/Feature/Delivery/OrderLifecycleAlertsTest.php`
+
+### End-to-end check (2026-11-17)
+
+Run on a disposable copy of the QA database, with a real Reverb server, two
+Chromium admin sessions and driver actions sent to the driver HTTP API:
+
+- **Dispatcher** (super-admin, English, Asia/Damascus) received one toast
+  (about 0.5–1.2 s) and one bell entry each for: declined, accepted, picked
+  up, delivered and expired.
+- **Viewer** (`orders.view` only, Arabic, America/Los_Angeles) received only
+  picked up and delivered.
+- **Inactive admin:** nothing.
+- **Nothing alerted:** GPS pings and offers created by admins.
+- **Repeated driver requests** (reject, accept, pick up and deliver each sent
+  twice; the expiry sweep run twice) created no second alert.
+- **Not covered by this run:** a driver going offline while an offer is
+  pending. That cancels the offer without an alert, and the next driver is
+  offered automatically. If no driver remains, the existing "waiting for a
+  driver" alert fires.
 
 ## Manual acceptance
 
