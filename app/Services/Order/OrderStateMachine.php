@@ -10,6 +10,7 @@ use App\Models\OrderCancellationRequest;
 use App\Models\OrderStatusHistory;
 use App\Notifications\CustomerOrderUpdate;
 use App\Services\Delivery\DeliveryOfferService;
+use App\Services\Notifications\OrderLifecycleAlerts;
 use App\Services\Realtime\Notify;
 use App\Services\Realtime\Realtime;
 
@@ -74,7 +75,7 @@ class OrderStateMachine
             throw new BusinessRuleException(__('admin.errors.order_changed_concurrently'), 409);
         }
 
-        OrderStatusHistory::create([
+        $history = OrderStatusHistory::create([
             'order_id' => $order->getKey(),
             'from_status' => $from->value,
             'to_status' => $to->value,
@@ -95,6 +96,9 @@ class OrderStateMachine
         }
 
         $order->refresh();
+        // 2026-11-17: admin bell alerts for driver/customer lifecycle events
+        // (sent after the commit, at most once per history row).
+        OrderLifecycleAlerts::transition($order, $from, $to, $actorType, $history);
         // WAFFRLI (2026-11-03): every transition reaches the order's customer,
         // drivers and operations over Reverb after the transaction commits.
         Realtime::publish(OrderStatusChanged::fromTransition($order, $from->value, $previousDriverId));

@@ -999,6 +999,13 @@ return [
         'order_problem_reported' => ['title' => 'مشكلة في التوصيل', 'body' => 'أبلغ سائق عن مشكلة في :reference.'],
         'order_no_driver_available' => ['title' => 'طلب بانتظار سائق', 'body' => 'لا يوجد سائق متاح للطلب :reference. أسنده يدوياً أو انتظر إعادة المحاولة التلقائية.'],
         'plus_request_submitted' => ['title' => 'طلب بلس جديد', 'body' => 'طلب بلس :reference بانتظار المراجعة.'],
+        // 2026-11-17: دورة حياة الطلب.
+        'order_driver_accepted' => ['title' => 'قبل السائق الطلب', 'body' => 'قبل :driver الطلب :reference وأصبح مُسنداً إليه.'],
+        'order_offer_rejected' => ['title' => 'رُفض عرض التوصيل', 'body' => 'رفض :driver عرض توصيل الطلب :reference. يجري عرضه على السائق التالي.'],
+        'order_offer_expired' => ['title' => 'انتهت مهلة العرض', 'body' => 'لم يرد :driver على عرض توصيل الطلب :reference في الوقت المحدد.'],
+        'order_picked_up' => ['title' => 'استُلم الطلب', 'body' => 'استلم :driver الطلب :reference.'],
+        'order_delivered' => ['title' => 'تم تسليم الطلب', 'body' => 'سلّم :driver الطلب :reference.'],
+        'order_cancelled_by_customer' => ['title' => 'ألغى العميل الطلب', 'body' => 'ألغى العميل الطلب :reference قبل قبوله.'],
     ],
     'marketing' => [
         'nav' => 'الرسائل التسويقية',

@@ -999,6 +999,13 @@ return [
         'order_problem_reported' => ['title' => 'Delivery problem reported', 'body' => 'A driver reported a problem on :reference.'],
         'order_no_driver_available' => ['title' => 'Order waiting for a driver', 'body' => 'No driver is available for :reference. Assign one manually or wait for automatic retry.'],
         'plus_request_submitted' => ['title' => 'New PLUS request', 'body' => 'PLUS request :reference is waiting for review.'],
+        // 2026-11-17: order lifecycle.
+        'order_driver_accepted' => ['title' => 'Driver accepted', 'body' => ':driver accepted order :reference and is now assigned.'],
+        'order_offer_rejected' => ['title' => 'Offer declined', 'body' => ':driver declined the delivery offer for :reference. The next driver is being offered.'],
+        'order_offer_expired' => ['title' => 'Offer expired', 'body' => ':driver did not answer the delivery offer for :reference in time.'],
+        'order_picked_up' => ['title' => 'Order picked up', 'body' => ':driver picked up order :reference.'],
+        'order_delivered' => ['title' => 'Order delivered', 'body' => ':driver delivered order :reference.'],
+        'order_cancelled_by_customer' => ['title' => 'Order cancelled by the customer', 'body' => 'The customer cancelled order :reference before it was accepted.'],
     ],
     'marketing' => [
         'nav' => 'Marketing messages',
