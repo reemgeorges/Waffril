@@ -39,14 +39,80 @@ final class AdminTimezone
      */
     private const BINDING = 'waffrli.admin_timezone';
 
-    /** A valid IANA identifier (case-sensitive, as browsers report it), else null. */
+    /**
+     * Legacy IANA names some browsers and OS versions still report, mapped
+     * to the canonical zone (tzdata "backward" file). Needed because PHP
+     * builds that use the system tzdata may not know these links at all.
+     */
+    private const ALIASES = [
+        'Asia/Calcutta' => 'Asia/Kolkata', 'Asia/Katmandu' => 'Asia/Kathmandu',
+        'Asia/Saigon' => 'Asia/Ho_Chi_Minh', 'Asia/Rangoon' => 'Asia/Yangon',
+        'Asia/Dacca' => 'Asia/Dhaka', 'Asia/Thimbu' => 'Asia/Thimphu',
+        'Asia/Ulan_Bator' => 'Asia/Ulaanbaatar', 'Asia/Ashkhabad' => 'Asia/Ashgabat',
+        'Asia/Macao' => 'Asia/Macau', 'Asia/Ujung_Pandang' => 'Asia/Makassar',
+        'Asia/Chongqing' => 'Asia/Shanghai', 'Asia/Chungking' => 'Asia/Shanghai',
+        'Asia/Harbin' => 'Asia/Shanghai', 'Asia/Kashgar' => 'Asia/Urumqi',
+        'Asia/Tel_Aviv' => 'Asia/Jerusalem', 'Asia/Istanbul' => 'Europe/Istanbul',
+        'Europe/Kiev' => 'Europe/Kyiv', 'Europe/Uzhgorod' => 'Europe/Kyiv',
+        'Europe/Zaporozhye' => 'Europe/Kyiv', 'Europe/Belfast' => 'Europe/London',
+        'Europe/Nicosia' => 'Asia/Nicosia', 'Europe/Tiraspol' => 'Europe/Chisinau',
+        'America/Buenos_Aires' => 'America/Argentina/Buenos_Aires',
+        'America/Catamarca' => 'America/Argentina/Catamarca',
+        'America/Cordoba' => 'America/Argentina/Cordoba',
+        'America/Jujuy' => 'America/Argentina/Jujuy',
+        'America/Mendoza' => 'America/Argentina/Mendoza',
+        'America/Indianapolis' => 'America/Indiana/Indianapolis',
+        'America/Fort_Wayne' => 'America/Indiana/Indianapolis',
+        'America/Louisville' => 'America/Kentucky/Louisville',
+        'America/Godthab' => 'America/Nuuk', 'America/Montreal' => 'America/Toronto',
+        'America/Shiprock' => 'America/Denver', 'America/Ensenada' => 'America/Tijuana',
+        'America/Santa_Isabel' => 'America/Tijuana', 'America/Porto_Acre' => 'America/Rio_Branco',
+        'America/Atka' => 'America/Adak', 'America/Virgin' => 'America/St_Thomas',
+        'Atlantic/Faeroe' => 'Atlantic/Faroe', 'Atlantic/Jan_Mayen' => 'Europe/Oslo',
+        'Pacific/Enderbury' => 'Pacific/Kanton', 'Pacific/Truk' => 'Pacific/Chuuk',
+        'Pacific/Yap' => 'Pacific/Chuuk', 'Pacific/Ponape' => 'Pacific/Pohnpei',
+        'Pacific/Samoa' => 'Pacific/Pago_Pago', 'Pacific/Johnston' => 'Pacific/Honolulu',
+        'Africa/Asmera' => 'Africa/Nairobi', 'Africa/Timbuktu' => 'Africa/Abidjan',
+        'Australia/ACT' => 'Australia/Sydney', 'Australia/Canberra' => 'Australia/Sydney',
+        'Australia/NSW' => 'Australia/Sydney', 'Australia/North' => 'Australia/Darwin',
+        'Australia/Queensland' => 'Australia/Brisbane', 'Australia/South' => 'Australia/Adelaide',
+        'Australia/Tasmania' => 'Australia/Hobart', 'Australia/Victoria' => 'Australia/Melbourne',
+        'Australia/West' => 'Australia/Perth',
+        'US/Alaska' => 'America/Anchorage', 'US/Arizona' => 'America/Phoenix',
+        'US/Central' => 'America/Chicago', 'US/Eastern' => 'America/New_York',
+        'US/Hawaii' => 'Pacific/Honolulu', 'US/Mountain' => 'America/Denver',
+        'US/Pacific' => 'America/Los_Angeles',
+        'Etc/UTC' => 'UTC', 'Etc/UCT' => 'UTC', 'Etc/Universal' => 'UTC', 'Etc/Zulu' => 'UTC',
+        'Etc/GMT' => 'UTC', 'Etc/GMT0' => 'UTC', 'Etc/GMT+0' => 'UTC', 'Etc/GMT-0' => 'UTC',
+        'Etc/Greenwich' => 'UTC', 'GMT' => 'UTC', 'UCT' => 'UTC', 'Universal' => 'UTC', 'Zulu' => 'UTC',
+    ];
+
+    /**
+     * The canonical zone for a browser-reported IANA name (legacy names
+     * mapped), else null. Region/City names and UTC only: raw offsets
+     * ("+03:00") and abbreviations ("EST") are refused.
+     */
     public static function valid(?string $zone): ?string
     {
         if ($zone === null || $zone === '' || strlen($zone) > 64) {
             return null;
         }
+        // Canonical name first; the name as sent if this PHP's tzdata is
+        // older than the canonical one (e.g. knows Europe/Kiev, not Europe/Kyiv).
+        foreach (array_unique([self::ALIASES[$zone] ?? $zone, $zone]) as $candidate) {
+            if ($candidate !== 'UTC' && ! preg_match('~^[A-Z][A-Za-z_]*(?:/[A-Za-z0-9_+\-]+){1,2}$~', $candidate)) {
+                continue;
+            }
+            try {
+                new DateTimeZone($candidate);
 
-        return in_array($zone, DateTimeZone::listIdentifiers(), true) || $zone === 'UTC' ? $zone : null;
+                return $candidate;
+            } catch (Throwable) {
+                // try the next candidate
+            }
+        }
+
+        return null;
     }
 
     public static function fallback(): string
@@ -63,8 +129,10 @@ final class AdminTimezone
     /** Resolves and remembers the zone for this request. */
     public static function resolveFrom(Request $request): string
     {
-        $zone = self::valid($request->cookie(self::COOKIE)) ?? self::fallback();
+        $reported = $request->cookie(self::COOKIE);
+        $zone = self::valid(is_string($reported) ? $reported : null) ?? self::fallback();
         app()->instance(self::BINDING, $zone);
+        app()->instance(self::BINDING.'.reported', is_string($reported) ? $reported : null);
 
         return $zone;
     }
@@ -77,10 +145,23 @@ final class AdminTimezone
         return is_string($zone) ? $zone : self::fallback();
     }
 
+    /**
+     * The zone name the browser reported for this request, exactly as sent
+     * (it may be a legacy alias of current()). The head script compares the
+     * browser's zone with it, so an alias never triggers a reload.
+     */
+    public static function reported(): ?string
+    {
+        $zone = app()->bound(self::BINDING.'.reported') ? app(self::BINDING.'.reported') : null;
+
+        return is_string($zone) ? $zone : null;
+    }
+
     /** Forgets the zone resolved for the current request (tests). */
     public static function reset(): void
     {
         app()->forgetInstance(self::BINDING);
+        app()->forgetInstance(self::BINDING.'.reported');
     }
 
     /** A copy of $value in the admin's zone (the instant is unchanged). */

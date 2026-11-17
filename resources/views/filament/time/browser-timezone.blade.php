@@ -10,9 +10,11 @@
             const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             if (! zone) { return; }
             const rendered = @js(\App\Support\Time\AdminTimezone::current());
+            // The zone name the server received (may be a legacy alias of `rendered`).
+            const reported = @js(\App\Support\Time\AdminTimezone::reported());
             const secure = location.protocol === 'https:' ? '; Secure' : '';
             document.cookie = 'waffrli_tz=' + encodeURIComponent(zone) + '; path=/; max-age=31536000; SameSite=Lax' + secure;
-            if (zone !== rendered) {
+            if (zone !== rendered && zone !== reported) {
                 const key = 'waffrli_tz_applied:' + zone;
                 if (! sessionStorage.getItem(key)) {
                     sessionStorage.setItem(key, '1');

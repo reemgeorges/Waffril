@@ -89,6 +89,28 @@ class AdminTimezoneTest extends AdminPanelTestCase
         $this->assertSame('2026-11-16 19:35:00', (string) DB::table('orders')->where('id', $this->order->id)->value('created_at'), 'Stored UTC value unchanged.');
     }
 
+    public function test_legacy_browser_zone_names_are_accepted_and_offsets_refused(): void
+    {
+        // Browsers still report some pre-2022 names; PHP may not know them.
+        $this->assertSame('Asia/Kolkata', AdminTimezone::valid('Asia/Calcutta'));
+        $this->assertContains(AdminTimezone::valid('Europe/Kiev'), ['Europe/Kyiv', 'Europe/Kiev']);
+        $this->assertSame('America/Los_Angeles', AdminTimezone::valid('US/Pacific'));
+        $this->assertSame('UTC', AdminTimezone::valid('Etc/UTC'));
+        $this->assertSame('Asia/Damascus', AdminTimezone::valid('Asia/Damascus'));
+        $this->assertSame('America/Argentina/Buenos_Aires', AdminTimezone::valid('America/Argentina/Buenos_Aires'));
+        foreach (['+03:00', 'EST', 'Mars/Olympus', 'asia/damascus', '', str_repeat('A', 80)] as $bad) {
+            $this->assertNull(AdminTimezone::valid($bad), $bad);
+        }
+
+        // The page renders in the canonical zone (Kolkata = UTC+5:30) and tells
+        // the head script which name it received, so the alias is not reloaded.
+        $this->actingAsAdmin($this->superAdmin());
+        $page = (string) $this->pageIn('Asia/Calcutta', '/admin/orders/'.$this->order->id)->getContent();
+        $this->assertStringContainsString('01:05', $page);   // 19:35 UTC + 5:30
+        $this->assertStringContainsString("const reported = 'Asia\\/Calcutta'", $page);
+        $this->assertStringContainsString("const rendered = 'Asia\\/Kolkata'", $page);
+    }
+
     public function test_livewire_updates_keep_the_admins_zone(): void
     {
         $this->assertContains(SetAdminDisplayTimezone::class, Livewire::getPersistentMiddleware());
