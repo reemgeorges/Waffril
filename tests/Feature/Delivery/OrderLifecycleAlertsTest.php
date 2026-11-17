@@ -3,6 +3,7 @@
 namespace Tests\Feature\Delivery;
 
 use App\Events\Orders\OrderPlaced;
+use App\Filament\Support\LocalizedNotification;
 use App\Models\Admin;
 use App\Models\City;
 use App\Models\DeliveryOffer;
@@ -101,6 +102,16 @@ class OrderLifecycleAlertsTest extends AdminPanelTestCase
         $this->assertStringContainsString($order->order_number, $alert->data['body']);
         $this->assertStringContainsString('Samer Haddad', $alert->data['body']);
         $this->assertStringEndsWith('/admin/orders/'.$order->id, $alert->data['actions'][0]['url']);
+        // The bell re-translates the stored alert for the viewer: every
+        // parameter is filled in both languages (was a literal ":driver").
+        foreach (['en', 'ar'] as $locale) {
+            app()->setLocale($locale);
+            $body = (string) LocalizedNotification::fromArray($alert->data)->getBody();
+            $this->assertStringContainsString('Samer Haddad', $body, $locale);
+            $this->assertStringContainsString($order->order_number, $body, $locale);
+            $this->assertStringNotContainsString(':driver', $body, $locale);
+        }
+        app()->setLocale('en');
         $this->assertSame([], $this->alerts($this->viewer, 'order.driver_accepted'), 'Only admins who can assign drivers.');
         $this->assertSame([], $this->alerts($this->outsider, 'order.driver_accepted'));
 
