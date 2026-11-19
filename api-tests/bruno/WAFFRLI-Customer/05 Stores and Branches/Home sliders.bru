@@ -1,0 +1,27 @@
+meta {
+  name: Home sliders (promotions and linked stores)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/v1/customer/sliders
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("response envelope and slider list", function () {
+    const b = res.getBody();
+    expect(b).to.include.all.keys("data", "status", "error", "statusCode");
+    expect(b.data.sliders).to.be.an("array");
+    b.data.sliders.forEach(s => {
+      expect(s).to.include.all.keys("id", "title", "subtitle", "image_url", "action", "store");
+      expect(["none", "store"]).to.include(s.action);
+      if (s.action === "store") expect(s.store.branch_id).to.be.greaterThan(0);
+    });
+  });
+}

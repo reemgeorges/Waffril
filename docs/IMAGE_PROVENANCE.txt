@@ -1,0 +1,10 @@
+WAFFRLI DEMO MEDIA — IMAGE PROVENANCE
+
+This bundle contains synthetic demo imagery made for testing mock restaurant and product listings.
+- The sixteen food pictures originate from an AI-generated 4 x 4 photographic food showcase, cropped into separate assets.
+- The remaining non-food mock product assets are original vector-style product illustrations rendered to JPG with Python/Pillow.
+- No authentic restaurant-brand logos or official medical-product labels are used.
+- The source media is illustrative only, not evidence that any named demo store is real.
+- Do not use these materials to impersonate an existing company or claim that fictional shops are real.
+
+Images ship locally; runtime does not require Unsplash, Pexels, a remote CDN, or any third-party API.
