@@ -38,10 +38,13 @@ class PlusPlanQuotaAndOrderNumberTest extends CustomerTestCase
         $this->assertSame(3, $cycle->fresh()->free_deliveries_total);
     }
 
-    public function test_compact_order_reference_is_twelve_characters_long(): void
+    public function test_short_order_reference_is_eight_unambiguous_characters(): void
     {
-        $number = CheckoutService::orderNumber();
-        $this->assertMatchesRegularExpression('/^WF[0-9]{6}[A-Z0-9]{4}$/', $number);
-        $this->assertSame(12, strlen($number));
+        // 2026-11-20: WF + 6 (was 12 characters with the date).
+        foreach (range(1, 200) as $i) {
+            $number = CheckoutService::orderNumber();
+            $this->assertMatchesRegularExpression('/^WF[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/', $number);
+            $this->assertSame(8, strlen($number));
+        }
     }
 }
