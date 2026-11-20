@@ -19,6 +19,7 @@ use App\Support\Time\AdminTimezone;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Tables\Columns\TextColumn;
@@ -137,6 +138,9 @@ class PlusRequestResource extends AdminResource
                 RowActions::primary(Action::make('approveOther')->label(__('admin.requests.approve'))->icon('heroicon-m-check')->color('success')
                     ->visible(fn (PlusRequest $record) => $pending($record) && $record->type !== PlusRequest::TYPE_NEW)
                     ->schema(fn (PlusRequest $record) => [
+                        // 2026-11-20: cancelling ends the discounts now by default.
+                        Toggle::make('end_now')->label(__('admin.plus.cancel_end_now'))->helperText(__('admin.plus.cancel_end_now_help'))
+                            ->default(true)->visible($record->type === PlusRequest::TYPE_CANCEL),
                         Textarea::make('note')->label(__('admin.fields.note'))->maxLength(1000)->required($record->type === PlusRequest::TYPE_CUSTOM),
                     ])
                     ->modalDescription(fn (PlusRequest $record) => __("admin.plus.approve_{$record->type}_help"))
@@ -144,7 +148,7 @@ class PlusRequestResource extends AdminResource
                     ->action(fn (PlusRequest $record, array $data) => BusinessAction::run(fn ($admin) => match ($record->type) {
                         PlusRequest::TYPE_RENEW => $service()->approveRenewal($record, $admin, $data['note'] ?? null),
                         PlusRequest::TYPE_CHANGE => $service()->approveChange($record, $admin, $data['note'] ?? null),
-                        PlusRequest::TYPE_CANCEL => $service()->approveCancellation($record, $admin, $data['note'] ?? null),
+                        PlusRequest::TYPE_CANCEL => $service()->approveCancellation($record, $admin, $data['note'] ?? null, (bool) ($data['end_now'] ?? true)),
                         default => $service()->resolveCustom($record, $admin, (string) $data['note']),
                     }))),
                 Action::make('reject')->label(__('admin.requests.reject'))->icon('heroicon-m-x-mark')->color('danger')

@@ -30,7 +30,6 @@ use Brick\Math\RoundingMode;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * WAFFRLI (2026-11-03) — checkout: turns a cart (or, for demo seeding, an
@@ -216,7 +215,10 @@ class CheckoutService
             try {
                 return Order::create($attributes + ['order_number' => $data['order_number'] ?? self::orderNumber()]);
             } catch (QueryException $e) {
-                if (isset($data['order_number']) || ! str_contains(strtolower($e->getMessage()), 'order_number')) {
+                // SQLite names the column, MySQL the unique index (uq_orders_number):
+                // was the column only, so a collision on MySQL failed the checkout.
+                $message = strtolower($e->getMessage());
+                if (isset($data['order_number']) || ! (str_contains($message, 'order_number') || str_contains($message, 'uq_orders_number'))) {
                     throw $e;
                 }
             }
@@ -224,12 +226,21 @@ class CheckoutService
         throw new BusinessRuleException(__('messages.customer.checkout_conflict'), 409);
     }
 
+    /** Characters of the random part: no 0/O, 1/I/L, so it can be read out on the phone. */
+    public const ORDER_NUMBER_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
     public static function orderNumber(): string
     {
-        // Compact public reference, 12 chars: WF + YYMMDD + 4 random.
-        // Uniqueness is enforced in createOrderRow() with collision retries.
-        // Existing order references and internal numeric IDs remain unchanged.
-        return 'WF'.now()->format('ymd').strtoupper(Str::random(4));
+        // 2026-11-20: short public reference, 8 chars: WF + 6 random from an
+        // unambiguous alphabet (31^6 ≈ 887 million), e.g. WF7K3QXM. Was
+        // WF + YYMMDD + 4 (12 chars). Uniqueness: unique index + retries in
+        // createOrderRow(). Existing references and numeric ids are unchanged.
+        $random = '';
+        for ($i = 0; $i < 6; $i++) {
+            $random .= self::ORDER_NUMBER_ALPHABET[random_int(0, strlen(self::ORDER_NUMBER_ALPHABET) - 1)];
+        }
+
+        return 'WF'.$random;
     }
 
     protected function existing(User $user, string $key): ?Order

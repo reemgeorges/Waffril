@@ -143,9 +143,8 @@ final class Fields
         if (! OperationalMoney::inputEnabled()) {
             $base = self::defaultCurrency();
 
-            return $input
+            return self::currencyOnTheLeft($input, fn (Get $get) => $monetary($get) ? $base?->code : null)
                 ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.min(4, $base?->decimals ?? 4) : 'decimal:0,4')
-                ->suffix(fn (Get $get) => $monetary($get) ? $base?->code : null)
                 ->live(onBlur: true)
                 ->hint(fn (Get $get, $state) => $monetary($get) ? self::operationalPreview($state) : null)
                 ->hintColor('warning');
@@ -153,10 +152,9 @@ final class Fields
 
         $operational = OperationalMoney::currency();
 
-        return $input
+        return self::currencyOnTheLeft($input, fn (Get $get) => $monetary($get) ? self::currencyLabel($operational) : null)
             // Typed in the DISPLAYED denomination (new SYP: up to 2 decimals = qirsh).
             ->rule(fn (Get $get) => $monetary($get) ? 'decimal:0,'.(int) Denomination::decimals($operational) : 'decimal:0,4')
-            ->suffix(fn (Get $get) => $monetary($get) ? self::currencyLabel($operational) : null)
             ->afterStateHydrated(function (TextInput $component, $state, Get $get) use ($monetary): void {
                 if ($state !== null && $state !== '' && $monetary($get)) {
                     $component->state(Denomination::presentString(OperationalMoney::fromBase((string) $state), OperationalMoney::currency()));
@@ -202,10 +200,9 @@ final class Fields
      */
     public static function recordMoney(string $name, ?Currency $currency): TextInput
     {
-        return TextInput::make($name)->label(__("admin.fields.{$name}"))
+        return self::currencyOnTheLeft(TextInput::make($name)->label(__("admin.fields.{$name}")), fn () => self::currencyLabel($currency))
             ->numeric()
             ->rule('decimal:0,'.(int) Denomination::decimals($currency, 4))
-            ->suffix(self::currencyLabel($currency))
             ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' || ! is_numeric($state)
                 ? $state
                 : (string) (Denomination::toStored((string) $state, $currency) ?? throw new \LogicException('validated amount has too many decimals')));
@@ -217,7 +214,7 @@ final class Fields
         return Denomination::presentString((string) ($stored ?? '0'), $currency) ?? '0';
     }
 
-    /** "≈ 15,001 ل.س · rate not confirmed" for a base amount being typed. */
+    /** "≈ ل.س 15,001 · rate not confirmed" for a base amount being typed. */
     public static function operationalPreview(mixed $baseAmount): ?string
     {
         if (OperationalMoney::sameAsBase() || $baseAmount === null || $baseAmount === '' || ! is_numeric($baseAmount)) {
@@ -301,6 +298,20 @@ final class Fields
             : __('admin.money.not_storable', ['options' => $options]);
     }
 
+    /**
+     * 2026-11-20: the currency sits on the LEFT of every amount in the panel,
+     * in both languages. An input's suffix is drawn on the left in Arabic
+     * (right-to-left), its prefix on the left in English.
+     */
+    public static function currencyOnTheLeft(TextInput $input, Closure $label): TextInput
+    {
+        $rtl = fn (): bool => app()->getLocale() === 'ar';
+
+        return $input
+            ->prefix(fn (Get $get) => $rtl() ? null : $input->evaluate($label, ['get' => $get]))
+            ->suffix(fn (Get $get) => $rtl() ? $input->evaluate($label, ['get' => $get]) : null);
+    }
+
     /** "ل.س" in Arabic, the ISO code otherwise. */
     public static function currencyLabel(?Currency $currency): string
     {
@@ -358,9 +369,10 @@ final class Fields
     }
 
     /**
-     * A stored amount in ITS OWN currency (2026-11-15: "15,000 ل.س" in
-     * Arabic, "15,000 SYP" / "3.34 USD" in English), isolated left-to-right
-     * like the mobile apps. Never converts: a USD record stays USD.
+     * A stored amount in ITS OWN currency, isolated left-to-right. Never
+     * converts: a USD record stays USD. 2026-11-20: the currency is on the
+     * LEFT of the number in both languages ("ل.س 15,000", "SYP 15,000",
+     * "USD 3.34"); was "15,000 ل.س".
      */
     public static function formatMoney(mixed $amount, ?Currency $currency): string
     {
@@ -369,7 +381,12 @@ final class Fields
         }
         $label = self::currencyLabel($currency);
 
-        return "\u{2066}".trim(self::formatAmount($amount, $currency).' '.$label)."\u{2069}";
+        $number = self::formatAmount($amount, $currency);
+
+        // The label is isolated on its own (FSI…PDI): otherwise the digits after
+        // Arabic letters count as Arabic numbers (bidi rule W2) and are drawn to
+        // the LEFT of "ل.س" again.
+        return "\u{2066}".($label === '' ? $number : "\u{2068}{$label}\u{2069} {$number}")."\u{2069}";
     }
 
     /** The number only, at the currency's decimals with thousands separators ("66,127", "−2.50"). */

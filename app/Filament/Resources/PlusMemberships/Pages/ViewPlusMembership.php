@@ -6,6 +6,7 @@ use App\Filament\Concerns\RefreshesOnOperationalEvents;
 use App\Filament\Resources\PlusMemberships\PlusMembershipResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\PlusPolicyFields;
+use App\Models\PlusCycle;
 use App\Models\PlusMembership;
 use App\Services\Plus\PlusService;
 use App\Support\Auth\AdminPermissions;
@@ -37,6 +38,12 @@ class ViewPlusMembership extends ViewRecord
                     ->helperText(__('admin.plus.override_help'))])
                 ->action(fn (PlusMembership $record, array $data) => BusinessAction::run(fn ($admin) => app(PlusService::class)
                     ->setFreeDeliveriesOverride($record, filled($data['value'] ?? null) ? (int) $data['value'] : null, $admin))),
+            // 2026-11-20: a membership cancelled "at the end of the cycle" can be ended now.
+            Action::make('endBenefitsNow')->label(__('admin.plus.end_benefits_now'))->icon('heroicon-o-no-symbol')->color('danger')
+                ->visible(fn (PlusMembership $record) => $can() && $record->status === PlusMembership::STATUS_CANCELLED
+                    && $record->cycles()->whereIn('status', [PlusCycle::STATUS_ACTIVE, PlusCycle::STATUS_SCHEDULED])->exists())
+                ->requiresConfirmation()->modalDescription(__('admin.plus.end_benefits_now_help'))
+                ->action(fn (PlusMembership $record) => BusinessAction::run(fn ($admin) => app(PlusService::class)->endBenefitsNow($record, $admin))),
         ];
     }
 }

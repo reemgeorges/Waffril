@@ -31,7 +31,13 @@ use Illuminate\Support\Facades\DB;
  * - renew:  confirms the next cycle (starts when the previous one ends);
  *           an approved plan change takes effect here.
  * - change: records next_plan_id — applies from the next cycle.
- * - cancel: stops future renewal; the current cycle keeps its benefits.
+ * - cancel: stops future renewal. 2026-11-20: the admin chooses whether the
+ *           current cycle's benefits end NOW (default in the panel) or at the
+ *           end of the cycle. Ended-now cycles become `cancelled`, so no
+ *           discount or free delivery applies to any later order.
+ * - new on a cancelled membership whose cycle is still running reactivates
+ *           it (was refused as "already has a membership" until the cycle
+ *           ran out, although the customer could already submit it).
  * - custom: recorded and resolved manually by an admin (no automatic effect).
  *
  * Each cycle snapshots its benefits (plan discounts, then per-member
@@ -90,8 +96,18 @@ class PlusService
             $plan = PlusPlan::query()->where('is_active', true)->findOrFail($request->requested_plan_id);
 
             $membership = PlusMembership::query()->where('user_id', $request->user_id)->lockForUpdate()->first();
-            if ($membership && $membership->status !== PlusMembership::STATUS_ENDED) {
+            if ($membership && $membership->status === PlusMembership::STATUS_ACTIVE) {
                 throw new BusinessRuleException(__('admin.errors.membership_already_exists'));
+            }
+            // A cancelled membership may still have a running (or scheduled)
+            // cycle: the new cycle starts when the last one ends, never overlapping.
+            $startsAt ??= now();
+            if ($membership) {
+                $liveUntil = PlusCycle::query()->where('plus_membership_id', $membership->id)
+                    ->whereIn('status', [PlusCycle::STATUS_ACTIVE, PlusCycle::STATUS_SCHEDULED])->max('ends_at');
+                if ($liveUntil !== null && Carbon::parse($liveUntil)->gt($startsAt)) {
+                    $startsAt = Carbon::parse($liveUntil);
+                }
             }
 
             $attributes = [
@@ -109,7 +125,7 @@ class PlusService
                 : PlusMembership::create($attributes + ['user_id' => $request->user_id]);
 
             $request->forceFill(['plus_membership_id' => $membership->id])->save();
-            $cycle = $this->createCycle($membership, $plan, $admin, $request, $startsAt ?? now());
+            $cycle = $this->createCycle($membership, $plan, $admin, $request, $startsAt);
             $this->markResolved($request, $admin, PlusRequest::STATUS_APPROVED, $note);
 
             AdminAudit::log('plus.membership_approved', $membership, ['request_id' => $request->id, 'cycle_id' => $cycle->id, 'policy' => $policy], $admin);
@@ -167,15 +183,24 @@ class PlusService
         });
     }
 
-    public function approveCancellation(PlusRequest $request, Admin $admin, ?string $note = null): PlusMembership
+    /**
+     * @param  bool  $endNow  true: the current cycle's benefits stop now (no
+     *                        discount or free delivery on later orders); false: they last until
+     *                        the cycle ends (the pre-2026-11-20 behaviour, kept as the default
+     *                        for API/service callers; the panel defaults to ending now)
+     */
+    public function approveCancellation(PlusRequest $request, Admin $admin, ?string $note = null, bool $endNow = false): PlusMembership
     {
         $this->authorize($admin);
 
-        return DB::transaction(function () use ($request, $admin, $note) {
+        return DB::transaction(function () use ($request, $admin, $note, $endNow) {
             $request = $this->lockPending($request, PlusRequest::TYPE_CANCEL);
             $membership = PlusMembership::query()->where('user_id', $request->user_id)->lockForUpdate()->firstOrFail();
 
             $membership->update(['status' => PlusMembership::STATUS_CANCELLED, 'cancelled_at' => now(), 'next_plan_id' => null]);
+            if ($endNow) {
+                $this->cancelActiveCycles($membership);
+            }
 
             PlusCycle::query()->where('plus_membership_id', $membership->id)
                 ->where('status', PlusCycle::STATUS_SCHEDULED)
@@ -189,10 +214,39 @@ class PlusService
             $this->markResolved($request, $admin, PlusRequest::STATUS_APPROVED, $note);
             $this->endIfNothingLeft($membership);
 
-            AdminAudit::log('plus.membership_cancelled', $membership, ['request_id' => $request->id], $admin);
+            AdminAudit::log('plus.membership_cancelled', $membership, ['request_id' => $request->id, 'ended_now' => $endNow], $admin);
 
             return $membership->refresh();
         });
+    }
+
+    /**
+     * Ends the benefits of an already-cancelled membership now (its cycle was
+     * left running until its end). Orders already placed keep their discount.
+     */
+    public function endBenefitsNow(PlusMembership $membership, Admin $admin): PlusMembership
+    {
+        $this->authorize($admin);
+
+        return DB::transaction(function () use ($membership, $admin) {
+            $membership = PlusMembership::query()->lockForUpdate()->findOrFail($membership->getKey());
+            if ($membership->status !== PlusMembership::STATUS_CANCELLED) {
+                throw new BusinessRuleException(__('admin.errors.membership_not_cancelled'));
+            }
+            $count = $this->cancelActiveCycles($membership);
+            $this->endIfNothingLeft($membership);
+            AdminAudit::log('plus.benefits_ended', $membership, ['cycles' => $count], $admin);
+
+            return $membership->refresh();
+        });
+    }
+
+    /** Active and scheduled cycles → cancelled (unused free deliveries lapse). */
+    protected function cancelActiveCycles(PlusMembership $membership): int
+    {
+        return PlusCycle::query()->where('plus_membership_id', $membership->id)
+            ->whereIn('status', [PlusCycle::STATUS_ACTIVE, PlusCycle::STATUS_SCHEDULED])
+            ->get()->each->update(['status' => PlusCycle::STATUS_CANCELLED])->count();
     }
 
     /** `custom` requests are handled manually; approving only records the decision. */

@@ -151,20 +151,20 @@ class OperationalMoneyTest extends AdminPanelTestCase
     {
         app()->setLocale('ar');
         // 2.50 USD = 32,500 old SYP = 325 new SYP (never "32,500" as new pounds).
-        $this->assertSame("\u{2066}325 ل.س\u{2069}", Fields::catalogMoney('2.50'));
-        $this->assertSame("\u{2066}150 ل.س\u{2069}", Fields::formatMoney('15000.0000', $this->syp));
-        $this->assertSame("\u{2066}1,500,000.50 ل.س\u{2069}", Fields::formatMoney('150000050', $this->syp));
-        $this->assertSame("\u{2066}3.34 USD\u{2069}", Fields::formatMoney('3.3400', $this->usd()));
+        $this->assertSame("\u{2066}\u{2068}ل.س\u{2069} 325\u{2069}", Fields::catalogMoney('2.50'));
+        $this->assertSame("\u{2066}\u{2068}ل.س\u{2069} 150\u{2069}", Fields::formatMoney('15000.0000', $this->syp));
+        $this->assertSame("\u{2066}\u{2068}ل.س\u{2069} 1,500,000.50\u{2069}", Fields::formatMoney('150000050', $this->syp));
+        $this->assertSame("\u{2066}\u{2068}USD\u{2069} 3.34\u{2069}", Fields::formatMoney('3.3400', $this->usd()));
 
         app()->setLocale('en');
-        $this->assertSame("\u{2066}150 SYP\u{2069}", Fields::formatMoney('15000.0000', $this->syp));
-        $this->assertSame("\u{2066}0.05 SYP\u{2069}", Fields::formatMoney('5', $this->syp), '5 old pounds = 5 qirsh');
+        $this->assertSame("\u{2066}\u{2068}SYP\u{2069} 150\u{2069}", Fields::formatMoney('15000.0000', $this->syp));
+        $this->assertSame("\u{2066}\u{2068}SYP\u{2069} 0.05\u{2069}", Fields::formatMoney('5', $this->syp), '5 old pounds = 5 qirsh');
         // The original old-pound record stays visible for audit.
         $this->assertSame(__('admin.money.stored_denomination', ['amount' => '15,000', 'code' => 'SYP', 'denomination' => __('admin.money.denomination_old')]),
             Fields::storedDenominationNote('15000.0000', $this->syp));
         $this->assertNull(Fields::storedDenominationNote('3.34', $this->usd()));
         // A historical USD amount is never relabelled or converted.
-        $this->assertSame("\u{2066}3.34 USD\u{2069}", Fields::formatMoney('3.3400', $this->usd()));
+        $this->assertSame("\u{2066}\u{2068}USD\u{2069} 3.34\u{2069}", Fields::formatMoney('3.3400', $this->usd()));
         $this->assertNotNull(Fields::historicalCurrencyNote($this->usd()));
         $this->assertNull(Fields::historicalCurrencyNote($this->syp));
 

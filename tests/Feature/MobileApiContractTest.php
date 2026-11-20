@@ -23,7 +23,7 @@ class MobileApiContractTest extends TestCase
         $document = Yaml::parseFile(base_path(BuildMobileApiContractCommand::PATH));
         $operations = collect($document['paths'])->flatMap(fn ($ops, $path) => collect($ops)->map(fn ($op, $method) => $op + ['path' => $path, 'method' => $method])->values())->values();
 
-        $this->assertCount(94, $operations, '65 customer + 29 driver operations (4 delivery-offer endpoints 2026-11-10; 2 read-only content endpoints 2026-11-12).');
+        $this->assertCount(95, $operations, '66 customer + 29 driver operations (4 delivery-offer endpoints 2026-11-10; 2 read-only content endpoints 2026-11-12; authenticated home sliders 2026-11-19).');
         $public = $operations->filter(fn ($op) => empty($op['security']))->map(fn ($op) => $op['method'].' '.$op['path'])->sort()->values()->all();
         $this->assertSame([
             // 2026-11-12: published Terms & Conditions and FAQ, read-only (shown during registration).
