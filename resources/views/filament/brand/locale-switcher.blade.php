@@ -1,4 +1,4 @@
-{{-- WAFFRLI (2026-11-04): visible AR | EN switch (header and login page).
+{{-- WAFFRLI (2026-11-04): visible AR | EN switch in the panel header (not on the login page since 2026-11-15).
      POST + CSRF to admin.locale; the choice is saved on the signed-in admin. --}}
 @php($current = app()->getLocale())
 <div @class(['wf-locale-switch', 'wf-locale-switch--floating' => $floating ?? false]) role="group" aria-label="{{ __('admin.locale_switch.label') }}" data-testid="locale-switcher">
