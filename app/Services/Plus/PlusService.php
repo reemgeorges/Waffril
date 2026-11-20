@@ -309,9 +309,12 @@ class PlusService
             'plan_name' => $plan->getTranslations('name'),
             'renewal_policy' => $membership->renewal_policy,
             'snapshot_currency_id' => $currency->id,
-            // 2026-11-12: the platform-wide allowance (admin setting, default 10)
-            // replaces the per-plan value; an approved member override still wins.
-            'free_deliveries_total' => $membership->free_deliveries_override ?? self::freeDeliveriesLimit(),
+            // Priority: explicitly approved member override, then optional
+            // per-plan quota, then the platform default. Zero is meaningful.
+            // Confirmed cycles keep their immutable benefit snapshot.
+            'free_deliveries_total' => $membership->free_deliveries_override
+                ?? $plan->free_deliveries_override
+                ?? self::freeDeliveriesLimit(),
             'delivery_discount_percent' => self::deliveryDiscountPercent(),
             'confirmed_by_admin_id' => $admin->id,
             'confirmed_at' => now(),

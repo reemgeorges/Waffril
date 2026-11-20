@@ -34,6 +34,7 @@ return [
         'settings' => 'Settings',
     ],
     'resources' => [
+        'home_slider' => ['singular' => 'Home slider', 'plural' => 'Home sliders'],
         'error_event' => [
             'singular' => 'Error',
             'plural' => 'Errors',
@@ -176,6 +177,8 @@ return [
         ],
     ],
     'fields' => [
+        'title' => 'Title',
+        'subtitle' => 'Subtitle',
         'plus_discount_percent' => 'PLUS discount (%)',
         'account_status' => 'Account status',
         'action' => 'Action',
@@ -596,6 +599,14 @@ return [
     'notifications_page' => [
         'notice' => 'Notifications the system sent to customers, drivers and staff. This page is read-only.',
     ],
+    'sliders' => [
+        'content' => 'Home screen banners',
+        'image_help' => 'Landscape picture, approximately 16:9, JPG/PNG/WebP, up to 4 MB; saved to public storage.',
+        'store_help' => 'Optional: choose a store to open an available branch in the customer city. Leave empty for an informational banner.',
+        'global_banner' => 'General banner (no store link)',
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+    ],
     'offers' => [
         'all_branches' => 'All branches',
         'all_products' => 'All products',
@@ -671,6 +682,9 @@ return [
         'status_reversed' => 'Returned',
     ],
     'plus' => [
+        'plan_free_deliveries' => 'Free deliveries for this plan',
+        'plan_free_deliveries_help' => 'Leave blank to use the platform setting. Enter 0 to offer no free deliveries. Applies to NEW cycles only; member exceptions take priority.',
+        'platform_default' => 'Platform default',
         'free_deliveries_global_help' => 'New cycles use the platform setting "Free deliveries per cycle" (Settings → PLUS); confirmed cycles keep the benefits they were approved with.',
         'free_deliveries_remaining' => 'Free deliveries remaining',
         'delivery_discount_after_allowance' => 'Delivery discount after free deliveries',

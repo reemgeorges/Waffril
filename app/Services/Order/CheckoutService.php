@@ -226,7 +226,10 @@ class CheckoutService
 
     public static function orderNumber(): string
     {
-        return 'WF'.now()->format('ymd').'-'.strtoupper(Str::random(6));
+        // Compact public reference, 12 chars: WF + YYMMDD + 4 random.
+        // Uniqueness is enforced in createOrderRow() with collision retries.
+        // Existing order references and internal numeric IDs remain unchanged.
+        return 'WF'.now()->format('ymd').strtoupper(Str::random(4));
     }
 
     protected function existing(User $user, string $key): ?Order

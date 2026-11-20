@@ -17,6 +17,7 @@ class PlusPlan extends BaseModel
         'description' => 'description',
         'default_duration_days' => 'default_duration_days',
         'free_deliveries_per_cycle' => 'free_deliveries_per_cycle',
+        'free_deliveries_override' => 'free_deliveries_override',
         'display_price' => 'display_price',
         'is_active' => 'is_active',
         'sort_order' => 'sort_order',
@@ -27,6 +28,7 @@ class PlusPlan extends BaseModel
     protected $casts = [
         'default_duration_days' => 'integer',
         'free_deliveries_per_cycle' => 'integer',
+        'free_deliveries_override' => 'integer',
         'display_price' => 'decimal:4',
         'is_active' => 'boolean',
         'sort_order' => 'integer',

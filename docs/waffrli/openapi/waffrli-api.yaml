@@ -8171,6 +8171,39 @@ paths:
       x-throttle:
         - customer-api
         - '60,1'
+  /api/v1/customer/sliders:
+    get:
+      tags:
+        - Customer
+      operationId: customer.sliders.get
+      summary: 'Customer Home Slider Controller'
+      description: |-
+        Requires a `user` token.
+        Throttle: `customer-api`.
+        Handler: `Customer\CustomerHomeSliderController`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+      security:
+        -
+          customerToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
   /api/v1/customer/store-categories:
     get:
       tags:

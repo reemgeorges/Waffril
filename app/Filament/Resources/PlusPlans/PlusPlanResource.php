@@ -57,9 +57,10 @@ class PlusPlanResource extends AdminResource
                 Fields::translatable('description', required: false, multiline: true),
                 Grid::make(3)->schema([
                     TextInput::make('default_duration_days')->label(__('admin.fields.default_duration_days'))->integer()->minValue(1)->maxValue(3650)->default(30)->required(),
-                    // 2026-11-12: new cycles use the platform setting (Settings → PLUS); kept read-only.
-                    TextInput::make('free_deliveries_per_cycle')->label(__('admin.fields.free_deliveries_per_cycle'))->integer()->default(0)
-                        ->disabled()->dehydrated(false)->helperText(__('admin.plus.free_deliveries_global_help')),
+                    // NULL = platform default; explicit 0 = no free deliveries for this plan.
+                    TextInput::make('free_deliveries_override')->label(__('admin.plus.plan_free_deliveries'))
+                        ->integer()->minValue(0)->maxValue(100)
+                        ->helperText(__('admin.plus.plan_free_deliveries_help')),
                     Fields::money('display_price', required: false)->helperText(__('admin.plus.display_price_help')),
                 ]),
                 Grid::make(2)->schema([
@@ -90,8 +91,11 @@ class PlusPlanResource extends AdminResource
                     Stack::make([
                         TextColumn::make('default_duration_days')->label(__('admin.fields.default_duration_days'))->icon('heroicon-m-calendar-days')
                             ->formatStateUsing(fn ($state) => trans_choice('admin.table.duration_days', (int) $state, ['count' => (int) $state])),
-                        TextColumn::make('free_deliveries_per_cycle')->label(__('admin.fields.free_deliveries_per_cycle'))->icon('heroicon-m-truck')
-                            ->formatStateUsing(fn ($state) => trans_choice('admin.table.free_per_cycle', (int) $state, ['count' => (int) $state])),
+                        TextColumn::make('free_deliveries_override')->label(__('admin.plus.plan_free_deliveries'))->icon('heroicon-m-truck')
+                            ->placeholder(__('admin.plus.platform_default'))
+                            ->formatStateUsing(fn ($state) => $state === null
+                                ? __('admin.plus.platform_default')
+                                : trans_choice('admin.table.free_per_cycle', (int) $state, ['count' => (int) $state])),
                     ])->space(1),
                     Split::make([
                         TextColumn::make('store_discounts_count')->counts('storeDiscounts')->label(__('admin.plus.store_discounts'))->badge()->color('gold')->grow(false)

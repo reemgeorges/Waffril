@@ -5,6 +5,7 @@ use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Customer\CustomerCartController;
 use App\Http\Controllers\Customer\CustomerCatalogController;
+use App\Http\Controllers\Customer\CustomerHomeSliderController;
 use App\Http\Controllers\Customer\CustomerContentController;
 use App\Http\Controllers\Customer\CustomerEngagementController;
 use App\Http\Controllers\Customer\CustomerNotificationController;
@@ -66,6 +67,7 @@ Route::prefix('customer')->group(function () {
         Route::post('cities/detect', [CustomerCityController::class, 'detect'])->middleware('throttle:60,1');
 
         // Catalog (delivery city of the selected address only).
+        Route::get('sliders', CustomerHomeSliderController::class);
         Route::get('store-categories', [CustomerCatalogController::class, 'storeCategories']);
         Route::get('product-categories', [CustomerCatalogController::class, 'productCategories']);
         Route::get('branches', [CustomerCatalogController::class, 'branches']);
