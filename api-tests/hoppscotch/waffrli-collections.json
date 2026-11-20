@@ -2907,6 +2907,27 @@
        }
       },
       "description": "Route: `GET /api/v1/customer/product-categories`. Same request in Bruno: `WAFFRLI-Customer/05 Stores and Branches/Product categories (tree).bru`."
+     },
+     {
+      "v": "17",
+      "name": "Home sliders (promotions and linked stores)",
+      "method": "GET",
+      "endpoint": "<<base_url>>/api/v1/customer/sliders",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"HTTP 200\", function () {\n  expect(res.getStatus()).to.equal(200);\n});\ntest(\"response envelope and slider list\", function () {\n  const b = res.getBody();\n  expect(b).to.include.all.keys(\"data\", \"status\", \"error\", \"statusCode\");\n  expect(b.data.sliders).to.be.an(\"array\");\n  b.data.sliders.forEach(s => {\n    expect(s).to.include.all.keys(\"id\", \"title\", \"subtitle\", \"image_url\", \"action\", \"store\");\n    expect([\"none\", \"store\"]).to.include(s.action);\n    if (s.action === \"store\") expect(s.store.branch_id).to.be.greaterThan(0);\n  });\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
+      },
+      "body": {
+       "contentType": null,
+       "body": null
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": "Route: `GET /api/v1/customer/sliders`. Same request in Bruno: `WAFFRLI-Customer/05 Stores and Branches/Home sliders.bru`."
      }
     ],
     "auth": {

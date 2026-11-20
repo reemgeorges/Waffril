@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Currency;
 use App\Models\Driver;
+use App\Models\HomeSlider;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
@@ -238,6 +239,9 @@ trait WaffrliFixtures
         $plan = PlusPlan::create(['code' => 'gold', 'name' => ['en' => 'Gold'], 'free_deliveries_per_cycle' => 2, 'display_price' => 5]);
         PlusStoreDiscount::create(['plus_plan_id' => $plan->id, 'store_id' => $store->id, 'discount_type' => 'percent', 'discount_value' => 10, 'max_discount_amount' => 5]);
         app(PlusService::class)->approveNew(PlusRequest::create(['user_id' => $user->id, 'type' => 'new', 'requested_plan_id' => $plan->id]), $admin, PlusMembership::POLICY_MONTHLY);
+
+        // Home slider (2026-11-19 resource): one linked slide.
+        HomeSlider::create(['code' => 'full-dataset', 'title' => ['en' => 'Welcome', 'ar' => 'أهلاً'], 'image' => 'home-sliders/full-dataset.jpg', 'store_id' => $store->id, 'is_active' => true]);
 
         // Catalog taxonomies and a stored (never sent) admin notification.
         $storeCategory = StoreCategory::create(['name' => ['en' => 'Restaurants', 'ar' => 'مطاعم'], 'slug' => 'restaurants']);
