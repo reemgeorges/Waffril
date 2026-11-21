@@ -12,6 +12,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\Order\CheckoutService;
+use Database\Seeders\Demo\DemoContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -35,12 +36,12 @@ use Throwable;
  *  - one Sanctum token per customer and per driver, written ONLY to
  *    storage/app/loadtest/tokens.json (git-ignored), never printed.
  *
- * Guards: APP_ENV must be local, testing or staging AND
- * WAFFRLI_LOADTEST_SEED=yes must be set explicitly. Notifications are muted
+ * Guards: see assertAllowed() (environment, explicit opt-in, explicitly
+ * named disposable database, no real customers/orders). Notifications are muted
  * while seeding (nothing is sent: no SMS, no push). Re-running adds only what
  * is missing (natural keys) and re-issues tokens.
  *
- *   WAFFRLI_LOADTEST_SEED=yes php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder"
+ *   WAFFRLI_LOADTEST_SEED=yes WAFFRLI_LOADTEST_DATABASE=<db name> php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder"
  *
  * Sizes: LOADTEST_CUSTOMERS, LOADTEST_DRIVERS, LOADTEST_ORDERS_PER_CUSTOMER,
  * LOADTEST_CITY (English name, default Hama).
@@ -51,13 +52,38 @@ class LoadTestDatasetSeeder extends Seeder
 
     public const ALLOWED_ENVIRONMENTS = ['local', 'testing', 'staging'];
 
+    /**
+     * Refuses anything but a disposable load-test database, even when the
+     * environment variables are misconfigured:
+     *  1. APP_ENV local/testing/staging, never production;
+     *  2. WAFFRLI_LOADTEST_SEED=yes;
+     *  3. WAFFRLI_LOADTEST_DATABASE equal to the database actually connected
+     *     (the operator names the target explicitly);
+     *  4. that database name contains "loadtest", "staging" or "test";
+     *  5. no customer or order other than demo / load-test ones exists
+     *     (real customer data is never mixed with synthetic data).
+     */
     public static function assertAllowed(): void
     {
-        if (! app()->environment(self::ALLOWED_ENVIRONMENTS)) {
+        if (app()->environment('production') || ! app()->environment(self::ALLOWED_ENVIRONMENTS)) {
             throw new RuntimeException('Load-test data may only be seeded in: '.implode(', ', self::ALLOWED_ENVIRONMENTS).'. Current: '.app()->environment().'.');
         }
         if (env('WAFFRLI_LOADTEST_SEED') !== 'yes') {
             throw new RuntimeException('Set WAFFRLI_LOADTEST_SEED=yes to confirm this is a disposable load-test database.');
+        }
+        $database = (string) DB::connection()->getDatabaseName();
+        if (DB::connection()->getDriverName() !== 'sqlite' || $database !== ':memory:') {
+            if (env('WAFFRLI_LOADTEST_DATABASE') !== $database) {
+                throw new RuntimeException("Set WAFFRLI_LOADTEST_DATABASE to the target database name ({$database}) to confirm it is disposable.");
+            }
+            if (! preg_match('/(loadtest|staging|test)/i', basename($database))) {
+                throw new RuntimeException("Database \"{$database}\" does not look disposable (its name must contain loadtest, staging or test).");
+            }
+        }
+        $synthetic = fn ($q) => $q->where('email', 'like', '%@'.self::EMAIL_DOMAIN)->orWhere('email', 'like', '%@'.DemoContext::DEMO_EMAIL_DOMAIN);
+        if (User::withTrashed()->whereNot($synthetic)->exists()
+            || Order::query()->whereHas('user', fn ($q) => $q->withTrashed()->whereNot($synthetic))->exists()) {
+            throw new RuntimeException('This database holds real customers or orders: load-test data is only seeded into a disposable copy.');
         }
     }
 
@@ -154,18 +180,52 @@ class LoadTestDatasetSeeder extends Seeder
         }
         $drivers = Driver::query()->where('phone', 'like', '+99966%')->orderBy('id')->get();
         $busy = Order::query()->whereIn('driver_id', $drivers->pluck('id'))->whereIn('status', [OrderStatus::Assigned->value, OrderStatus::PickedUp->value])->pluck('driver_id')->all();
-        $orders = Order::query()->whereHas('user', fn ($q) => $q->where('email', 'like', '%@'.self::EMAIL_DOMAIN))
-            ->where('status', OrderStatus::Delivered->value)->whereNull('driver_id')->orderByDesc('id')->limit($drivers->count())->get();
+        $users = User::query()->where('email', 'like', '%@'.self::EMAIL_DOMAIN)->orderBy('id')->get();
+        $branches = Branch::query()->whereIn('city_id', $drivers->pluck('city_id')->unique())->where('is_active', true)->get();
+        $menus = $this->menus($branches);
+        if ($users->isEmpty() || $menus->isEmpty()) {
+            return;
+        }
+        $checkout = app(CheckoutService::class);
         $n = 0;
         foreach ($drivers as $i => $driver) {
-            if (in_array($driver->id, $busy, true) || ! isset($orders[$i])) {
+            if (in_array($driver->id, $busy, true)) {
                 continue;
             }
-            Order::query()->whereKey($orders[$i]->id)->update(['status' => OrderStatus::PickedUp->value, 'driver_id' => $driver->id,
-                'delivered_at' => null, 'picked_up_at' => now()]);
-            $n++;
+            $user = $users[$i % $users->count()];
+            $branchId = $menus->keys()[$i % $menus->count()];
+            // Placed through the real checkout at midday yesterday (branches open), then moved
+            // along the normal lifecycle with a history row for each step.
+            $placedAt = now()->subDay()->setTime(10, 0)->addMinutes($i);
+            Carbon::setTestNow($placedAt);
+            try {
+                DB::transaction(function () use ($checkout, $user, $branchId, $menus, $driver, $placedAt) {
+                    $order = $checkout->placeOrder($user, Branch::query()->findOrFail($branchId),
+                        [['branch_product_id' => $menus[$branchId]['cheapest_id'], 'quantity' => $menus[$branchId]['min_quantity'], 'options' => [], 'notes' => null]],
+                        ['checkout_key' => (string) Str::uuid(), 'use_free_delivery' => false, 'order_number' => self::syntheticNumber(), 'history_note' => self::SYNTHETIC_NOTE]);
+                    foreach ([[OrderStatus::Pending, OrderStatus::Assigned, 5], [OrderStatus::Assigned, OrderStatus::PickedUp, 20]] as [$from, $to, $minutes]) {
+                        OrderStatusHistory::create(['order_id' => $order->id, 'from_status' => $from->value, 'to_status' => $to->value,
+                            'actor_type' => 'system', 'actor_id' => null, 'driver_id' => $driver->id, 'note' => self::SYNTHETIC_NOTE]);
+                    }
+                    Order::query()->whereKey($order->id)->update(['status' => OrderStatus::PickedUp->value, 'driver_id' => $driver->id,
+                        'assigned_at' => $placedAt->copy()->addMinutes(5), 'picked_up_at' => $placedAt->copy()->addMinutes(20)]);
+                });
+                $n++;
+            } catch (Throwable $e) {
+                $this->command?->warn('Active delivery skipped: '.$e->getMessage());
+            } finally {
+                Carbon::setTestNow();
+            }
         }
         $this->command?->info("Active deliveries: {$n} drivers given an in-progress order.");
+    }
+
+    public const SYNTHETIC_NOTE = 'SYNTHETIC load-test record';
+
+    /** LT-######## : never a real order number (those are WF…). */
+    protected static function syntheticNumber(): string
+    {
+        return 'LT-'.strtoupper(Str::random(8));
     }
 
     /**
@@ -230,11 +290,15 @@ class LoadTestDatasetSeeder extends Seeder
                         $lines = [['branch_product_id' => $menu['cheapest_id'], 'quantity' => $menu['min_quantity'] + (($i + $k) % 2), 'options' => [], 'notes' => null]];
                         $order = $checkout->placeOrder($user, Branch::query()->findOrFail($branchId), $lines, [
                             'checkout_key' => (string) Str::uuid(), 'address_id' => $address?->id, 'use_free_delivery' => false,
-                            'history_note' => 'Load-test history',
+                            'order_number' => self::syntheticNumber(), 'history_note' => self::SYNTHETIC_NOTE,
                         ]);
+                        // SYNTHETIC: closed directly (no driver, cash payment left
+                        // pending, no collection/settlement): volume for indexes only,
+                        // identified by the LT- number and the history note.
                         Order::query()->whereKey($order->id)->update(['status' => OrderStatus::Delivered->value, 'delivered_at' => $moment->copy()->addMinutes(40)]);
                         OrderStatusHistory::create(['order_id' => $order->id, 'from_status' => OrderStatus::Pending->value,
-                            'to_status' => OrderStatus::Delivered->value, 'actor_type' => 'system', 'actor_id' => null, 'note' => 'Load-test history']);
+                            'to_status' => OrderStatus::Delivered->value, 'actor_type' => 'system', 'actor_id' => null,
+                            'note' => self::SYNTHETIC_NOTE.' (closed directly; payment not collected)']);
                     });
                     $placed++;
                 } catch (Throwable $e) {

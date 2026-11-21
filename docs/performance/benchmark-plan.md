@@ -34,7 +34,7 @@ Then 500 simultaneously active users ≈ 80–125 req/s, and 2,000 ≈ 330–500
   - Results from a smaller box are a lower bound, not a capacity figure.
 - **The load generator** runs on a separate machine from the system under test.
 - **Production.** Never run the scripts against production without written authorization.
-  - The scripts refuse to start unless `TARGET_ENV` is `staging` or `local`.
+  - The scripts refuse to start unless `TARGET_ENV` is `staging` or `local` **and** every host is listed in `ALLOWED_HOSTS`. Writes need `ALLOW_WRITES=yes`.
   - Set `FORBIDDEN_HOSTS` to the production host names.
 
 ## 3. Scenarios (`tests/load/`)
@@ -97,7 +97,7 @@ production-equivalent staging is **NOT YET VERIFIED**.
 2. Build staging to the same specification. Then:
    - `php artisan migrate`;
    - `php artisan db:seed --class=WaffrliDemoSeeder`;
-   - `WAFFRLI_LOADTEST_SEED=yes php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder"`.
+   - `WAFFRLI_LOADTEST_SEED=yes WAFFRLI_LOADTEST_DATABASE=<db> php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder"`.
 3. Warm up: `php artisan optimize`, then run one `PROFILE=50` pass.
 4. Baseline: `php tests/load/tools/profile-endpoints.php 30 > profile-before.txt`.
 5. For each profile, start `tools/monitor.sh 5 > monitor-<profile>.csv` on the host, then the k6 scripts with `--summary-export summary-<profile>.json`.

@@ -31,7 +31,8 @@ export const options = {
 };
 
 export function setup() {
-  assertSafeTarget();
+  // GPS pings update the driver's stored position: a write.
+  assertSafeTarget({ writes: true });
 }
 
 export default function () {

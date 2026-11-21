@@ -29,18 +29,25 @@ WAFFRLI_DELIVERY_OFFERS_ENABLED=false php artisan db:seed --class=WaffrliDemoSee
 ```
 
 ```bash
-WAFFRLI_LOADTEST_SEED=yes WAFFRLI_DELIVERY_OFFERS_ENABLED=false php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder" --force
+WAFFRLI_LOADTEST_SEED=yes WAFFRLI_LOADTEST_DATABASE=waffrli_loadtest WAFFRLI_DELIVERY_OFFERS_ENABLED=false php artisan db:seed --class="Database\Seeders\LoadTest\LoadTestDatasetSeeder" --force
 ```
 
 ```bash
 php artisan optimize
 ```
 
+**The seeder refuses to run unless** all of these hold:
+- `APP_ENV` is local, testing or staging;
+- `WAFFRLI_LOADTEST_SEED=yes`;
+- `WAFFRLI_LOADTEST_DATABASE` equals the database it is connected to;
+- the database name contains `loadtest`, `staging` or `test`;
+- the database holds no customers or orders other than the demo and load-test ones.
+
 **What the load-test seeder does:**
 
 - **Who:** 2,000 customers (`@loadtest.invalid`, unassigned `+999` phones) and 40 drivers.
-- **Order history:** 3 orders per customer through the real checkout, back-dated and marked delivered.
-- **Active deliveries:** one in-progress delivery per driver, so GPS pings take the full path.
+- **Order history:** 3 orders per customer through the real checkout, back-dated, then **closed directly as delivered**: no driver, and the cash payment is left pending. These rows exist only to give the indexes realistic volume. They are labelled: the order number starts with `LT-` and the history note reads `SYNTHETIC load-test record`.
+- **Active deliveries:** one fresh order per driver, moved pending → assigned → picked up with a history row for each step, so GPS pings take the full path.
 - **Tokens:** one token per account, written to `storage/app/loadtest/tokens.json`. That file is git-ignored, private (mode 600) and is never printed. Copy it to the load-generator machine over a secure channel, and delete it after the campaign.
 - **Sending:** nothing is sent while it runs.
 
@@ -54,22 +61,28 @@ Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) v0.54+ on a 
 ulimit -n 65535
 ```
 
+**Target safety** (enforced by `lib/common.js`):
+- `TARGET_ENV=staging` (or `local`, which allows 127.0.0.1/localhost only).
+- **Every** host used (`BASE_URL`, and `WS_URL` for the WebSocket test) must be listed exactly in `ALLOWED_HOSTS`. `TARGET_ENV` alone authorises nothing.
+- `FORBIDDEN_HOSTS` (your production host names) is always refused.
+- Runs that write data need `ALLOW_WRITES=yes`: checkout (`CHECKOUT_RATE` > 0) creates orders, and GPS updates driver positions.
+
 Customers, with profiles 50, 100, 250, 500, 1000 and 2000:
 
 ```bash
-TARGET_ENV=staging BASE_URL=https://staging.example TOKENS_FILE=./tokens.json PROFILE=250 HOLD_MIN=10 CHECKOUT_RATE=0.05 k6 run --summary-export summary-250.json tests/load/customer-mixed.js
+TARGET_ENV=staging ALLOWED_HOSTS=staging.example ALLOW_WRITES=yes FORBIDDEN_HOSTS=waffrli.example BASE_URL=https://staging.example TOKENS_FILE=./tokens.json PROFILE=250 HOLD_MIN=10 CHECKOUT_RATE=0.05 k6 run --summary-export summary-250.json tests/load/customer-mixed.js
 ```
 
 Drivers (GPS every 5 s):
 
 ```bash
-TARGET_ENV=staging BASE_URL=https://staging.example TOKENS_FILE=./tokens.json DRIVERS=40 HOLD_MIN=10 k6 run tests/load/driver-gps.js
+TARGET_ENV=staging ALLOWED_HOSTS=staging.example ALLOW_WRITES=yes BASE_URL=https://staging.example TOKENS_FILE=./tokens.json DRIVERS=40 HOLD_MIN=10 k6 run tests/load/driver-gps.js
 ```
 
 Persistent WebSocket connections:
 
 ```bash
-TARGET_ENV=staging BASE_URL=https://staging.example WS_URL=wss://ws.staging.example REVERB_KEY=<public app key> TOKENS_FILE=./tokens.json CONNECTIONS=2000 RAMP_MIN=5 HOLD_MIN=15 k6 run tests/load/reverb-connections.js
+TARGET_ENV=staging ALLOWED_HOSTS=staging.example,ws.staging.example BASE_URL=https://staging.example WS_URL=wss://ws.staging.example REVERB_KEY=<public app key> TOKENS_FILE=./tokens.json CONNECTIONS=2000 RAMP_MIN=5 HOLD_MIN=15 k6 run tests/load/reverb-connections.js
 ```
 
 Server-side sampling, run on the staging host during each test:

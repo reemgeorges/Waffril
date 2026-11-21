@@ -4,7 +4,9 @@ namespace Tests\Feature\Performance;
 
 use App\Models\PersonalAccessToken;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\Settings\PlatformSettings;
+use Database\Seeders\LoadTest\LoadTestDatasetSeeder;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Customer\CustomerTestCase;
@@ -95,5 +97,58 @@ class CapacityRegressionTest extends CustomerTestCase
         // Revocation is unchanged: a deleted token is refused at once.
         PersonalAccessToken::findToken($token)->delete();
         $this->api($token)->getJson('/api/v1/customer/orders')->assertUnauthorized();
+    }
+
+    private function loadTestEnv(array $vars): void
+    {
+        foreach ($vars as $k => $v) {
+            if ($v === null) {
+                putenv($k);
+                unset($_ENV[$k], $_SERVER[$k]);
+            } else {
+                putenv("{$k}={$v}");
+                $_ENV[$k] = $_SERVER[$k] = $v;
+            }
+        }
+    }
+
+    public function test_load_test_seeder_refuses_anything_but_a_disposable_database(): void
+    {
+        $seeder = LoadTestDatasetSeeder::class;
+        $database = (string) DB::connection()->getDatabaseName();
+        $refuses = function (string $why) use ($seeder) {
+            try {
+                $seeder::assertAllowed();
+                $this->fail("Expected a refusal: {$why}");
+            } catch (\RuntimeException $e) {
+                $this->assertNotSame('', $e->getMessage(), $why);
+            }
+        };
+
+        try {
+            $this->loadTestEnv(['WAFFRLI_LOADTEST_SEED' => null, 'WAFFRLI_LOADTEST_DATABASE' => $database]);
+            $refuses('no explicit opt-in');
+
+            $this->loadTestEnv(['WAFFRLI_LOADTEST_SEED' => 'yes', 'WAFFRLI_LOADTEST_DATABASE' => $database]);
+            $seeder::assertAllowed();   // demo data only: allowed
+
+            if ($database !== ':memory:') {
+                $this->loadTestEnv(['WAFFRLI_LOADTEST_DATABASE' => 'some_other_db']);
+                $refuses('target database not named explicitly');
+                $this->loadTestEnv(['WAFFRLI_LOADTEST_DATABASE' => $database]);
+            }
+
+            // A real customer in the database: refused, and nothing is touched.
+            $real = User::query()->create(['name' => 'Real Customer', 'email' => 'real@example.com', 'phone' => '+963900000001', 'password' => 'x-not-used-x']);
+            $refuses('real customer present');
+            $real->forceDelete();
+            $seeder::assertAllowed();
+
+            $this->app['env'] = 'production';
+            $refuses('production');
+        } finally {
+            $this->app['env'] = 'testing';
+            $this->loadTestEnv(['WAFFRLI_LOADTEST_SEED' => null, 'WAFFRLI_LOADTEST_DATABASE' => null]);
+        }
     }
 }

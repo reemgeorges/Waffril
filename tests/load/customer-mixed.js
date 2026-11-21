@@ -10,8 +10,8 @@
 // CHECKOUT_RATE (0..1, default 0.05): share of journeys that end in a real
 // checkout on the staging database (cash, no wallet). Set 0 for read-only.
 import http from 'k6/http';
-import { group, sleep } from 'k6';
-import { Counter, Trend } from 'k6/metrics';
+import { check, group, sleep } from 'k6';
+import { Counter, Rate, Trend } from 'k6/metrics';
 import { assertSafeTarget, BASE_URL, branches, customerFor, headers, ok, stagesFor, think, uuid } from './lib/common.js';
 
 const PROFILE = __ENV.PROFILE || '50';
@@ -22,7 +22,9 @@ const THINK_MAX = parseFloat(__ENV.THINK_MAX || '8');
 
 const checkoutLatency = new Trend('waffrli_checkout_ms', true);
 const ordersPlaced = new Counter('waffrli_orders_placed');
-const checkoutRejected = new Counter('waffrli_checkout_rejected');
+const checkoutRejected = new Counter('waffrli_checkout_rejected');   // 409/422 business refusals
+const checkoutRateLimited = new Counter('waffrli_checkout_rate_limited');   // 429
+const replayMismatch = new Rate('waffrli_checkout_replay_mismatch');   // replay did not return the original order
 
 // PROPOSED thresholds (not approved business requirements): see docs/performance/benchmark-plan.md.
 export const options = {
@@ -34,12 +36,13 @@ export const options = {
     'http_req_duration{kind:read}': ['p(95)<500', 'p(99)<1500'],
     'http_req_duration{kind:search}': ['p(95)<800'],
     waffrli_checkout_ms: ['p(95)<2000'],
+    waffrli_checkout_replay_mismatch: ['rate==0'],
   },
   summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
 };
 
 export function setup() {
-  assertSafeTarget();
+  assertSafeTarget({ writes: CHECKOUT_RATE > 0 });
   const res = http.get(`${BASE_URL}/up`);
   if (res.status !== 200) {
     throw new Error(`${BASE_URL}/up answered ${res.status}`);
@@ -81,7 +84,7 @@ export default function () {
     group('search', () => {
       const terms = ['shawarma', 'pizza', 'شاورما', 'برغر', 'coffee', 'chicken'];
       const res = http.get(`${BASE_URL}/api/v1/customer/search?q=${encodeURIComponent(terms[__ITER % terms.length])}`,
-        headers(t, { tags: { name: 'search', kind: 'search' } }));
+        headers(t, { tags: { name: 'search', kind: 'search' }, expected: [422] }));
       ok(res, 'search', [422]);
     });
     sleep(think(THINK_MIN, THINK_MAX));
@@ -96,7 +99,7 @@ export default function () {
     group('cart and checkout', () => {
       const add = http.post(`${BASE_URL}/api/v1/customer/cart/items`,
         JSON.stringify({ branch_id: branch.id, product_id: branch.cheapest_product_id, quantity: branch.min_quantity }),
-        headers(t, { tags: { name: 'cart-add', kind: 'write' } }));
+        headers(t, { tags: { name: 'cart-add', kind: 'write' }, expected: [409, 422, 429] }));
       ok(add, 'cart-add', [409, 422]);
       const cartId = add.status < 300 ? add.json('data.cart.id') : null;
       sleep(think(1, 3));
@@ -107,18 +110,30 @@ export default function () {
       const key = uuid();
       const body = JSON.stringify({ address_id: customer.address_id, use_free_delivery: false });
       const res = http.post(`${BASE_URL}/api/v1/customer/carts/${cartId}/checkout`, body,
-        headers(t, { headers: { 'Idempotency-Key': key }, tags: { name: 'checkout', kind: 'write' } }));
+        headers(t, { headers: { 'Idempotency-Key': key }, tags: { name: 'checkout', kind: 'write' }, expected: [409, 422, 429] }));
       checkoutLatency.add(res.timings.duration);
-      // 409/422 are business refusals (closed branch, paused ordering, rate limit 429) — counted, not errors of the platform.
       if (res.status >= 200 && res.status < 300) {
+        const orderId = res.json('data.order.id');
         ordersPlaced.add(1);
-        // The app retries with the same key: must return the same order, never a second one.
+        // The app retries with the same key: it must get the SAME order back
+        // (2xx, replayed=true, same id) — never a second order, never a 404.
         const replay = http.post(`${BASE_URL}/api/v1/customer/carts/${cartId}/checkout`, body,
-          headers(t, { headers: { 'Idempotency-Key': key }, tags: { name: 'checkout-replay', kind: 'write' } }));
-        ok(replay, 'checkout-replay', [404]);
+          headers(t, { headers: { 'Idempotency-Key': key }, tags: { name: 'checkout-replay', kind: 'write' }, expected: [429] }));
+        if (replay.status === 429) {
+          // Throttled before reaching checkout: no verdict on idempotency, reported as rate limiting.
+          checkoutRateLimited.add(1);
+        } else {
+          const sameOrder = replay.status >= 200 && replay.status < 300
+            && replay.json('data.replayed') === true && orderId !== undefined && replay.json('data.order.id') === orderId;
+          replayMismatch.add(!sameOrder);
+          check(replay, { 'checkout-replay: same order returned': () => sameOrder });
+        }
+      } else if (res.status === 429) {
+        checkoutRateLimited.add(1);   // rate limiting: reported apart from business refusals
+      } else if (res.status === 409 || res.status === 422) {
+        checkoutRejected.add(1, { status: String(res.status) });   // closed branch, paused ordering, minimum…
       } else {
-        checkoutRejected.add(1, { status: String(res.status) });
-        ok(res, 'checkout', [409, 422, 429]);
+        ok(res, 'checkout');   // anything else (5xx, timeout) fails the check
       }
     });
   }
