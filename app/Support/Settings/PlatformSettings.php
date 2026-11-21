@@ -58,7 +58,44 @@ final class PlatformSettings
         ];
     }
 
+    /**
+     * Container key of the per-request memo (2026-11-21, capacity audit):
+     * get() ran one query per call, e.g. 12 identical queries for a list of
+     * 12 branches. The memo is a SCOPED instance: a new one for every HTTP
+     * request, and Laravel resets it before every queue job, so long-running
+     * workers never keep a stale value. Saving or deleting a Setting clears it.
+     */
+    public const MEMO = 'waffrli.platform_settings.memo';
+
+    /** @return \ArrayObject<string, mixed> */
+    private static function memo(): \ArrayObject
+    {
+        if (! app()->bound(self::MEMO)) {
+            app()->scoped(self::MEMO, fn () => new \ArrayObject);
+        }
+
+        return app(self::MEMO);
+    }
+
+    /** Forget the values read in this request/job (called when a Setting is saved or deleted). */
+    public static function forgetMemo(): void
+    {
+        if (app()->resolved(self::MEMO)) {
+            app(self::MEMO)->exchangeArray([]);
+        }
+    }
+
     public static function get(string $key): mixed
+    {
+        $memo = self::memo();
+        if ($memo->offsetExists($key)) {
+            return $memo[$key];
+        }
+
+        return $memo[$key] = self::read($key);
+    }
+
+    private static function read(string $key): mixed
     {
         $definition = self::definitions()[$key] ?? null;
         // Raw stored JSON (toBase): the model's `json` cast would decode it a second time.

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Localization;
 
+use App\Filament\Pages\PlatformSettingsPage;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Models\Admin;
 use App\Models\Branch;
@@ -107,6 +108,9 @@ class DatabaseTranslationsTest extends CustomerTestCase
 
         // Only Arabic set: English callers get the Arabic text rather than nothing.
         Setting::query()->where('key', 'maintenance.message')->update(['value' => json_encode(['ar' => 'متوقف مؤقتًا'], JSON_UNESCAPED_UNICODE)]);
+        // A raw query-builder write bypasses the Setting model events that clear the
+        // per-request settings memo (the app always saves through the model).
+        PlatformSettings::forgetMemo();
         $this->assertSame('متوقف مؤقتًا', PlatformSettings::text('maintenance.message', 'en'));
     }
 
@@ -135,13 +139,13 @@ class DatabaseTranslationsTest extends CustomerTestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         $this->actingAs($this->admin(), 'admin_web');
 
-        Livewire::test(\App\Filament\Pages\PlatformSettingsPage::class)
+        Livewire::test(PlatformSettingsPage::class)
             ->fillForm(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance']])
             ->call('save');
         $this->assertSame(['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance'], PlatformSettings::get('maintenance.message'));
 
         // Clearing one language keeps the other.
-        Livewire::test(\App\Filament\Pages\PlatformSettingsPage::class)
+        Livewire::test(PlatformSettingsPage::class)
             ->assertSchemaStateSet(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => 'Short maintenance']])
             ->fillForm(['maintenance__message' => ['ar' => 'صيانة قصيرة', 'en' => '']])
             ->call('save');

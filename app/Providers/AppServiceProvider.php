@@ -7,6 +7,7 @@ use App\Contracts\Messaging\TextMessageGateway;
 use App\Contracts\Push\PushTransport;
 use App\Exceptions\Handler;
 use App\Listeners\RealtimeDomainSubscriber;
+use App\Models\PersonalAccessToken;
 use App\Policies\NotificationPolicy;
 use App\Policies\RolePolicy;
 use App\Services\Functional\AdminAuthService;
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
 use Spatie\Translatable\Facades\Translatable;
 
@@ -104,6 +106,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerAuthRateLimiters();
+
+        // WAFFRLI (2026-11-21, capacity audit): at most one `last_used_at`
+        // write per token per minute instead of one per API request.
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         // WAFFRLI (2026-11-16): unexpected errors are also stored, grouped and
         // scrubbed, for Monitoring → Errors. Logging is unchanged.
