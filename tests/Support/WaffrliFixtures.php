@@ -28,7 +28,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\User;
 use App\Models\UserAddress;
-use App\Services\Catalog\ProductRatingService;
+use App\Services\Ratings\OrderDriverRatingService;
 use App\Services\Driver\DriverCashSettlementService;
 use App\Services\Order\OrderAdminService;
 use App\Services\Order\RefundService;
@@ -223,7 +223,14 @@ trait WaffrliFixtures
         // Delivered cash order for a settlement; rating on the delivered order.
         $this->order($user, $branch, '7', ['status' => OrderStatus::Delivered, 'driver' => $driver]);
         app(DriverCashSettlementService::class)->prepare($driver, $usd, now()->toDateString(), $admin);
-        app(ProductRatingService::class)->record($user, $product, Order::where('status', 'delivered')->firstOrFail(), 4, 'good');
+        $ratedOrder = Order::where('status', 'delivered')->firstOrFail();
+        app(OrderDriverRatingService::class)->saveOrderRating($user, $ratedOrder->id, 4, 'good');
+        app(OrderDriverRatingService::class)->saveDriverRating($user, $ratedOrder->id, 5, 'good driver');
+        // Historical product rating used only to verify archive constraints.
+        DB::table('legacy_product_ratings')->insert([
+            'user_id' => $user->id, 'product_id' => $product->id, 'order_id' => $ratedOrder->id,
+            'rating' => 4, 'is_hidden' => false, 'created_at' => now(), 'updated_at' => now(),
+        ]);
 
         // Dispatch (B1): an accepted order with one pending admin delivery offer
         // (inserted directly: delivery offers are switched off by default).

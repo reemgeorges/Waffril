@@ -147,9 +147,14 @@ class User extends BaseAuthModel implements \Illuminate\Contracts\Translation\Ha
         return $this->belongsToMany(Product::class, 'favorites')->withPivot('created_at');
     }
 
-    public function productRatings(): HasMany
+    public function orderRatings(): HasMany
     {
-        return $this->hasMany(ProductRating::class);
+        return $this->hasMany(OrderRating::class);
+    }
+
+    public function driverRatings(): HasMany
+    {
+        return $this->hasMany(DriverRating::class);
     }
 
     public function displayCurrency(): BelongsTo

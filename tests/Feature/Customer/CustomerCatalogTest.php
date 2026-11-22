@@ -7,7 +7,6 @@ use App\Models\BranchProduct;
 use App\Models\City;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\ProductRating;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 
@@ -59,7 +58,7 @@ class CustomerCatalogTest extends CustomerTestCase
 
         // One image per product, aggregates only (no individual comments exposed).
         $this->assertStringContainsString('demo/products/', $a['image_url']);
-        $this->assertArrayHasKey('average', $a['rating']);
+        $this->assertArrayNotHasKey('rating', $a);
         $this->assertStringNotContainsString('comment', json_encode($a));
     }
 
@@ -112,24 +111,4 @@ class CustomerCatalogTest extends CustomerTestCase
         $this->api($token)->postJson('/api/v1/customer/products/999999/favorite')->assertStatus(404);
     }
 
-    public function test_only_verified_purchasers_can_rate_and_hidden_ratings_do_not_count(): void
-    {
-        $user = $this->demoCustomer(4);
-        $token = $this->loginCustomer($user);
-        $order = Order::where('order_number', 'DEMO-0004')->firstOrFail(); // delivered: paracetamol + vitamin C
-        $vitamin = Product::where('name->en', 'Vitamin C 1000 mg')->firstOrFail();
-        $notBought = Product::where('name->en', 'Power bank 10000 mAh')->firstOrFail();
-
-        $this->api($token)->postJson("/api/v1/customer/products/{$vitamin->id}/rating", ['order_id' => $order->id, 'rating' => 5, 'comment' => 'Works'])
-            ->assertOk()->assertJsonPath('data.product_rating.count', 1);
-        $this->api($token)->postJson("/api/v1/customer/products/{$notBought->id}/rating", ['order_id' => $order->id, 'rating' => 5])->assertStatus(422);
-        $other = Order::where('order_number', 'DEMO-0001')->firstOrFail();
-        $this->api($token)->postJson("/api/v1/customer/products/{$vitamin->id}/rating", ['order_id' => $other->id, 'rating' => 5])->assertStatus(404);
-        $pending = Order::where('user_id', $user->id)->where('status', 'pending')->firstOrFail();
-        $this->api($token)->postJson("/api/v1/customer/products/{$vitamin->id}/rating", ['order_id' => $pending->id, 'rating' => 4])->assertStatus(422);
-
-        // Hidden (moderated) ratings never count: the power bank's only rating is hidden in the demo data.
-        $this->assertSame(1, ProductRating::where('product_id', $notBought->id)->where('is_hidden', true)->count());
-        $this->assertSame(0, $notBought->fresh()->rating_count);
-    }
 }

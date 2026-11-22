@@ -160,8 +160,9 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
             'chk_pog_selection' => ['product_option_groups', ['max_select' => 0]],
             'chk_pog_size_single' => ['product_option_groups', ['kind' => 'size']],
             'chk_po_max_quantity' => ['product_options', ['max_quantity' => 0]],
-            'chk_prt_rating' => ['product_ratings', ['rating' => 6]],
-            'chk_products_rating' => ['products', ['rating_sum' => $raw('rating_count * 5 + 1')], ['id' => $data['product']->id]],
+            'chk_prt_rating' => ['legacy_product_ratings', ['rating' => 6]],
+            'chk_order_rating_range' => ['order_ratings', ['rating' => 6]],
+            'chk_driver_rating_range' => ['driver_ratings', ['rating' => 6]],
             'chk_settings_key_format' => ['settings', ['key' => 'Bad Key']],
             'chk_stores_contact_phone' => ['stores', ['contact_phone' => '0912345678']],
             'chk_stores_contact_whatsapp' => ['stores', ['contact_whatsapp' => '0912345678']],
@@ -286,10 +287,10 @@ class WaffrliMySqlSchemaTest extends AdminPanelTestCase
         $this->assertTrue($order->payments->first()->refunds->isNotEmpty());
         $this->assertSame($data['store']->id, $order->branch->store->id);
 
-        $product = Product::with(['optionGroups.options', 'branchProducts', 'categories', 'ratings'])->findOrFail($data['product']->id);
+        $product = Product::with(['optionGroups.options', 'branchProducts', 'categories'])->findOrFail($data['product']->id);
         $this->assertSame(1, $product->optionGroups->first()->options->count());
-        $this->assertSame(1, $product->ratings->count());
-        $this->assertSame(1, $product->rating_count);
+        $this->assertSame(1, DB::table('order_ratings')->count());
+        $this->assertSame(1, DB::table('driver_ratings')->count());
 
         $store = Store::with(['branches.openingHours', 'products', 'categories'])->findOrFail($data['store']->id);
         $this->assertSame(7, $store->branches->first()->openingHours->count());

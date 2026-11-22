@@ -182,15 +182,12 @@ class WaffrliDemoSeederTest extends AdminPanelTestCase
         $this->assertSame(3, PlusCycleDiscount::query()->where('plus_cycle_id', $current->id)->count());
         $this->assertSame(['exception', 'plan'], PlusCycleDiscount::query()->where('plus_cycle_id', $next->id)->orderBy('source')->pluck('source')->unique()->values()->all());
 
-        // Catalog: one image per product, several categories, hidden ratings for moderation.
+        // Catalog remains product-focused, while customer feedback is on orders/drivers.
         $this->assertTrue(Product::all()->every(fn ($p) => $p->image && Storage::disk('public')->exists($p->image)));
         $this->assertGreaterThan(0, Product::has('categories', '>=', 2)->count());
-        $this->assertSame(2, DB::table('product_ratings')->where('is_hidden', true)->count());
-        foreach (Product::all() as $product) {
-            $visible = DB::table('product_ratings')->where('product_id', $product->id)->where('is_hidden', false);
-            $this->assertSame((clone $visible)->count(), $product->rating_count);
-            $this->assertSame((int) (clone $visible)->sum('rating'), $product->rating_sum);
-        }
+        $this->assertGreaterThan(0, DB::table('order_ratings')->count());
+        $this->assertSame(2, DB::table('order_ratings')->where('is_hidden', true)->count());
+        $this->assertSame(0, DB::table('legacy_product_ratings')->count());
     }
 
     public function test_seeded_translatable_data_is_bilingual(): void

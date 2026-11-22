@@ -10,7 +10,6 @@ use App\Filament\Resources\Products\RelationManagers\BranchOptionPricesRelationM
 use App\Filament\Resources\Products\RelationManagers\BranchPricesRelationManager;
 use App\Filament\Resources\Products\RelationManagers\OptionGroupsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
-use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\Columns;
 use App\Filament\Support\Fields;
@@ -40,7 +39,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 /**
  * WAFFRLI (2026-10-31). Store-owned products: one image, several
  * categories, option groups (sizes / choices / add-ons), per-branch prices
- * and availability, per-branch option prices, and rating moderation.
+ * and availability, per-branch option prices, and pricing and option management.
  * The owning store cannot change after creation.
  */
 class ProductResource extends AdminResource
@@ -103,7 +102,7 @@ class ProductResource extends AdminResource
 
     /**
      * All products (opened from Stores; table UX overhaul 2026-11-12):
-     * picture, name with its store and categories, branch pricing, rating
+     * picture, name with its store and categories, branch pricing
      * and status. "Prices & availability" is the primary action.
      */
     public static function table(Table $table): Table
@@ -124,8 +123,6 @@ class ProductResource extends AdminResource
                     ->color(fn ($state) => (int) $state > 0 ? 'success' : 'warning')
                     ->url(fn (Product $record) => $edit($record, 'branch-prices'))
                     ->extraAttributes(['class' => 'wf-stat-link'])->width(TableDefaults::COMPACT_WIDTH),
-                Columns::stars('rating', fn (Product $record) => [$record->averageRating(), (int) $record->rating_count])
-                    ->url(fn (Product $record) => $edit($record, 'ratings'))->visibleFrom('md'),
                 Columns::status(),
             ])
             ->searchPlaceholder(__('admin.table.search_product_name'))
@@ -150,8 +147,6 @@ class ProductResource extends AdminResource
                     ->visible(fn (Product $record) => static::can('update', $record))),
                 RowActions::more([
                     EditAction::make()->label(__('admin.table.edit_details')),
-                    Action::make('ratings')->label(__('admin.table.ratings'))->icon('heroicon-m-star')
-                        ->url(fn (Product $record) => $edit($record, 'ratings')),
                     ...RowActions::activation(static::class),
                     DeleteAction::make(), RestoreAction::make(),
                 ]),
@@ -173,7 +168,6 @@ class ProductResource extends AdminResource
             'option-groups' => OptionGroupsRelationManager::class,
             'options' => OptionsRelationManager::class,
             'branch-option-prices' => BranchOptionPricesRelationManager::class,
-            'ratings' => RatingsRelationManager::class,
         ];
     }
 

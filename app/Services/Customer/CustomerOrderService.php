@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CustomerOrderService
 {
-    public const WITH = ['branch.store', 'currency', 'items.options', 'items.offer', 'payments.method', 'statusHistories', 'cancellation', 'cancellationRequests', 'refunds', 'driver'];
+    public const WITH = ['branch.store', 'currency', 'items.options', 'items.offer', 'payments.method', 'statusHistories', 'cancellation', 'cancellationRequests', 'refunds', 'driver', 'orderRating', 'driverRating'];
 
     public function own(User $user, int|string $orderId): Order
     {
@@ -104,6 +104,23 @@ class CustomerOrderService
             'can_cancel' => $order->status === OrderStatus::Pending,
             'can_request_cancellation' => in_array($order->status, [OrderStatus::Accepted, OrderStatus::Assigned, OrderStatus::PickedUp], true)
                 && ! $order->cancellationRequests->contains('status', OrderCancellationRequest::STATUS_PENDING),
+        ];
+        $data['ratings'] = [
+            'can_rate_order' => $order->status === OrderStatus::Delivered,
+            'can_rate_driver' => $order->status === OrderStatus::Delivered && $order->driver_id !== null,
+            'order' => $order->orderRating ? [
+                'rating' => $order->orderRating->rating,
+                'comment' => $order->orderRating->comment,
+                'is_hidden' => (bool) $order->orderRating->is_hidden,
+                'updated_at' => $order->orderRating->updated_at?->toIso8601String(),
+            ] : null,
+            'driver' => $order->driverRating ? [
+                'rating' => $order->driverRating->rating,
+                'comment' => $order->driverRating->comment,
+                'is_hidden' => (bool) $order->driverRating->is_hidden,
+                'driver_id' => $order->driverRating->driver_id,
+                'updated_at' => $order->driverRating->updated_at?->toIso8601String(),
+            ] : null,
         ];
         if (! $detailed) {
             return $data;

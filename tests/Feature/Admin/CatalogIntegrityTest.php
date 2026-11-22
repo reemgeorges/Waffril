@@ -13,7 +13,6 @@ use App\Models\ProductOption;
 use App\Models\ProductOptionGroup;
 use App\Models\Setting;
 use App\Services\Catalog\BranchHoursService;
-use App\Services\Catalog\ProductRatingService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Tests\Support\WaffrliFixtures;
@@ -90,45 +89,6 @@ class CatalogIntegrityTest extends AdminPanelTestCase
         $this->assertFalse($hours->isOpenAt($branch, $friday), 'temporary closure wins');
     }
 
-    public function test_ratings_need_delivered_purchase_hidden_ratings_leave_the_average_placeholder_separate(): void
-    {
-        $admin = $this->superAdmin();
-        $store = $this->store();
-        $branch = $this->branch($store, $this->city());
-        $product = $this->product($store);
-        $service = app(ProductRatingService::class);
-        Setting::create(['key' => 'catalog.placeholder_rating', 'value' => 4.5]);
-
-        $this->assertSame(4.5, $product->displayRating());
-        $this->assertNull($product->averageRating());
-
-        $alice = $this->customer();
-        $pending = $this->order($alice, $branch, '10');
-        try {
-            $service->record($alice, $product, $pending, 5, null);
-            $this->fail('Undelivered purchase cannot be rated.');
-        } catch (BusinessRuleException) {
-        }
-
-        $service->record($alice, $product, $this->order($alice, $branch, '10', ['status' => OrderStatus::Delivered]), 5, 'great');
-        $bob = $this->customer();
-        $bobRating = $service->record($bob, $product, $this->order($bob, $branch, '10', ['status' => OrderStatus::Delivered]), 1, 'spam');
-
-        $this->assertSame(3.0, $product->fresh()->averageRating());
-        $service->hide($bobRating, $admin, 'abusive');
-        $this->assertSame(5.0, $product->fresh()->averageRating());
-        $this->assertSame(1, $product->fresh()->rating_count);
-        $service->unhide($bobRating, $admin);
-        $this->assertSame(2, $product->fresh()->rating_count);
-
-        // Re-rating replaces, never duplicates.
-        $service->record($alice, $product, $alice->orders()->where('status', 'delivered')->first(), 3, null);
-        $this->assertSame(2, $product->fresh()->rating_count);
-        $this->assertSame(2.0, $product->fresh()->averageRating());
-
-        $this->expectException(BusinessRuleException::class);
-        $service->hide($bobRating, $this->employee(['catalog.view']), 'x');
-    }
 
     public function test_category_tree_refuses_self_parent_and_cycles(): void
     {

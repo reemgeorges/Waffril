@@ -10,7 +10,6 @@ use App\Models\City;
 use App\Models\Currency;
 use App\Models\Offer;
 use App\Models\Product;
-use App\Models\Setting;
 use App\Models\StoreCategory;
 use App\Models\User;
 use App\Services\Catalog\BranchHoursService;
@@ -225,7 +224,7 @@ class CustomerCatalogService
             ])->values();
     }
 
-    /** Product card at a branch: branch price, best current public offer, aggregate rating. */
+    /** Product card at a branch: branch price and current public offer. */
     public function productSummary(BranchProduct $bp, Collection $offers, ?User $user): array
     {
         $product = $bp->product;
@@ -254,21 +253,9 @@ class CustomerCatalogService
             'requires_options' => $product->relationLoaded('optionGroups')
                 ? $product->optionGroups->contains(fn ($g) => $g->is_active && ! $g->trashed() && $g->min_select > 0)
                 : null,
-            'rating' => $this->rating($product),
         ];
     }
 
-    /** Genuine aggregate only (hidden ratings are already excluded from the counters); placeholder kept separate. */
-    public function rating(Product $product): array
-    {
-        static $placeholder = false;
-        if ($placeholder === false) {
-            $value = Setting::query()->where('key', 'catalog.placeholder_rating')->value('value');
-            $placeholder = is_numeric($value) ? (float) $value : null;
-        }
-
-        return ['average' => $product->averageRating(), 'count' => (int) $product->rating_count, 'placeholder' => $product->rating_count > 0 ? null : $placeholder];
-    }
 
     /** @return Collection<int, Collection<int, Offer>> active product offers of the branch, keyed by product */
     public function offersFor(Branch $branch): Collection

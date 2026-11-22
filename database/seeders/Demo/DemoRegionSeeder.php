@@ -22,7 +22,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\User;
 use App\Models\UserAddress;
-use App\Services\Catalog\ProductRatingService;
+use App\Services\Ratings\OrderDriverRatingService;
 use App\Services\Currency\OperationalMoney;
 use App\Services\Model\DeliveryFeeRule\DeliveryFeeRuleService;
 use App\Services\Order\OrderAdminService;
@@ -633,7 +633,7 @@ SVG);
                 // Typed in NEW pounds; the order's SYP amounts are stored in old pounds.
                 Money::toStorage(Denomination::toStored(BigDecimal::of($argument[0]), $order->currency)), $argument[1], $argument[2], $admin, $key.':refund'
             ),
-            'rate' => app(ProductRatingService::class)->record($order->user, $order->items()->firstOrFail()->product, $order, $argument[0], $argument[1]),
+            'rate' => app(OrderDriverRatingService::class)->saveOrderRating($order->user, $order->id, (int) $argument[0], $argument[1]),
         };
     }
 

@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Stores;
 
 use App\Filament\Resources\Branches\BranchResource;
 use App\Filament\Resources\Categories\CategoryResource;
-use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\StoreCategories\StoreCategoryResource;
 use App\Filament\Resources\Stores\Pages\CreateStore;
@@ -77,7 +76,6 @@ class StoreResource extends AdminResource
             ProductResource::getRouteBaseName().'.*',
             StoreCategoryResource::getRouteBaseName().'.*',
             CategoryResource::getRouteBaseName().'.*',
-            ProductRatingResource::getRouteBaseName().'.*',
         ];
     }
 

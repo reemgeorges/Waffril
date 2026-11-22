@@ -6,9 +6,6 @@ use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
-use App\Filament\Resources\ProductRatings\Pages\ListProductRatings;
-use App\Filament\Resources\Products\Pages\EditProduct;
-use App\Filament\Resources\Products\RelationManagers\RatingsRelationManager as ProductRatingsRelationManager;
 use App\Filament\Resources\Stores\Pages\EditStore;
 use App\Filament\Resources\Stores\Pages\ListStores;
 use App\Filament\Resources\Stores\RelationManagers\BranchesRelationManager;
@@ -18,7 +15,6 @@ use App\Filament\Support\Avatar;
 use App\Filament\Support\Fields;
 use App\Models\AdminAuditLog;
 use App\Models\BranchProduct;
-use App\Models\ProductRating;
 use Livewire\Livewire;
 use Tests\Support\WaffrliFixtures;
 
@@ -125,24 +121,6 @@ class AdminTableUxTest extends AdminPanelTestCase
             ->assertCanSeeTableRecords([$order]);
     }
 
-    public function test_ratings_hide_the_column_of_the_page_they_sit_on_and_filter_by_score(): void
-    {
-        $store = $this->store();
-        $product = $this->product($store);
-        $customer = $this->customer();
-        $order = $this->order($customer, $this->branch($store, $this->city()), '5');
-        $five = ProductRating::query()->create(['user_id' => $customer->id, 'product_id' => $product->id, 'order_id' => $order->id, 'rating' => 5, 'comment' => 'Great']);
-        $this->actingAsAdmin($this->superAdmin());
-
-        Livewire::test(ListProductRatings::class)
-            ->assertTableColumnVisible('product.name')
-            ->filterTable('rating', [5])->assertCanSeeTableRecords([$five])
-            ->filterTable('rating', [1])->assertCanNotSeeTableRecords([$five]);
-
-        Livewire::test(ProductRatingsRelationManager::class, ['ownerRecord' => $product, 'pageClass' => EditProduct::class])
-            ->assertCanSeeTableRecords([$five])
-            ->assertTableColumnHidden('product.name');
-    }
 
     public function test_an_orders_payments_tab_does_not_repeat_the_order(): void
     {

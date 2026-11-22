@@ -53,6 +53,11 @@ class Driver extends BaseAuthModel implements \Illuminate\Contracts\Translation\
         return $this->hasMany(Order::class);
     }
 
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(DriverRating::class);
+    }
+
     public function activeOrders(): HasMany
     {
         return $this->hasMany(Order::class)->whereIn('status', [

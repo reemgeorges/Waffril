@@ -9,6 +9,10 @@ use App\Exceptions\Handler;
 use App\Listeners\RealtimeDomainSubscriber;
 use App\Models\PersonalAccessToken;
 use App\Policies\NotificationPolicy;
+use App\Models\OrderRating;
+use App\Models\DriverRating;
+use App\Policies\OrderRatingPolicy;
+use App\Policies\DriverRatingPolicy;
 use App\Policies\RolePolicy;
 use App\Services\Functional\AdminAuthService;
 use App\Services\Functional\UserAuthService;
@@ -139,6 +143,8 @@ class AppServiceProvider extends ServiceProvider
         // WAFFRLI (2026-10-31): policies for vendor models used by the admin panel.
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(DatabaseNotification::class, NotificationPolicy::class);
+        Gate::policy(OrderRating::class, OrderRatingPolicy::class);
+        Gate::policy(DriverRating::class, DriverRatingPolicy::class);
     }
 
     /**

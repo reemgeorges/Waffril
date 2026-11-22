@@ -8,6 +8,7 @@ use App\Filament\Resources\Drivers\Pages\EditDriver;
 use App\Filament\Resources\Drivers\Pages\ListDrivers;
 use App\Filament\Resources\Drivers\RelationManagers\CashCollectionsRelationManager;
 use App\Filament\Resources\Drivers\RelationManagers\CashSettlementsRelationManager;
+use App\Filament\Resources\Drivers\RelationManagers\RatingsRelationManager;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
@@ -88,7 +89,9 @@ class DriverResource extends AdminResource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with('city'))
+            ->modifyQueryUsing(fn ($query) => $query->with('city')
+                ->withAvg(['ratings as public_rating_average' => fn ($q) => $q->where('is_hidden', false)], 'rating')
+                ->withCount(['ratings as public_ratings_count' => fn ($q) => $q->where('is_hidden', false)]))
             ->columns([
                 TextColumn::make('name')->label(__('admin.fields.name'))->searchable()->sortable()->weight(FontWeight::SemiBold)
                     ->description(fn ($record) => trim(($record->vehicle_type ?? '').' '.($record->vehicle_plate ?? '')) ?: null),
@@ -102,6 +105,10 @@ class DriverResource extends AdminResource
                     fn (Driver $record) => (int) $record->active_orders_count > 0 && OrderResource::canViewAny()
                         ? OrderResource::getUrl('index', ['tab' => 'on_the_road', 'filters' => ['driver_id' => ['value' => $record->getKey()]]]) : null,
                     __('admin.table.open_driver_orders'))->counts('activeOrders'),
+                TextColumn::make('public_rating_average')->label(__('order_driver_ratings.average'))
+                    ->formatStateUsing(fn ($state, Driver $record) => (int) $record->public_ratings_count > 0
+                        ? '★ '.number_format((float) $state, 1).' ('.$record->public_ratings_count.')'
+                        : __('order_driver_ratings.not_rated'))->visibleFrom('lg'),
                 Columns::status(),
                 TextColumn::make('last_location_at')->label(__('admin.table.last_seen'))->since()->placeholder('—')->sortable()
                     ->tooltip(fn ($record) => AdminTimezone::format($record->last_location_at, TableDefaults::dateTimeFormat()))
@@ -139,7 +146,7 @@ class DriverResource extends AdminResource
 
     public static function getRelations(): array
     {
-        return [OrdersRelationManager::class, CashCollectionsRelationManager::class, CashSettlementsRelationManager::class];
+        return [OrdersRelationManager::class, RatingsRelationManager::class, CashCollectionsRelationManager::class, CashSettlementsRelationManager::class];
     }
 
     public static function getPages(): array

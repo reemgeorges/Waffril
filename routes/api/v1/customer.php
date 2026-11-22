@@ -10,6 +10,7 @@ use App\Http\Controllers\Customer\CustomerContentController;
 use App\Http\Controllers\Customer\CustomerEngagementController;
 use App\Http\Controllers\Customer\CustomerNotificationController;
 use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Customer\CustomerRatingController;
 use App\Http\Controllers\Customer\CustomerPlusController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\Customer\CustomerWalletController;
@@ -77,11 +78,10 @@ Route::prefix('customer')->group(function () {
         Route::get('search', [CustomerCatalogController::class, 'search'])->middleware('throttle:60,1');
         Route::get('offers', [CustomerCatalogController::class, 'offers']);
 
-        // Favorites and ratings (products only).
+        // Product favorites only (ratings belong to delivered orders).
         Route::get('favorites', [CustomerEngagementController::class, 'favorites']);
         Route::post('products/{product}/favorite', [CustomerEngagementController::class, 'addFavorite'])->whereNumber('product');
         Route::delete('products/{product}/favorite', [CustomerEngagementController::class, 'removeFavorite'])->whereNumber('product');
-        Route::post('products/{product}/rating', [CustomerEngagementController::class, 'rate'])->whereNumber('product');
 
         // Carts (one per branch) and checkout.
         Route::get('carts', [CustomerCartController::class, 'index']);
@@ -95,6 +95,8 @@ Route::prefix('customer')->group(function () {
         // Orders.
         Route::get('orders', [CustomerOrderController::class, 'index']);
         Route::get('orders/{order}', [CustomerOrderController::class, 'show'])->whereNumber('order');
+        Route::put('orders/{order}/rating', [CustomerRatingController::class, 'order'])->whereNumber('order');
+        Route::put('orders/{order}/driver-rating', [CustomerRatingController::class, 'driver'])->whereNumber('order');
         Route::post('orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->whereNumber('order');
         Route::post('orders/{order}/cancellation-request', [CustomerOrderController::class, 'requestCancellation'])->whereNumber('order');
 
