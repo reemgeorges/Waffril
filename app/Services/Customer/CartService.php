@@ -103,6 +103,8 @@ class CartService
 
         $preview = null;
         $issue = null;
+        $pricedItems = [];   // index => server-priced line (same order as $lines)
+        $fmt = null;
         if ($lines !== []) {
             try {
                 $address = $user->addresses()->where('is_default', true)->first();
@@ -138,6 +140,7 @@ class CartService
                     'with_free_delivery' => null,
                     'without_free_delivery' => null,
                 ];
+                $pricedItems = $priced['items'];
                 if ($priced['free_delivery_applied']) {
                     $preview['with_free_delivery'] = ['delivery_fee' => $fmt($priced['delivery_fee']), 'total' => $fmt($priced['total'])];
                     $preview['without_free_delivery'] = $delivery($this->pricing->price($user, $cart->branch, $lines, $currency, $address, false));
@@ -150,12 +153,32 @@ class CartService
         return [
             'id' => $cart->id,
             'branch' => ['id' => $cart->branch->id, 'name' => $cart->branch->name, 'store' => ['id' => $cart->branch->store->id, 'name' => $cart->branch->store->name]],
-            'items' => $cart->items->map(fn ($i) => [
-                'id' => $i->id, 'product_id' => $i->branchProduct->product_id, 'name' => $i->branchProduct->product->name,
-                'image_url' => $this->catalog->url($i->branchProduct->product->image), 'quantity' => $i->quantity, 'notes' => $i->notes,
-                'is_available' => (bool) $i->branchProduct->is_available && (bool) $i->branchProduct->product->is_active,
-                'options' => $i->options->map(fn ($o) => ['id' => $o->id, 'name' => $o->name, 'group' => $o->group?->name, 'quantity' => (int) $o->pivot->quantity])->values(),
-            ])->values(),
+            'items' => $cart->items->values()->map(function ($i, $index) use ($pricedItems, $fmt, $preview) {
+                // 2026-11-22 (additive): the server's own price of this line, from
+                // the same OrderPricingService call as `preview` (and checkout).
+                // All amounts are strings in the payment currency (preview.currency),
+                // displayed denomination. Null when the cart cannot be priced (see `issue`).
+                $line = $pricedItems[$index] ?? null;
+                $money = fn ($v) => $line && $fmt ? $fmt($v) : null;
+                $optionPrices = collect($line['options'] ?? [])->keyBy('product_option_id');
+
+                return [
+                    'id' => $i->id, 'product_id' => $i->branchProduct->product_id, 'name' => $i->branchProduct->product->name,
+                    'image_url' => $this->catalog->url($i->branchProduct->product->image), 'quantity' => $i->quantity, 'notes' => $i->notes,
+                    'is_available' => (bool) $i->branchProduct->is_available && (bool) $i->branchProduct->product->is_active,
+                    'options' => $i->options->map(fn ($o) => ['id' => $o->id, 'name' => $o->name, 'group' => $o->group?->name, 'quantity' => (int) $o->pivot->quantity,
+                        'unit_price_delta' => $money($optionPrices[$o->id]['unit_price_delta'] ?? null),
+                        'total_price_delta' => $money($optionPrices[$o->id]['total_price_delta'] ?? null),
+                    ])->values(),
+                    'currency' => $line ? ($preview['currency'] ?? null) : null,
+                    'base_unit_price' => $money($line['base_unit_price'] ?? null),
+                    'options_unit_price' => $money($line['options_unit_price'] ?? null),
+                    'unit_price' => $money($line['unit_price'] ?? null),
+                    'line_subtotal' => $money($line['line_subtotal'] ?? null),
+                    'offer_discount' => $money($line['offer_discount_amount'] ?? null),
+                    'line_total' => $money($line['line_total'] ?? null),
+                ];
+            })->values(),
             'preview' => $preview,
             'issue' => $issue,
             'updated_at' => $cart->updated_at?->toIso8601String(),
