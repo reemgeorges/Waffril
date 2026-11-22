@@ -113,13 +113,15 @@ class CustomerOrderService
             'items' => $order->items->map(fn ($i) => [
                 'product_id' => $i->product_id, 'name' => $i->product_name, 'quantity' => $i->quantity,
                 'unit_price' => $fmt($i->unit_price), 'line_total' => $fmt($i->line_total), 'notes' => $i->notes,
+                // 2026-11-22 (additive): same breakdown as the cart items.
+                'base_unit_price' => $fmt($i->base_unit_price), 'options_unit_price' => $fmt($i->options_unit_price),
                 // 2026-11-15 (additive): the line before its offer, the exact offer
                 // discount, and the offer's type/percent: the immutable checkout
                 // snapshot, or for older items a verified fallback, else null
                 // (OrderItemDiscount::forItem).
                 'line_subtotal' => $fmt($i->line_subtotal), 'offer_discount' => $fmt($i->offer_discount_amount),
                 'offer' => OrderItemDiscount::forItem($i, $order),
-                'options' => $i->options->map(fn ($o) => ['group' => $o->group_name, 'option' => $o->option_name, 'quantity' => $o->quantity, 'total_price_delta' => $fmt($o->total_price_delta)])->values(),
+                'options' => $i->options->map(fn ($o) => ['group' => $o->group_name, 'option' => $o->option_name, 'quantity' => $o->quantity, 'unit_price_delta' => $fmt($o->unit_price_delta), 'total_price_delta' => $fmt($o->total_price_delta)])->values(),
             ])->values(),
             'amounts' => [
                 'subtotal' => $fmt($order->subtotal), 'offer_discount' => $fmt($order->offer_discount_total), 'plus_discount' => $fmt($order->plus_discount_amount),
