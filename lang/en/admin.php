@@ -571,7 +571,6 @@ return [
         'e164' => 'International format, e.g. +963912345678',
         'exchange_rate' => 'Units of this currency per 1 unit of the default currency (up to 12 decimals).',
         'password_keep' => 'Leave empty to keep the current password.',
-        'placeholder_rating' => 'Shown only for products without genuine ratings; never counted as a rating.',
         'price_delta' => 'Added to the branch price (0 = free option).',
         'slug' => 'Filled from the English name. English letters, digits and dashes only; must be unique.',
         'category_image' => 'A clear square picture, up to 2 MB.',
@@ -828,7 +827,6 @@ return [
                 'driver_recommendation_limit' => 'Recommended drivers shown',
             ],
             'catalog' => [
-                'placeholder_rating' => 'Placeholder rating for unrated products (1–5)',
                 'fallback_store_category_id' => 'Fallback store category',
                 'fallback_product_category_id' => 'Fallback product category',
             ],
@@ -1298,8 +1296,6 @@ return [
         'back_to_store' => 'Back to store',
         'branches_tab' => 'This store\'s branches',
         'products_tab' => 'This store\'s products',
-        'ratings_queue' => 'Review product ratings',
-        'categories_and_ratings' => 'Categories & ratings',
         'back_to_stores' => 'Back to stores',
     ],
     'categories' => [
