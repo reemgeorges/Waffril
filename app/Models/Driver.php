@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * WAFFRLI (2026-10-31). Platform driver — separate auth domain (future
  * `driver` Sanctum guard); accounts are created by admins.
  */
-class Driver extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference
+class Driver extends BaseAuthModel implements HasLocalePreference
 {
     public const AVAILABILITY_OFFLINE = 'offline';
 

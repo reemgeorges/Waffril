@@ -16,8 +16,10 @@ class OrderDriverRatingService
     public function saveOrderRating(User $user, int|string $orderId, int $score, ?string $comment): OrderRating
     {
         $this->validateInput($score, $comment);
+
         return DB::transaction(function () use ($user, $orderId, $score, $comment) {
             $order = $this->lockEligibleOrder($user, $orderId, false);
+
             return OrderRating::query()->updateOrCreate(
                 ['order_id' => $order->id],
                 ['user_id' => $user->id, 'rating' => $score, 'comment' => $comment]
@@ -28,8 +30,10 @@ class OrderDriverRatingService
     public function saveDriverRating(User $user, int|string $orderId, int $score, ?string $comment): DriverRating
     {
         $this->validateInput($score, $comment);
+
         return DB::transaction(function () use ($user, $orderId, $score, $comment) {
             $order = $this->lockEligibleOrder($user, $orderId, true);
+
             return DriverRating::query()->updateOrCreate(
                 ['order_id' => $order->id],
                 ['user_id' => $user->id, 'driver_id' => $order->driver_id,
@@ -58,6 +62,7 @@ class OrderDriverRatingService
         if ($driver && $order->driver_id === null) {
             throw new BusinessRuleException(__('order_driver_ratings.driver_missing'), 422);
         }
+
         return $order;
     }
 }

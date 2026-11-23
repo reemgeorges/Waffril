@@ -3634,330 +3634,87 @@
      },
      {
       "v": "17",
-      "name": "Rate a purchased product (verified purchaser)",
-      "method": "POST",
-      "endpoint": "<<base_url>>/api/v1/customer/products/<<rated_product_id>>/rating",
+      "name": "Rate delivered order - overall experience",
+      "method": "PUT",
+      "endpoint": "<<base_url>>/api/v1/customer/orders/<<delivered_order_id>>/rating",
       "params": [],
       "headers": [],
       "preRequestScript": "",
-      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"accepted for a verified purchase\", function () {\n  if (bru.getVar(\"rated_product_id\")) {\n    expect(res.getStatus()).to.equal(200);\n    expect(res.getBody().data.product_rating.count).to.be.greaterThan(0);\n  }\n});",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"rating saved\", function () {\n  expect(res.getStatus()).to.equal(200);\n  expect(res.getBody().data.rating.rating).to.equal(5);\n});",
       "auth": {
        "authType": "inherit",
        "authActive": true
       },
       "body": {
        "contentType": "application/json",
-       "body": "{\n  \"order_id\": <<delivered_order_id>>,\n  \"rating\": 5,\n  \"comment\": \"Bruno: great\"\n}"
+       "body": "{\n  \"rating\": 5,\n  \"comment\": \"Great ordering experience\"\n}"
       },
       "requestVariables": [],
-      "responses": {
-       "200 — Rate a purchased product (verified purchaser)": {
-        "name": "200 — Rate a purchased product (verified purchaser)",
-        "originalRequest": {
-         "v": "6",
-         "name": "200 — Rate a purchased product (verified purchaser)",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<rated_product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "OK",
-        "code": 200,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": {\n    \"message\": \"Thank you for your rating.\",\n    \"my_rating\": {\n      \"rating\": 5,\n      \"comment\": \"Bruno: great\",\n      \"is_hidden\": false\n    },\n    \"product_rating\": {\n      \"average\": 5,\n      \"count\": 1,\n      \"placeholder\": null\n    }\n  },\n  \"status\": true,\n  \"error\": null,\n  \"statusCode\": 200\n}"
-       },
-       "404 — Rate without purchase - refused": {
-        "name": "404 — Rate without purchase - refused",
-        "originalRequest": {
-         "v": "6",
-         "name": "404 — Rate without purchase - refused",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<rated_product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Not Found",
-        "code": 404,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"Not found.\",\n  \"statusCode\": 404\n}"
-       },
-       "422 — Rate - invalid value": {
-        "name": "422 — Rate - invalid value",
-        "originalRequest": {
-         "v": "6",
-         "name": "422 — Rate - invalid value",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<rated_product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Unprocessable Entity",
-        "code": 422,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"The rating field must be between 1 and 5.\",\n  \"errors\": {\n    \"rating\": [\n      \"The rating field must be between 1 and 5.\"\n    ]\n  },\n  \"statusCode\": 422\n}"
-       }
-      },
-      "description": "Route: `POST /api/v1/customer/products/{product}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate a purchased product (verified purchaser).bru`."
+      "responses": {},
+      "description": "Route: `PUT /api/v1/customer/orders/{order}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate order (overall).bru`."
      },
      {
       "v": "17",
-      "name": "Rate without purchase - refused",
-      "method": "POST",
-      "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
+      "name": "Rate delivered order - delivery driver",
+      "method": "PUT",
+      "endpoint": "<<base_url>>/api/v1/customer/orders/<<delivered_order_id>>/driver-rating",
       "params": [],
       "headers": [],
       "preRequestScript": "",
-      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"refused (not your order / not purchased)\", function () {\n  expect(res.getStatus()).to.be.oneOf([404, 422]);\n  expect(res.getBody().status).to.equal(false);\n});",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"rating saved when a driver is present\", function () {\n  expect(res.getStatus()).to.be.oneOf([200, 422]);\n});",
       "auth": {
        "authType": "inherit",
        "authActive": true
       },
       "body": {
        "contentType": "application/json",
-       "body": "{\n  \"order_id\": 999999,\n  \"rating\": 5\n}"
+       "body": "{\n  \"rating\": 4,\n  \"comment\": \"Friendly driver\"\n}"
       },
       "requestVariables": [],
-      "responses": {
-       "200 — Rate a purchased product (verified purchaser)": {
-        "name": "200 — Rate a purchased product (verified purchaser)",
-        "originalRequest": {
-         "v": "6",
-         "name": "200 — Rate a purchased product (verified purchaser)",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "OK",
-        "code": 200,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": {\n    \"message\": \"Thank you for your rating.\",\n    \"my_rating\": {\n      \"rating\": 5,\n      \"comment\": \"Bruno: great\",\n      \"is_hidden\": false\n    },\n    \"product_rating\": {\n      \"average\": 5,\n      \"count\": 1,\n      \"placeholder\": null\n    }\n  },\n  \"status\": true,\n  \"error\": null,\n  \"statusCode\": 200\n}"
-       },
-       "404 — Rate without purchase - refused": {
-        "name": "404 — Rate without purchase - refused",
-        "originalRequest": {
-         "v": "6",
-         "name": "404 — Rate without purchase - refused",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Not Found",
-        "code": 404,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"Not found.\",\n  \"statusCode\": 404\n}"
-       },
-       "422 — Rate - invalid value": {
-        "name": "422 — Rate - invalid value",
-        "originalRequest": {
-         "v": "6",
-         "name": "422 — Rate - invalid value",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Unprocessable Entity",
-        "code": 422,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"The rating field must be between 1 and 5.\",\n  \"errors\": {\n    \"rating\": [\n      \"The rating field must be between 1 and 5.\"\n    ]\n  },\n  \"statusCode\": 422\n}"
-       }
-      },
-      "description": "Route: `POST /api/v1/customer/products/{product}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate without purchase - refused.bru`."
+      "responses": {},
+      "description": "Route: `PUT /api/v1/customer/orders/{order}/driver-rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate delivery driver.bru`."
      },
      {
       "v": "17",
-      "name": "Rate - invalid value",
-      "method": "POST",
-      "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
+      "name": "Invalid order rating",
+      "method": "PUT",
+      "endpoint": "<<base_url>>/api/v1/customer/orders/<<delivered_order_id>>/rating",
       "params": [],
       "headers": [],
       "preRequestScript": "",
-      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"validation\", function () {\n  expect(res.getStatus()).to.be.oneOf([400, 422]);\n});",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"rating validation\", function () {\n  expect(res.getStatus()).to.equal(422);\n});",
       "auth": {
        "authType": "inherit",
        "authActive": true
       },
       "body": {
        "contentType": "application/json",
-       "body": "{\n  \"order_id\": 1,\n  \"rating\": 9\n}"
+       "body": "{ \"rating\": 9 }"
       },
       "requestVariables": [],
-      "responses": {
-       "200 — Rate a purchased product (verified purchaser)": {
-        "name": "200 — Rate a purchased product (verified purchaser)",
-        "originalRequest": {
-         "v": "6",
-         "name": "200 — Rate a purchased product (verified purchaser)",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "OK",
-        "code": 200,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": {\n    \"message\": \"Thank you for your rating.\",\n    \"my_rating\": {\n      \"rating\": 5,\n      \"comment\": \"Bruno: great\",\n      \"is_hidden\": false\n    },\n    \"product_rating\": {\n      \"average\": 5,\n      \"count\": 1,\n      \"placeholder\": null\n    }\n  },\n  \"status\": true,\n  \"error\": null,\n  \"statusCode\": 200\n}"
-       },
-       "404 — Rate without purchase - refused": {
-        "name": "404 — Rate without purchase - refused",
-        "originalRequest": {
-         "v": "6",
-         "name": "404 — Rate without purchase - refused",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Not Found",
-        "code": 404,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"Not found.\",\n  \"statusCode\": 404\n}"
-       },
-       "422 — Rate - invalid value": {
-        "name": "422 — Rate - invalid value",
-        "originalRequest": {
-         "v": "6",
-         "name": "422 — Rate - invalid value",
-         "method": "POST",
-         "endpoint": "<<base_url>>/api/v1/customer/products/<<product_id>>/rating",
-         "headers": [],
-         "params": [],
-         "body": {
-          "contentType": null,
-          "body": null
-         },
-         "auth": {
-          "authType": "inherit",
-          "authActive": true
-         },
-         "requestVariables": []
-        },
-        "status": "Unprocessable Entity",
-        "code": 422,
-        "headers": [
-         {
-          "key": "Content-Type",
-          "value": "application/json"
-         }
-        ],
-        "body": "{\n  \"data\": null,\n  \"status\": false,\n  \"error\": \"The rating field must be between 1 and 5.\",\n  \"errors\": {\n    \"rating\": [\n      \"The rating field must be between 1 and 5.\"\n    ]\n  },\n  \"statusCode\": 422\n}"
-       }
+      "responses": {},
+      "description": "Route: `PUT /api/v1/customer/orders/{order}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate order - invalid score.bru`."
+     },
+     {
+      "v": "17",
+      "name": "Cannot rate another customer's order",
+      "method": "PUT",
+      "endpoint": "<<base_url>>/api/v1/customer/orders/999999/rating",
+      "params": [],
+      "headers": [],
+      "preRequestScript": "",
+      "testScript": "// --- WAFFRLI Bruno compatibility shim (generated) ---\nconst __vars = (k) => { const v = pw.env.get(k); return v === undefined || v === null ? '' : String(v); };\nconst bru = {\n  setVar: (k, v) => pw.env.set(k, String(v)),\n  getVar: (k) => __vars(k),\n  interpolate: (s) => String(s).replace(/{{\\s*([\\w.]+)\\s*}}/g, (m, k) => __vars(k)),\n};\nconst __rand = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');\nconst require = () => ({\n  randomUUID: () => { const h = __rand(16); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); },\n  randomBytes: (n) => ({ toString: () => __rand(n) }),\n});\nconst res = { getStatus: () => pw.response.status, getBody: () => pw.response.body };\nconst __chain = (actual, negate) => {\n  const check = (ok, what) => { pw.expect(negate ? !ok : ok).toBe(true); return api; };\n  const keysOf = (o) => (o && typeof o === 'object' ? Object.keys(o) : []);\n  const api = {\n    equal: (e) => check(actual === e, 'equal'), eql: (e) => check(JSON.stringify(actual) === JSON.stringify(e), 'eql'),\n    oneOf: (list) => check(list.includes(actual), 'oneOf'), match: (re) => check(re.test(String(actual)), 'match'),\n    contain: (s) => check(String(actual).includes(s), 'contain'), include: (s) => check(Array.isArray(actual) ? actual.includes(s) : String(actual).includes(s), 'include'),\n    greaterThan: (n) => check(actual > n, 'gt'), lessThan: (n) => check(actual < n, 'lt'), most: (n) => check(actual <= n, 'most'), least: (n) => check(actual >= n, 'least'),\n    a: (t) => check(t === 'array' ? Array.isArray(actual) : typeof actual === t, 'a'), an: (t) => api.a(t),\n    property: (k) => check(actual != null && k in actual, 'property'),\n    keys: (...ks) => check(ks.flat().every((k) => keysOf(actual).includes(k)), 'keys'),\n    get empty() { return check(actual == null || (typeof actual === 'string' || Array.isArray(actual) ? actual.length === 0 : keysOf(actual).length === 0), 'empty'); },\n    get true() { return check(actual === true, 'true'); }, get false() { return check(actual === false, 'false'); },\n    get null() { return check(actual === null, 'null'); }, get undefined() { return check(actual === undefined, 'undefined'); },\n  };\n  for (const w of ['to', 'be', 'been', 'is', 'that', 'which', 'and', 'has', 'have', 'with', 'at', 'of', 'same', 'all', 'deep']) Object.defineProperty(api, w, { get: () => api });\n  Object.defineProperty(api, 'not', { get: () => __chain(actual, !negate) });\n  api.include.all = api;\n  return api;\n};\nconst expect = (actual) => __chain(actual, false);\nconst test = (name, fn) => pw.test(name, fn);\n\n\ntest(\"not found or not owned\", function () {\n  expect(res.getStatus()).to.equal(404);\n});",
+      "auth": {
+       "authType": "inherit",
+       "authActive": true
       },
-      "description": "Route: `POST /api/v1/customer/products/{product}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Rate - invalid value.bru`."
+      "body": {
+       "contentType": "application/json",
+       "body": "{ \"rating\": 5 }"
+      },
+      "requestVariables": [],
+      "responses": {},
+      "description": "Route: `PUT /api/v1/customer/orders/{order}/rating`. Same request in Bruno: `WAFFRLI-Customer/08 Ratings/Order not mine - refuse rating.bru`."
      }
     ],
     "auth": {

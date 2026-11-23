@@ -256,7 +256,6 @@ class CustomerCatalogService
         ];
     }
 
-
     /** @return Collection<int, Collection<int, Offer>> active product offers of the branch, keyed by product */
     public function offersFor(Branch $branch): Collection
     {

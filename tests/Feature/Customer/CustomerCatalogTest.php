@@ -5,7 +5,6 @@ namespace Tests\Feature\Customer;
 use App\Models\Branch;
 use App\Models\BranchProduct;
 use App\Models\City;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
@@ -110,5 +109,4 @@ class CustomerCatalogTest extends CustomerTestCase
         $this->api($token)->deleteJson("/api/v1/customer/products/{$product->id}/favorite")->assertOk();
         $this->api($token)->postJson('/api/v1/customer/products/999999/favorite')->assertStatus(404);
     }
-
 }

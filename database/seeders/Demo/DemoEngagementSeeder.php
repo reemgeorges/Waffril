@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
-use App\Models\Order;
 use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Models\OrderRating;
 use App\Services\Ratings\OrderDriverRatingService;
 use App\Services\Ratings\RatingModerationService;

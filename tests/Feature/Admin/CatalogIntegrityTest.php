@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\OrderStatus;
 use App\Exceptions\BusinessRuleException;
 use App\Models\BranchHourException;
 use App\Models\BranchOpeningHour;
@@ -88,7 +87,6 @@ class CatalogIntegrityTest extends AdminPanelTestCase
         BranchHourException::create(['branch_id' => $branch->id, 'kind' => 'closed', 'starts_at' => '2026-11-06 19:00', 'ends_at' => '2026-11-06 21:00', 'created_by_admin_id' => $admin->id]);
         $this->assertFalse($hours->isOpenAt($branch, $friday), 'temporary closure wins');
     }
-
 
     public function test_category_tree_refuses_self_parent_and_cycles(): void
     {

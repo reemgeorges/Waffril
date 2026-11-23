@@ -54,5 +54,4 @@ class CustomerEngagementController extends CustomerController
             return ['message' => __('messages.customer.favorite_removed'), 'product_id' => (int) $product, 'is_favorite' => false];
         });
     }
-
 }

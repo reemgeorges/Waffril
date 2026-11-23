@@ -121,7 +121,6 @@ class AdminTableUxTest extends AdminPanelTestCase
             ->assertCanSeeTableRecords([$order]);
     }
 
-
     public function test_an_orders_payments_tab_does_not_repeat_the_order(): void
     {
         $order = $this->order($this->customer(), $this->branch($this->store(), $this->city()), '5');

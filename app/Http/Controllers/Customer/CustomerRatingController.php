@@ -19,6 +19,7 @@ class CustomerRatingController extends CustomerController
             $review = $this->ratings->saveOrderRating(
                 $this->customer($request), $order, (int) $data['rating'], $data['comment'] ?? null
             );
+
             return [
                 'message' => __('order_driver_ratings.saved'),
                 'rating' => ['rating' => $review->rating, 'comment' => $review->comment, 'is_hidden' => $review->is_hidden,
@@ -37,6 +38,7 @@ class CustomerRatingController extends CustomerController
             $review = $this->ratings->saveDriverRating(
                 $this->customer($request), $order, (int) $data['rating'], $data['comment'] ?? null
             );
+
             return [
                 'message' => __('order_driver_ratings.saved'),
                 'rating' => ['rating' => $review->rating, 'comment' => $review->comment, 'is_hidden' => $review->is_hidden,

@@ -61,10 +61,8 @@ class Product extends BaseModel
         return $this->hasMany(BranchProductOption::class);
     }
 
-
     public function favoritedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'favorites')->withPivot('created_at');
     }
-
 }

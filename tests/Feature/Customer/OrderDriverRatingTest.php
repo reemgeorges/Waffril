@@ -5,6 +5,7 @@ namespace Tests\Feature\Customer;
 use App\Models\DriverRating;
 use App\Models\Order;
 use App\Models\OrderRating;
+use App\Models\User;
 
 class OrderDriverRatingTest extends CustomerTestCase
 {
@@ -33,7 +34,7 @@ class OrderDriverRatingTest extends CustomerTestCase
     public function test_rating_rejects_other_customers_and_undelivered_orders(): void
     {
         $order = Order::query()->where('status', 'delivered')->firstOrFail();
-        $other = \App\Models\User::query()->where('id', '!=', $order->user_id)->firstOrFail();
+        $other = User::query()->where('id', '!=', $order->user_id)->firstOrFail();
         $token = $this->loginCustomer($other);
         $this->api($token)->putJson("/api/v1/customer/orders/{$order->id}/rating", ['rating' => 5])->assertNotFound();
         $token = $this->loginCustomer($order->user, 'another-device');

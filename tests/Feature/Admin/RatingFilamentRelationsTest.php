@@ -8,10 +8,11 @@ use App\Filament\Resources\Customers\RelationManagers\DriverRatingsRelationManag
 use App\Filament\Resources\Customers\RelationManagers\OrderRatingsRelationManager as CustomerOrderRatings;
 use App\Filament\Resources\Drivers\Pages\EditDriver;
 use App\Filament\Resources\Drivers\RelationManagers\RatingsRelationManager as DriverRatings;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\DriverRatingsRelationManager as OrderDriverRatings;
 use App\Filament\Resources\Orders\RelationManagers\OrderRatingsRelationManager as OrderOrderRatings;
-use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Resources\Orders\RelationManagers\RatingsRelationManager;
 use App\Models\DriverRating;
 use App\Models\OrderRating;
 use App\Services\Ratings\OrderDriverRatingService;
@@ -38,7 +39,7 @@ class RatingFilamentRelationsTest extends AdminPanelTestCase
         $tabs = OrderResource::getRelations();
         $this->assertContains(OrderOrderRatings::class, $tabs);
         $this->assertContains(OrderDriverRatings::class, $tabs);
-        $this->assertNotContains(\App\Filament\Resources\Orders\RelationManagers\RatingsRelationManager::class, $tabs);
+        $this->assertNotContains(RatingsRelationManager::class, $tabs);
 
         $this->actingAsAdmin($this->superAdmin());
         Livewire::test(OrderOrderRatings::class, ['ownerRecord' => $order, 'pageClass' => ViewOrder::class])

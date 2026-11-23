@@ -2,21 +2,21 @@
 
 namespace App\Filament\Resources\OrderRatings;
 
+use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\OrderRatings\Pages\ListOrderRatings;
-use App\Filament\Support\AdminResource;
 use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\OrderRating;
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Services\Ratings\RatingModerationService;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -24,12 +24,22 @@ use Filament\Tables\Table;
 class OrderRatingResource extends AdminResource
 {
     protected static ?string $model = OrderRating::class;
+
     protected static string|\UnitEnum|null $navigationGroup = 'operations';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-star';
+
     protected static ?int $navigationSort = 75;
 
-    public static function getModelLabel(): string { return __('order_driver_ratings.order_singular'); }
-    public static function getPluralModelLabel(): string { return __('order_driver_ratings.order_plural'); }
+    public static function getModelLabel(): string
+    {
+        return __('order_driver_ratings.order_singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('order_driver_ratings.order_plural');
+    }
 
     public static function table(Table $table): Table
     {

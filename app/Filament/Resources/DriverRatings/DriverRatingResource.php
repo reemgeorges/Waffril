@@ -2,34 +2,44 @@
 
 namespace App\Filament\Resources\DriverRatings;
 
+use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\DriverRatings\Pages\ListDriverRatings;
-use App\Filament\Support\AdminResource;
+use App\Filament\Resources\Drivers\DriverResource;
 use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Support\AdminResource;
 use App\Filament\Support\BusinessAction;
 use App\Filament\Support\RowActions;
 use App\Filament\Support\TableDefaults;
 use App\Models\DriverRating;
-use App\Filament\Resources\Drivers\DriverResource;
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Services\Ratings\RatingModerationService;
 use App\Support\Auth\AdminPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class DriverRatingResource extends AdminResource
 {
     protected static ?string $model = DriverRating::class;
+
     protected static string|\UnitEnum|null $navigationGroup = 'people';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-star';
+
     protected static ?int $navigationSort = 75;
 
-    public static function getModelLabel(): string { return __('order_driver_ratings.driver_singular'); }
-    public static function getPluralModelLabel(): string { return __('order_driver_ratings.driver_plural'); }
+    public static function getModelLabel(): string
+    {
+        return __('order_driver_ratings.driver_singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('order_driver_ratings.driver_plural');
+    }
 
     public static function table(Table $table): Table
     {

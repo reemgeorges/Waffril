@@ -7,9 +7,9 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\CancellationRequestsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\DeliveryOffersRelationManager;
-use App\Filament\Resources\Orders\RelationManagers\OrderRatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\DriverRatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\OrderRatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
@@ -166,7 +166,7 @@ class OrderResource extends AdminResource
         $waitingTab = fn ($livewire) => ($livewire->activeTab ?? null) === 'waiting_for_driver';
 
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch.store', 'city', 'driver', 'currency', 'user' , 'orderRating', 'driverRating']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch.store', 'city', 'driver', 'currency', 'user', 'orderRating', 'driverRating']))
             // Dispatch B4: orders without an available driver stand out.
             ->recordClasses(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER ? 'waffrli-row-no-driver' : null)
             ->columns([
@@ -257,7 +257,7 @@ class OrderResource extends AdminResource
             CancellationRequestsRelationManager::class,
             RefundsRelationManager::class,
             DeliveryOffersRelationManager::class,
-        
+
             OrderRatingsRelationManager::class,
             DriverRatingsRelationManager::class,
         ];

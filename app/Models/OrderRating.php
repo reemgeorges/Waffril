@@ -14,7 +14,18 @@ class OrderRating extends BasePlatformModel
         'hidden_at' => 'datetime',
     ];
 
-    public function order(): BelongsTo { return $this->belongsTo(Order::class); }
-    public function user(): BelongsTo { return $this->belongsTo(User::class)->withTrashed(); }
-    public function hiddenBy(): BelongsTo { return $this->belongsTo(Admin::class, 'hidden_by_admin_id'); }
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    public function hiddenBy(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'hidden_by_admin_id');
+    }
 }

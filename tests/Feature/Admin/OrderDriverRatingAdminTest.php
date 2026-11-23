@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\OrderStatus;
+use App\Exceptions\BusinessRuleException;
 use App\Models\DriverRating;
 use App\Models\OrderRating;
 use App\Services\Ratings\OrderDriverRatingService;
@@ -40,7 +41,7 @@ class OrderDriverRatingAdminTest extends AdminPanelTestCase
         $customer = $this->customer();
         $order = $this->order($customer, $branch, '10', ['status' => OrderStatus::Delivered]);
         $review = app(OrderDriverRatingService::class)->saveOrderRating($customer, $order->id, 4, 'Fine');
-        $this->expectException(\App\Exceptions\BusinessRuleException::class);
+        $this->expectException(BusinessRuleException::class);
         app(RatingModerationService::class)->setHidden($review, $this->employee(['orders.view']), true, 'Not permitted');
     }
 }
