@@ -19,6 +19,7 @@ final class Readable
     /** Model class basename → admin.resources.<key>. */
     private const MODELS = [
         'Order' => 'order', 'Store' => 'store', 'Branch' => 'branch', 'Product' => 'product',
+        // Archived audit events retain their original class label.
         'ProductRating' => 'product_rating', 'DriverCashSettlement' => 'driver_cash_settlement',
         'Driver' => 'driver', 'User' => 'customer', 'Admin' => 'admin', 'PlusRequest' => 'plus_request',
         'PlusMembership' => 'plus_membership', 'PlusCycle' => 'plus_cycle', 'PlusPlan' => 'plus_plan',
@@ -36,7 +37,11 @@ final class Readable
             return '—';
         }
         $base = class_basename($class);
-        $label = isset(self::MODELS[$base]) ? __('admin.resources.'.self::MODELS[$base].'.singular') : Str::headline($base);
+        $label = match ($base) {
+            'OrderRating' => __('order_driver_ratings.order_singular'),
+            'DriverRating' => __('order_driver_ratings.driver_singular'),
+            default => isset(self::MODELS[$base]) ? __('admin.resources.'.self::MODELS[$base].'.singular') : Str::headline($base),
+        };
 
         return $id !== null && $id !== '' ? $label.' #'.$id : $label;
     }

@@ -7,9 +7,10 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\CancellationRequestsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\DeliveryOffersRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\DriverRatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
+use App\Filament\Resources\Orders\RelationManagers\OrderRatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\PaymentsRelationManager;
-use App\Filament\Resources\Orders\RelationManagers\RatingsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Orders\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Resources\Orders\Support\DispatchPanel;
@@ -129,6 +130,26 @@ class OrderResource extends AdminResource
                     ]),
                 ]),
             ]),
+            Section::make(__('order_driver_ratings.order_singular'))->icon('heroicon-o-star')->columnSpanFull()->columns(3)->schema([
+                TextEntry::make('order_rating_score')->label(__('order_driver_ratings.stars'))
+                    ->state(fn (Order $record) => $record->orderRating?->rating
+                        ? str_repeat('★', $record->orderRating->rating) : __('order_driver_ratings.not_rated')),
+                TextEntry::make('order_rating_comment')->label(__('order_driver_ratings.comment'))
+                    ->state(fn (Order $record) => $record->orderRating?->comment)->placeholder('—'),
+                TextEntry::make('order_rating_state')->label(__('order_driver_ratings.visibility'))
+                    ->state(fn (Order $record) => ! $record->orderRating ? '—'
+                        : ($record->orderRating->is_hidden ? __('order_driver_ratings.hidden') : __('order_driver_ratings.visible'))),
+            ]),
+            Section::make(__('order_driver_ratings.driver_singular'))->icon('heroicon-o-truck')->columnSpanFull()->columns(3)->schema([
+                TextEntry::make('driver_rating_score')->label(__('order_driver_ratings.stars'))
+                    ->state(fn (Order $record) => $record->driverRating?->rating
+                        ? str_repeat('★', $record->driverRating->rating) : __('order_driver_ratings.not_rated')),
+                TextEntry::make('driver_rating_comment')->label(__('order_driver_ratings.comment'))
+                    ->state(fn (Order $record) => $record->driverRating?->comment)->placeholder('—'),
+                TextEntry::make('driver_rating_state')->label(__('order_driver_ratings.visibility'))
+                    ->state(fn (Order $record) => ! $record->driverRating ? '—'
+                        : ($record->driverRating->is_hidden ? __('order_driver_ratings.hidden') : __('order_driver_ratings.visible'))),
+            ]),
         ]);
     }
 
@@ -145,7 +166,7 @@ class OrderResource extends AdminResource
         $waitingTab = fn ($livewire) => ($livewire->activeTab ?? null) === 'waiting_for_driver';
 
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch.store', 'city', 'driver', 'currency', 'user']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['branch.store', 'city', 'driver', 'currency', 'user', 'orderRating', 'driverRating']))
             // Dispatch B4: orders without an available driver stand out.
             ->recordClasses(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER ? 'waffrli-row-no-driver' : null)
             ->columns([
@@ -192,6 +213,12 @@ class OrderResource extends AdminResource
                     ->formatStateUsing(fn ($state) => $state?->label())->color(fn ($state) => $state ? DispatchPanel::statusColor($state) : 'gray')->placeholder('—'),
                 IconColumn::make('needs_attention')->label(__('admin.dispatch.needs_attention'))->boolean()->visible($waitingTab)
                     ->state(fn (Order $record) => $record->dispatch_state === Order::DISPATCH_NO_DRIVER)->trueColor('danger')->trueIcon('heroicon-o-exclamation-triangle')->falseIcon('heroicon-o-minus')->falseColor('gray'),
+                TextColumn::make('orderRating.rating')->label(__('order_driver_ratings.order_singular'))
+                    ->formatStateUsing(fn ($state) => $state ? str_repeat('★', (int) $state) : '—')
+                    ->color('warning')->placeholder('—')->visibleFrom('xl'),
+                TextColumn::make('driverRating.rating')->label(__('order_driver_ratings.driver_singular'))
+                    ->formatStateUsing(fn ($state) => $state ? str_repeat('★', (int) $state) : '—')
+                    ->color('warning')->placeholder('—')->visibleFrom('xl'),
                 TextColumn::make('total')->label(__('admin.fields.total'))->alignEnd()->weight(FontWeight::SemiBold)
                     ->formatStateUsing(fn ($state, Order $record) => Fields::formatMoney($state, $record->currency))
                     ->description(fn ($record) => Fields::historicalCurrencyNote($record->currency)),
@@ -230,7 +257,9 @@ class OrderResource extends AdminResource
             CancellationRequestsRelationManager::class,
             RefundsRelationManager::class,
             DeliveryOffersRelationManager::class,
-            RatingsRelationManager::class,
+
+            OrderRatingsRelationManager::class,
+            DriverRatingsRelationManager::class,
         ];
     }
 

@@ -31,18 +31,18 @@ class SchemaIntegrityTest extends AdminPanelTestCase
         'plus_plans', 'plus_memberships', 'plus_store_discounts', 'plus_requests', 'plus_cycles', 'plus_cycle_discounts',
         'payment_methods', 'wallets', 'driver_cash_settlements', 'orders', 'order_items', 'order_item_options', 'order_status_histories',
         'order_cancellation_requests', 'order_cancellations', 'order_payments', 'order_refunds', 'wallet_transactions',
-        'product_ratings',
+        'legacy_product_ratings', 'order_ratings', 'driver_ratings',
         'admin_audit_logs',
     ];
 
     public function test_all_approved_tables_exist(): void
     {
-        $this->assertCount(66, self::TABLES, '65 approved tables + admin_audit_logs');
+        $this->assertCount(68, self::TABLES, 'original 66 tables, archived product ratings, plus 2 new rating tables');
         foreach (self::TABLES as $table) {
             $this->assertTrue(Schema::hasTable($table), "Missing table {$table}");
         }
 
-        foreach (['store_ratings', 'driver_ratings', 'store_favorites', 'coupons', 'merchant_payouts', 'product_images', 'support_tickets'] as $forbidden) {
+        foreach (['store_ratings', 'store_favorites', 'coupons', 'merchant_payouts', 'product_images', 'support_tickets'] as $forbidden) {
             $this->assertFalse(Schema::hasTable($forbidden), "Excluded table {$forbidden} must not exist");
         }
     }

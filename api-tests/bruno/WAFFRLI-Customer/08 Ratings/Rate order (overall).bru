@@ -1,0 +1,25 @@
+meta {
+  name: Rate delivered order - overall experience
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/v1/customer/orders/{{delivered_order_id}}/rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "rating": 5,
+    "comment": "Great ordering experience"
+  }
+}
+
+tests {
+  test("rating saved", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.rating.rating).to.equal(5);
+  });
+}

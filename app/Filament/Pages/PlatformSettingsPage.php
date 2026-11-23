@@ -131,7 +131,6 @@ class PlatformSettingsPage extends Page
             'int' => TextInput::make($name)->label($label)->integer()->minValue($definition['min'] ?? 0)->maxValue($definition['max'] ?? null)->required(),
             'select' => Select::make($name)->label($label)->required()
                 ->options(collect($definition['options'] ?? [])->mapWithKeys(fn ($option) => [$option => __("admin.settings.options.{$option}")])),
-            'rating' => TextInput::make($name)->label($label)->numeric()->minValue(1)->maxValue(5)->helperText(__('admin.help.placeholder_rating')),
             'phone' => TextInput::make($name)->label($label)->tel()->regex('/^\+[1-9]\d{6,14}$/')->helperText(__('admin.help.e164')),
             'store_category' => Select::make($name)->label($label)->searchable()->placeholder(__('admin.settings.no_fallback'))
                 ->options(fn () => StoreCategory::query()->orderBy('sort_order')->get()->mapWithKeys(fn ($c) => [$c->id => $c->name]))

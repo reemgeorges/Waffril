@@ -81,7 +81,6 @@ class PlatformSettingsService
             'int' => $this->int($key, $value, (int) ($definition['min'] ?? 0), (int) ($definition['max'] ?? 100000)),
             'select' => in_array((string) $value, $definition['options'] ?? [], true) ? (string) $value : $this->invalid($key),
             'bool' => (bool) $value,
-            'rating' => $this->rating($key, $value),
             'phone' => preg_match('/^\+[1-9]\d{6,14}$/', (string) $value) ? (string) $value : $this->invalid($key),
             'timezone' => in_array($value, timezone_identifiers_list(), true) ? $value : $this->invalid($key),
             'store_category' => StoreCategory::query()->whereKey($value)->exists() ? (int) $value : $this->invalid($key),
@@ -97,15 +96,6 @@ class PlatformSettingsService
         }
 
         return (int) $value;
-    }
-
-    protected function rating(string $key, mixed $value): float
-    {
-        if (! is_numeric($value) || (float) $value < 1 || (float) $value > 5) {
-            $this->invalid($key);
-        }
-
-        return round((float) $value, 2);
     }
 
     protected function invalid(string $key): never

@@ -3,16 +3,12 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Exceptions\BusinessRuleException;
-use App\Models\Order;
 use App\Models\Product;
-use App\Services\Catalog\ProductRatingService;
 use App\Services\Customer\CustomerCatalogService;
 use Illuminate\Http\Request;
 
 /**
- * WAFFRLI customer API (2026-11-03) — product favorites and verified-purchase
- * product ratings. Only PRODUCTS can be favorited or rated (no store or
- * driver ratings). Customers see aggregates, never other people's comments.
+ * WAFFRLI customer API (2026-11-03) — product favorites. Order and driver ratings are handled by CustomerRatingController.
  */
 class CustomerEngagementController extends CustomerController
 {
@@ -37,7 +33,6 @@ class CustomerEngagementController extends CustomerController
             return ['favorites' => $products->map(fn (Product $p) => [
                 'id' => $p->id, 'name' => $p->name, 'image_url' => $this->catalog->url($p->image),
                 'store' => ['id' => $p->store->id, 'name' => $p->store->name],
-                'rating' => $this->catalog->rating($p),
             ])->values()];
         });
     }
@@ -57,30 +52,6 @@ class CustomerEngagementController extends CustomerController
             $this->customer($request)->favoriteProducts()->detach((int) $product);
 
             return ['message' => __('messages.customer.favorite_removed'), 'product_id' => (int) $product, 'is_favorite' => false];
-        });
-    }
-
-    public function rate(Request $request, string $product)
-    {
-        return $this->respond(function () use ($request, $product) {
-            $data = $request->validate([
-                'order_id' => ['required', 'integer'],
-                'rating' => ['required', 'integer', 'between:1,5'],
-                'comment' => ['nullable', 'string', 'max:1000'],
-            ]);
-            $user = $this->customer($request);
-            $order = Order::query()->whereKey($data['order_id'])->where('user_id', $user->id)->first();
-            if (! $order) {
-                throw new BusinessRuleException(__('messages.customer.not_found'), 404);
-            }
-            $model = $this->activeProduct($product);
-            $rating = app(ProductRatingService::class)->record($user, $model, $order, (int) $data['rating'], $data['comment'] ?? null);
-
-            return [
-                'message' => __('messages.customer.rating_saved'),
-                'my_rating' => ['rating' => $rating->rating, 'comment' => $rating->comment, 'is_hidden' => (bool) $rating->is_hidden],
-                'product_rating' => $this->catalog->rating($model->fresh()),
-            ];
         });
     }
 }

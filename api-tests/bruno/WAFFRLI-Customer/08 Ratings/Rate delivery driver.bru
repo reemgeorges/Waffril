@@ -1,0 +1,24 @@
+meta {
+  name: Rate delivered order - delivery driver
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/v1/customer/orders/{{delivered_order_id}}/driver-rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "rating": 4,
+    "comment": "Friendly driver"
+  }
+}
+
+tests {
+  test("rating saved when a driver is present", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 422]);
+  });
+}

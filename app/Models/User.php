@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 
-class User extends BaseAuthModel implements \Illuminate\Contracts\Translation\HasLocalePreference
+class User extends BaseAuthModel implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -147,9 +148,14 @@ class User extends BaseAuthModel implements \Illuminate\Contracts\Translation\Ha
         return $this->belongsToMany(Product::class, 'favorites')->withPivot('created_at');
     }
 
-    public function productRatings(): HasMany
+    public function orderRatings(): HasMany
     {
-        return $this->hasMany(ProductRating::class);
+        return $this->hasMany(OrderRating::class);
+    }
+
+    public function driverRatings(): HasMany
+    {
+        return $this->hasMany(DriverRating::class);
     }
 
     public function displayCurrency(): BelongsTo

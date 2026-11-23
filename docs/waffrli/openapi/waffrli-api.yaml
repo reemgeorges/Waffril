@@ -7309,6 +7309,96 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       x-throttle:
         - customer-api
+  '/api/v1/customer/orders/{order}/driver-rating':
+    put:
+      tags:
+        - Customer
+      operationId: customer.ordersOrderDriverRating.put
+      summary: 'Customerratingcontroller Driver'
+      description: |-
+        Requires a `user` token.
+        Throttle: `customer-api`.
+        Handler: `Customer\CustomerRatingController@driver`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        -
+          customerToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+  '/api/v1/customer/orders/{order}/rating':
+    put:
+      tags:
+        - Customer
+      operationId: customer.ordersOrderRating.put
+      summary: 'Customerratingcontroller Order'
+      description: |-
+        Requires a `user` token.
+        Throttle: `customer-api`.
+        Handler: `Customer\CustomerRatingController@order`.
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        -
+          customerToken: []
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
   /api/v1/customer/payments:
     get:
       tags:
@@ -7902,104 +7992,6 @@ paths:
           $ref: '#/components/responses/Conflict'
         422:
           $ref: '#/components/responses/Unprocessable'
-        429:
-          $ref: '#/components/responses/TooManyRequests'
-      x-throttle:
-        - customer-api
-  '/api/v1/customer/products/{product}/rating':
-    post:
-      tags:
-        - Customer
-      operationId: customer.productsProductRating.post
-      summary: 'Rate a purchased product (verified purchaser)'
-      description: |-
-        Requires a `user` token.
-        Throttle: `customer-api`.
-        Handler: `Customer\CustomerEngagementController@rate`.
-      parameters:
-        -
-          $ref: '#/components/parameters/AcceptLanguage'
-        -
-          name: product
-          in: path
-          required: true
-          schema:
-            type: integer
-      security:
-        -
-          customerToken: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                order_id:
-                  type: integer
-                rating:
-                  type: integer
-                comment:
-                  type: string
-              description: 'Inferred from a real request (no FormRequest on this action).'
-            example:
-              order_id: 22
-              rating: 5
-              comment: 'Bruno: great'
-      responses:
-        200:
-          description: Success.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Envelope'
-              example:
-                data:
-                  message: 'Thank you for your rating.'
-                  my_rating:
-                    rating: 5
-                    comment: 'Bruno: great'
-                    is_hidden: false
-                  product_rating:
-                    average: 5
-                    count: 1
-                    placeholder: null
-                status: true
-                error: null
-                statusCode: 200
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthenticated'
-        403:
-          $ref: '#/components/responses/Forbidden'
-        404:
-          description: 'Rate without purchase - refused (real response)'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-              example:
-                data: null
-                status: false
-                error: 'Not found.'
-                statusCode: 404
-        409:
-          $ref: '#/components/responses/Conflict'
-        422:
-          description: 'Rate - invalid value (real response)'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-              example:
-                data: null
-                status: false
-                error: 'The rating field must be between 1 and 5.'
-                errors:
-                  rating:
-                    - 'The rating field must be between 1 and 5.'
-                statusCode: 422
         429:
           $ref: '#/components/responses/TooManyRequests'
       x-throttle:

@@ -1479,6 +1479,80 @@ paths:
       security:
         -
           bearerAuth: []
+  '/api/v1/customer/orders/{order}/driver-rating':
+    put:
+      tags:
+        - customer
+      operationId: customer.ordersOrderDriverRating.put
+      summary: 'Customerratingcontroller Driver'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
+  '/api/v1/customer/orders/{order}/rating':
+    put:
+      tags:
+        - customer
+      operationId: customer.ordersOrderRating.put
+      summary: 'Customerratingcontroller Order'
+      parameters:
+        -
+          $ref: '#/components/parameters/AcceptLanguage'
+        -
+          name: order
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          $ref: '#/components/responses/Ok'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthenticated'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/Unprocessable'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+      x-throttle:
+        - customer-api
+      security:
+        -
+          bearerAuth: []
   /api/v1/customer/payments:
     get:
       tags:
@@ -1700,43 +1774,6 @@ paths:
         - customer
       operationId: customer.productsProductFavorite.post
       summary: 'Customerengagementcontroller Addfavorite'
-      parameters:
-        -
-          $ref: '#/components/parameters/AcceptLanguage'
-        -
-          name: product
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          $ref: '#/components/responses/Ok'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthenticated'
-        403:
-          $ref: '#/components/responses/Forbidden'
-        404:
-          $ref: '#/components/responses/NotFound'
-        409:
-          $ref: '#/components/responses/Conflict'
-        422:
-          $ref: '#/components/responses/Unprocessable'
-        429:
-          $ref: '#/components/responses/TooManyRequests'
-      x-throttle:
-        - customer-api
-      security:
-        -
-          bearerAuth: []
-  '/api/v1/customer/products/{product}/rating':
-    post:
-      tags:
-        - customer
-      operationId: customer.productsProductRating.post
-      summary: 'Customerengagementcontroller Rate'
       parameters:
         -
           $ref: '#/components/parameters/AcceptLanguage'

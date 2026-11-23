@@ -10,9 +10,10 @@ use App\Filament\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
+use App\Filament\Resources\DriverRatings\DriverRatingResource;
+use App\Filament\Resources\OrderRatings\OrderRatingResource;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
-use App\Filament\Resources\ProductRatings\ProductRatingResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
 use App\Filament\Resources\StoreCategories\StoreCategoryResource;
@@ -249,7 +250,6 @@ class AdminWorkflowOverhaulTest extends AdminPanelTestCase
     {
         $hidden = [
             ProductResource::class,
-            ProductRatingResource::class,
             BranchResource::class,
             CategoryResource::class,
             StoreCategoryResource::class,
@@ -276,14 +276,35 @@ class AdminWorkflowOverhaulTest extends AdminPanelTestCase
         }
     }
 
-    public function test_catalog_staff_reach_categories_and_ratings_from_the_stores_page(): void
+    public function test_catalog_staff_reach_categories_from_the_stores_page(): void
     {
-        $this->actingAsAdmin($this->employee(['catalog.view', 'catalog.manage', 'ratings.moderate']));
+        $this->actingAsAdmin($this->employee(['catalog.view', 'catalog.manage']));
         Livewire::test(ListStores::class)
-            ->assertActionVisible('storeCategories')->assertActionVisible('productCategories')->assertActionVisible('ratings');
+            ->assertActionVisible('storeCategories')->assertActionVisible('productCategories')
+            // 2026-11-22: product ratings were replaced by order/driver ratings,
+            // which have their own sidebar entries (not a stores-page shortcut).
+            ->assertActionDoesNotExist('ratings');
+    }
 
-        $this->actingAsAdmin($this->employee(['catalog.view']));
-        Livewire::test(ListStores::class)->assertActionHidden('ratings');
+    public function test_order_and_driver_ratings_are_in_the_sidebar_for_moderators_only(): void
+    {
+        $this->actingAsAdmin($this->employee(['ratings.moderate']));
+        $labels = $this->sidebarLabels();
+        foreach ([OrderRatingResource::class, DriverRatingResource::class] as $resource) {
+            $this->assertContains($resource::getNavigationLabel(), $labels);
+            $this->get($resource::getUrl('index'))->assertOk();
+        }
+    }
+
+    /** Separate test: Filament builds the menu once per application. */
+    public function test_order_and_driver_ratings_are_hidden_and_refused_without_moderation_permission(): void
+    {
+        $this->actingAsAdmin($this->employee(['catalog.view', 'orders.view']));
+        $labels = $this->sidebarLabels();
+        foreach ([OrderRatingResource::class, DriverRatingResource::class] as $resource) {
+            $this->assertNotContains($resource::getNavigationLabel(), $labels);
+            $this->get($resource::getUrl('index'))->assertForbidden();
+        }
     }
 
     public function test_new_store_products_and_branches_open_their_pricing_next(): void

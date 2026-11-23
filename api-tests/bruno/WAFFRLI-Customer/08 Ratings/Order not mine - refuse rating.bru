@@ -1,0 +1,21 @@
+meta {
+  name: Cannot rate another customer's order
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/api/v1/customer/orders/999999/rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  { "rating": 5 }
+}
+
+tests {
+  test("not found or not owned", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

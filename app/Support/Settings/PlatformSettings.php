@@ -39,7 +39,6 @@ final class PlatformSettings
             // B4: driver ranking for automatic offers (fair rotation is the only strategy implemented).
             'dispatch.rotation_strategy' => ['group' => 'dispatch', 'type' => 'select', 'default' => 'fair_rotation', 'options' => ['fair_rotation']],
             'dispatch.location_fresh_minutes' => ['group' => 'dispatch', 'type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120],
-            'catalog.placeholder_rating' => ['group' => 'catalog', 'type' => 'rating', 'default' => null],
             // UX overhaul (2026-11-12): the category offered first when a
             // category is deleted and its stores/products need another one.
             'catalog.fallback_store_category_id' => ['group' => 'catalog', 'type' => 'store_category', 'default' => null],

@@ -188,7 +188,8 @@ class CustomerResource extends AdminResource
             'wallets' => WalletsRelationManager::class,
             'addresses' => AddressesRelationManager::class,
             'plus' => RelationManagers\PlusRequestsRelationManager::class,
-            'ratings' => RelationManagers\RatingsRelationManager::class,
+            'order-ratings' => RelationManagers\OrderRatingsRelationManager::class,
+            'driver-ratings' => RelationManagers\DriverRatingsRelationManager::class,
         ];
     }
 

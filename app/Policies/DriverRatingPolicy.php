@@ -2,10 +2,7 @@
 
 namespace App\Policies;
 
-/**
- * WAFFRLI (2026-10-31). Moderation (hide/unhide) goes through ProductRatingService.
- */
-class ProductRatingPolicy extends AdminResourcePolicy
+class DriverRatingPolicy extends AdminResourcePolicy
 {
     protected ?string $viewPermission = 'ratings.moderate';
 

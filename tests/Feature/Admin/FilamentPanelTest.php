@@ -7,9 +7,12 @@ use App\Filament\Pages\PlatformSettingsPage;
 use App\Filament\Resources\Currencies\Pages\ManageCurrencies;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Filament\Resources\DriverCashSettlements\Pages\ListDriverCashSettlements;
+use App\Filament\Resources\DriverRatings\DriverRatingResource;
+use App\Filament\Resources\DriverRatings\Pages\ListDriverRatings;
+use App\Filament\Resources\OrderRatings\OrderRatingResource;
+use App\Filament\Resources\OrderRatings\Pages\ListOrderRatings;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\PlusRequests\Pages\ListPlusRequests;
-use App\Filament\Resources\ProductRatings\Pages\ListProductRatings;
 use App\Filament\Resources\Roles\Pages\ManageRoles;
 use App\Filament\Resources\StoreCategories\Pages\ManageStoreCategories;
 use App\Filament\Resources\Stores\Pages\CreateStore;
@@ -27,7 +30,8 @@ use App\Models\Setting;
 use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\User;
-use App\Services\Catalog\ProductRatingService;
+use App\Services\Ratings\OrderDriverRatingService;
+use App\Support\Settings\PlatformSettings;
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -174,7 +178,7 @@ class FilamentPanelTest extends AdminPanelTestCase
         $this->actingAsAdmin($admin);
 
         Livewire::test(ListDriverCashSettlements::class)
-            ->callAction('prepare', ['driver_id' => $driver->id, 'currency_id' => $this->usd()->id, 'business_date' => now(\App\Support\Settings\PlatformSettings::timezone())->toDateString()]); // business days are in the platform timezone
+            ->callAction('prepare', ['driver_id' => $driver->id, 'currency_id' => $this->usd()->id, 'business_date' => now(PlatformSettings::timezone())->toDateString()]); // business days are in the platform timezone
         $settlement = DriverCashSettlement::firstOrFail();
         $this->assertSame('25.0000', (string) $settlement->expected_amount);
 
@@ -189,18 +193,39 @@ class FilamentPanelTest extends AdminPanelTestCase
 
     public function test_rating_moderation_from_the_panel(): void
     {
-        $store = $this->store();
-        $branch = $this->branch($store, $this->city());
-        $product = $this->product($store);
+        // 2026-11-22: product ratings were replaced by order + driver ratings.
+        $city = $this->city();
+        $branch = $this->branch($this->store(), $city);
+        $driver = $this->driver($city);
         $user = $this->customer();
-        $rating = app(ProductRatingService::class)->record($user, $product, $this->order($user, $branch, '9', ['status' => OrderStatus::Delivered]), 2, 'meh');
+        $order = $this->order($user, $branch, '9', ['status' => OrderStatus::Delivered, 'driver' => $driver]);
+        $ratings = app(OrderDriverRatingService::class);
+        $orderRating = $ratings->saveOrderRating($user, $order->id, 2, 'meh');
+        $driverRating = $ratings->saveDriverRating($user, $order->id, 1, 'rude');
+
+        // Without the moderation permission the rating screens are refused.
+        $this->actingAsAdmin($this->employee(['orders.view', 'drivers.view']));
+        $this->get(OrderRatingResource::getUrl('index'))->assertForbidden();
+        $this->get(DriverRatingResource::getUrl('index'))->assertForbidden();
+
         $this->actingAsAdmin($this->employee(['ratings.moderate']));
+        Livewire::test(ListOrderRatings::class)
+            ->callAction(TestAction::make('hide')->table($orderRating), ['reason' => 'off-topic'])
+            ->assertHasNoActionErrors();
+        Livewire::test(ListDriverRatings::class)
+            ->callAction(TestAction::make('hide')->table($driverRating), ['reason' => 'abusive'])
+            ->assertHasNoActionErrors();
 
-        Livewire::test(ListProductRatings::class)
-            ->callAction(TestAction::make('hide')->table($rating), ['reason' => 'off-topic']);
+        // Hidden with a reason; the customer's score and comment are never changed.
+        $this->assertTrue($orderRating->fresh()->is_hidden);
+        $this->assertSame('off-topic', $orderRating->fresh()->hidden_reason);
+        $this->assertSame(2, $orderRating->fresh()->rating);
+        $this->assertTrue($driverRating->fresh()->is_hidden);
+        $this->assertSame(1, $driverRating->fresh()->rating);
+        $this->assertSame(0, $driver->ratings()->where('is_hidden', false)->count(), 'A hidden review no longer counts for the driver.');
 
-        $this->assertTrue($rating->fresh()->is_hidden);
-        $this->assertSame(0, $product->fresh()->rating_count);
+        Livewire::test(ListDriverRatings::class)->callAction(TestAction::make('unhide')->table($driverRating->fresh()));
+        $this->assertFalse($driverRating->fresh()->is_hidden);
     }
 
     public function test_plus_request_approval_from_the_panel(): void
@@ -240,12 +265,14 @@ class FilamentPanelTest extends AdminPanelTestCase
         $this->actingAsAdmin($this->employee(['settings.manage']));
 
         Livewire::test(PlatformSettingsPage::class)
-            ->fillForm(['support__phone' => '+963911111111', 'catalog__placeholder_rating' => '4.2', 'orders__accepting_new' => false])
-            ->call('save');
+            ->fillForm(['support__phone' => '+963911111111', 'orders__accepting_new' => false])
+            ->call('save')
+            ->assertHasNoFormErrors();
 
         $this->assertSame('+963911111111', Setting::where('key', 'support.phone')->value('value'));
-        $this->assertSame(4.2, Setting::where('key', 'catalog.placeholder_rating')->first()->value);
         $this->assertFalse(Setting::where('key', 'orders.accepting_new')->first()->value);
+        // 2026-11-22: the product-rating placeholder went with product ratings.
+        $this->assertArrayNotHasKey('catalog.placeholder_rating', PlatformSettings::definitions());
     }
 
     public function test_arabic_locale_renders_rtl(): void

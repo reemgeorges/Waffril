@@ -1,0 +1,21 @@
+meta {
+  name: Invalid order rating
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/api/v1/customer/orders/{{delivered_order_id}}/rating
+  body: json
+  auth: inherit
+}
+
+body:json {
+  { "rating": 9 }
+}
+
+tests {
+  test("rating validation", function () {
+    expect(res.getStatus()).to.equal(422);
+  });
+}

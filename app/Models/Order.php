@@ -183,10 +183,27 @@ class Order extends BasePlatformModel
         return $this->hasMany(OrderCancellationRequest::class)->orderByDesc('id');
     }
 
-    /** Ratings left for products of this (delivered) order. */
-    public function ratings(): HasMany
+    /** Independent post-delivery feedback, one of each per order. */
+    public function orderRating(): HasOne
     {
-        return $this->hasMany(ProductRating::class);
+        return $this->hasOne(OrderRating::class);
+    }
+
+    /** Filament table-backed relation; UNIQUE(order_id) guarantees at most one row. */
+    public function orderRatings(): HasMany
+    {
+        return $this->hasMany(OrderRating::class);
+    }
+
+    public function driverRating(): HasOne
+    {
+        return $this->hasOne(DriverRating::class);
+    }
+
+    /** Filament table-backed relation; UNIQUE(order_id) guarantees at most one row. */
+    public function driverRatings(): HasMany
+    {
+        return $this->hasMany(DriverRating::class);
     }
 
     public function cancellation(): HasOne

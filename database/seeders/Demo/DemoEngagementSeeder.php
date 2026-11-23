@@ -2,15 +2,17 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
-use App\Models\ProductRating;
-use App\Services\Catalog\ProductRatingService;
+use App\Models\OrderRating;
+use App\Services\Ratings\OrderDriverRatingService;
+use App\Services\Ratings\RatingModerationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * WAFFRLI demo — verified-purchase product ratings (two hidden by a
- * moderator for the moderation queue), product favorites and persisted
+ * WAFFRLI demo — independent order and driver feedback (some hidden by
+ * a moderator), product favorites and persisted
  * database notifications. Notifications are stored rows only: nothing is
  * sent (no FCM/SMS/e-mail).
  */
@@ -40,20 +42,39 @@ class DemoEngagementSeeder extends Seeder
     public function run(): void
     {
         $context = app(DemoContext::class);
-        $ratings = app(ProductRatingService::class);
-
+        $ratings = app(OrderDriverRatingService::class);
+        $moderation = app(RatingModerationService::class);
+        $visited = [];
         foreach (self::RATINGS as $i => [$customer, $number, $storeSlug, $productKey, $stars, $comment, $hideReason]) {
-            $user = DemoPeopleSeeder::customer($customer);
-            $product = DemoCatalogSeeder::findProduct($storeSlug, $productKey);
-            $order = Order::query()->where('order_number', $number)->first();
-            if (! $order || ProductRating::query()->where('user_id', $user->id)->where('product_id', $product->id)->exists()) {
+            // The historic demo fixture includes two products in one order.
+            // New rule: exactly ONE overall score per order, not per product.
+            if (isset($visited[$number])) {
                 continue;
             }
-
+            $visited[$number] = true;
+            $user = DemoPeopleSeeder::customer($customer);
+            $order = Order::query()->where('order_number', $number)->first();
+            if (! $order || $order->status !== OrderStatus::Delivered
+                || OrderRating::query()->where('order_id', $order->id)->exists()) {
+                continue;
+            }
             $at = ($order->delivered_at ?? $context->anchor())->copy()->addHours(2 + $i);
-            $rating = $context->at($at, fn () => $ratings->record($user, $product, $order, $stars, $comment));
+            $orderRating = $context->at($at, fn () => $ratings->saveOrderRating($user, $order->id, $stars, $comment));
             if ($hideReason) {
-                $context->at($at->copy()->addHours(3), fn () => $ratings->hide($rating, $context->operator(), $hideReason));
+                $context->at($at->copy()->addHours(3),
+                    fn () => $moderation->setHidden($orderRating, $context->operator(), true, $hideReason));
+            }
+            if ($order->driver_id !== null) {
+                // Deliberately independent score/comment, not copied from order.
+                $driverStars = min(5, max(1, 6 - $stars));
+                $driverRating = $context->at($at, fn () => $ratings->saveDriverRating(
+                    $user, $order->id, $driverStars, 'Demo driver feedback for '.$number
+                ));
+                if ($hideReason) {
+                    $context->at($at->copy()->addHours(3), fn () => $moderation->setHidden(
+                        $driverRating, $context->operator(), true, $hideReason
+                    ));
+                }
             }
         }
 

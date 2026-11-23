@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
  * Store → Products (UX overhaul 2026-11-12). Products belong to this store
  * (two stores selling "the same" item keep their own picture, text and
  * prices). Add a product in a dialog without leaving the store; open it for
- * branch prices, options and ratings. Uses the product resource's form,
+ * branch prices and options. Uses the product resource's form,
  * policy and validation; the global product list stays available.
  */
 class ProductsRelationManager extends RelationManager
@@ -62,8 +62,8 @@ class ProductsRelationManager extends RelationManager
     /**
      * Store → Products (table UX overhaul, 2026-11-12): picture (or initial),
      * name with its categories, how many of the store's branches price it,
-     * rating and a readable status. "Prices & availability" is the primary
-     * action; details, ratings and activation sit under "More actions".
+     * a readable status. "Prices & availability" is the primary
+     * action; details and activation sit under "More actions".
      */
     public function table(Table $table): Table
     {
@@ -86,8 +86,6 @@ class ProductsRelationManager extends RelationManager
                     ->url(fn (Product $record) => $edit($record, 'branch-prices'))
                     ->tooltip(__('admin.stores.sold_in_branches_help'))
                     ->extraAttributes(['class' => 'wf-stat-link'])->width(TableDefaults::COMPACT_WIDTH),
-                Columns::stars('rating', fn (Product $record) => [$record->averageRating(), (int) $record->rating_count])
-                    ->url(fn (Product $record) => $edit($record, 'ratings'))->visibleFrom('md'),
                 Columns::status(),
             ])
             ->defaultSort('name')
@@ -117,8 +115,6 @@ class ProductsRelationManager extends RelationManager
                 RowActions::more([
                     Action::make('details')->label(__('admin.table.edit_details'))->icon('heroicon-m-pencil-square')
                         ->url(fn (Product $record) => $edit($record)),
-                    Action::make('ratings')->label(__('admin.table.ratings'))->icon('heroicon-m-star')
-                        ->url(fn (Product $record) => $edit($record, 'ratings')),
                     ...RowActions::activation(ProductResource::class),
                 ]),
             ])
